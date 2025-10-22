@@ -43,7 +43,7 @@ spl_autoload_register(function ($class) {
 if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php')) {
     require_once AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
     
-    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    $updateChecker = YahnisElsts\PluginUpdateChecker\v5p6\PucFactory::buildUpdateChecker(
         'https://github.com/ProBluex/wordpress-plugin-aiagentpaywall',
         __FILE__,
         '402links-agent-hub'
