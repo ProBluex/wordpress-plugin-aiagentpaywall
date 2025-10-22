@@ -16,7 +16,12 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AGENT_HUB_VERSION', '2.2.8');
+// Dynamically extract version from plugin header to maintain single source of truth
+if (!function_exists('get_plugin_data')) {
+    require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+}
+$plugin_data = get_plugin_data(__FILE__);
+define('AGENT_HUB_VERSION', $plugin_data['Version']);
 define('AGENT_HUB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AGENT_HUB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AGENT_HUB_PLUGIN_FILE', __FILE__);
