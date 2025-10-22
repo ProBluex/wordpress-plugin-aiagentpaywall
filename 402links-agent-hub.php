@@ -49,10 +49,20 @@ if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-upda
         '402links-agent-hub'
     );
     
-    // Check for updates from the main branch
+    // Use GitHub Releases for updates (more reliable than branch commits)
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+    
+    // Set branch as fallback if no releases exist
     $updateChecker->setBranch('main');
     
-    // Optional: Set GitHub access token for private repos
+    // Add update check logging for debugging (only in WP_DEBUG mode)
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        add_action('puc_check_now-402links-agent-hub', function() {
+            error_log('402links Agent Hub: Checking for updates from GitHub...');
+        });
+    }
+    
+    // Optional: Uncomment for private repos (requires GitHub Personal Access Token)
     // $updateChecker->setAuthentication('YOUR_GITHUB_TOKEN_HERE');
 }
 

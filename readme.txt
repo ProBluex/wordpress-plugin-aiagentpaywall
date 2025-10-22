@@ -85,7 +85,7 @@ This version adds automatic updates from GitHub. Ensure your WordPress site can 
 
 == Support ==
 
-For support, visit: https://402links.com/contact
+For support, visit: https://402links.com/support
 Documentation: https://402links.com/docs
 
 == Privacy Policy ==
