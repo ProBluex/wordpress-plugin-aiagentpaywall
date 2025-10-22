@@ -79,14 +79,11 @@ jQuery(document).ready(function($) {
             site_id: agentHubData.siteId || undefined  // Include site_id for validation
         };
         
-        // Call the existing submit-contact-message edge function
+        // Call the existing submit-contact-message edge function via Cloudflare proxy
         $.ajax({
-            url: 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/submit-contact-message',
+            url: 'https://api.402links.com/functions/v1/submit-contact-message',
             type: 'POST',
             contentType: 'application/json',
-            headers: {
-                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuaW9ud25rbnduenB3ZnVhY3NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODQ5NTAsImV4cCI6MjA3NDk2MDk1MH0.vgBlogXLSPd5AA_nt6ISv69xrMa4a--__EXdWgI79Dc'
-            },
             data: JSON.stringify(formData),
             success: function(response) {
                 if (response.success) {
