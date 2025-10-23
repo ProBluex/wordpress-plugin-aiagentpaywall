@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.9
+Stable tag: 2.3.10
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,15 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.10 =
+* Phase 4: Agent Hub Violations Dashboard
+* Added dedicated Violations submenu page in WordPress admin
+* Real-time violations display with filtering by type and agent name
+* Statistics dashboard showing total violations, robots.txt violations, unpaid access, and unique agents
+* Integrated get-violations edge function for backend violation data retrieval
+* AJAX-powered violations table with sorting and detailed violation information
+* Enhanced API.php with get_violations() method supporting filters
 
 = 2.3.9 =
 * Phase 3: Robots.txt Violation Detection System

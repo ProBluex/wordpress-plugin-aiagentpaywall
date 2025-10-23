@@ -258,6 +258,36 @@ class API {
     }
     
     /**
+     * Get agent violations from backend
+     * 
+     * @param string $site_id Site UUID
+     * @param array $filters Optional filters (violation_type, agent_name, start_date, end_date)
+     * @return array Response from backend
+     */
+    public function get_violations($site_id, $filters = []) {
+        $params = array_merge(['site_id' => $site_id], $filters);
+        $query_string = http_build_query($params);
+        
+        $result = $this->request('GET', '/get-violations?' . $query_string);
+        
+        if ($result['success'] && isset($result['violations'])) {
+            return [
+                'success' => true,
+                'violations' => $result['violations'],
+                'count' => $result['count'] ?? count($result['violations'])
+            ];
+        }
+        
+        error_log('402links: Failed to fetch violations: ' . ($result['error'] ?? 'Unknown error'));
+        return [
+            'success' => false,
+            'error' => $result['error'] ?? 'Failed to fetch violations',
+            'violations' => [],
+            'count' => 0
+        ];
+    }
+    
+    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {

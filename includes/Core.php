@@ -43,6 +43,9 @@ class Core {
         add_action('wp_ajax_agent_hub_get_batch_status', [Admin::class, 'ajax_get_batch_status']);
         add_action('wp_ajax_agent_hub_cancel_batch', [Admin::class, 'ajax_cancel_batch']);
         
+        // Violations AJAX handler
+        add_action('wp_ajax_agent_hub_get_violations', [Admin::class, 'ajax_get_violations']);
+        
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);
     }
