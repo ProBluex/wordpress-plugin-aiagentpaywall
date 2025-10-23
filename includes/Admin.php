@@ -716,7 +716,6 @@ class Admin {
             wp_send_json_error($result);
         }
     }
-    }
     
     /**
      * AJAX: Get site bot policies
