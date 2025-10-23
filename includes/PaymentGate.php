@@ -346,6 +346,9 @@ class PaymentGate {
         // Set headers with x402 discovery info
         header('WWW-Authenticate: x402="' . $www_auth_payload . '"');
         header('X-402-Version: 1');
+        header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
+        header('X-402-Payment-Required: true');
+        header('X-402-Facilitator: CDP');
         header('X-402-Scheme: exact');
         header('X-402-Network: ' . $requirements['network']);
         header('X-402-Amount: ' . $requirements['maxAmountRequired']);
@@ -353,9 +356,8 @@ class PaymentGate {
         header('X-402-Asset: ' . $requirements['asset']);
         header('X-402-PayTo: ' . $requirements['payTo']);
         header('X-402-Resource: ' . $requirements['resource']);
-        header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery');
+        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery, X-402-Payment-Required, X-402-Facilitator');
         
         // BROWSER vs AGENT: Return HTML for browsers, JSON for agents
         if (self::is_browser_request()) {

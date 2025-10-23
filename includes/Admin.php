@@ -142,6 +142,14 @@ class Admin {
             true
         );
         
+        wp_enqueue_script(
+            'agent-hub-settings',
+            AGENT_HUB_PLUGIN_URL . 'assets/js/settings.js',
+            ['jquery'],
+            AGENT_HUB_VERSION,
+            true
+        );
+        
         wp_localize_script('agent-hub-admin', 'agentHubData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('agent_hub_nonce'),
@@ -655,6 +663,79 @@ class Admin {
         } else {
             wp_send_json_error($result);
         }
+    }
+    
+    /**
+     * AJAX: Test .well-known endpoints
+     */
+    public static function ajax_test_endpoints() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $site_url = get_site_url();
+        $results = [];
+        
+        // Test endpoints
+        $endpoints = [
+            '402.json' => '/.well-known/402.json',
+            'agent-card.json' => '/.well-known/agent-card.json',
+            '402-root.json' => '/.well-known/402-root.json',
+            'robots.txt' => '/robots.txt'
+        ];
+        
+        foreach ($endpoints as $name => $path) {
+            $url = $site_url . $path;
+            $response = wp_remote_get($url, ['timeout' => 10]);
+            
+            if (is_wp_error($response)) {
+                $results[$name] = [
+                    'status' => 'error',
+                    'code' => 0,
+                    'message' => $response->get_error_message(),
+                    'url' => $url
+                ];
+            } else {
+                $code = wp_remote_retrieve_response_code($response);
+                $body = wp_remote_retrieve_body($response);
+                
+                // Validate JSON for .json endpoints
+                $is_valid_json = true;
+                if (strpos($name, '.json') !== false) {
+                    $json = json_decode($body, true);
+                    $is_valid_json = (json_last_error() === JSON_ERROR_NONE && !empty($json));
+                }
+                
+                $results[$name] = [
+                    'status' => ($code === 200 && $is_valid_json) ? 'success' : 'error',
+                    'code' => $code,
+                    'message' => $code === 200 ? 'Working correctly' : 'HTTP ' . $code,
+                    'url' => $url,
+                    'valid_json' => $is_valid_json
+                ];
+            }
+        }
+        
+        wp_send_json_success(['results' => $results]);
+    }
+    
+    /**
+     * AJAX: Flush rewrite rules
+     */
+    public static function ajax_flush_rewrite_rules() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        // Re-register rewrite rules before flushing
+        \AgentHub\WellKnown::register_rewrite_rules();
+        flush_rewrite_rules();
+        
+        wp_send_json_success(['message' => 'Rewrite rules flushed successfully. Endpoints should now work.']);
     }
 }
 }

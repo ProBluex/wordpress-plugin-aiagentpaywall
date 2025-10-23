@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,16 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.4.1 =
+* 🔧 Fixed: .well-known endpoints now work correctly with automatic rewrite flush
+* ✨ Enhanced: /.well-known/402.json now fully x402 spec compliant with version support
+* ✨ New: /.well-known/402-root.json platform discovery endpoint
+* ✨ New: Endpoint diagnostics panel for testing .well-known URLs
+* 📝 Improved: Enhanced x402 HTTP headers on all 402 responses
+* 🐛 Fixed: Rewrite rules automatically flush on plugin activation
+* 🔍 Added: "Test Endpoints" button to verify x402 discovery endpoints
+* 🔄 Added: "Flush Rewrite Rules" button for manual endpoint refresh
 
 = 2.4.0 =
 * 🎉 Major Feature: Comprehensive Bot Management System

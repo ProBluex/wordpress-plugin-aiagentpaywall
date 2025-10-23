@@ -3,7 +3,7 @@
  * Plugin Name: 402links Agent Hub
  * Plugin URI: https://402links.com
  * Description: Automatically monetize WordPress content with AI agent payments via x402 protocol
- * Version: 2.4.0
+ * Version: 2.4.1
  * Author: 402links
  * Author URI: https://402links.com
  * License: Proprietary
@@ -113,7 +113,10 @@ function agent_hub_activate() {
     update_option('402links_plugin_active', true);
     update_option('402links_last_activated', current_time('mysql'));
     
-    // Flush rewrite rules for .well-known endpoint
+    // CRITICAL: Register rewrite rules BEFORE flushing
+    \AgentHub\WellKnown::register_rewrite_rules();
+    
+    // Flush rewrite rules for .well-known endpoints
     flush_rewrite_rules();
 }
 
@@ -128,6 +131,7 @@ function agent_hub_deactivate() {
     // We want to preserve all 402-compatible pages in the Agent Hub
     // even if the plugin is temporarily disabled
     
+    // Flush rewrite rules on deactivation
     flush_rewrite_rules();
 }
 

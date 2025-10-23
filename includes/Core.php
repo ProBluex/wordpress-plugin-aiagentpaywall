@@ -22,6 +22,7 @@ class Core {
         add_filter('query_vars', [WellKnown::class, 'register_query_vars']);
         add_action('template_redirect', [WellKnown::class, 'serve_402_json'], 5);
         add_action('template_redirect', [WellKnown::class, 'serve_agent_card'], 5);
+        add_action('template_redirect', [WellKnown::class, 'serve_402_root'], 5);
         
         // robots.txt injection
         add_filter('robots_txt', [WellKnown::class, 'inject_robots_txt'], 10, 2);
@@ -46,6 +47,10 @@ class Core {
         // Bot management AJAX handlers
         add_action('wp_ajax_agent_hub_get_bot_stats', [Admin::class, 'ajax_get_bot_stats']);
         add_action('wp_ajax_agent_hub_update_bot_policy', [Admin::class, 'ajax_update_bot_policy']);
+        
+        // Diagnostics AJAX handler
+        add_action('wp_ajax_agent_hub_test_endpoints', [Admin::class, 'ajax_test_endpoints']);
+        add_action('wp_ajax_agent_hub_flush_rewrite_rules', [Admin::class, 'ajax_flush_rewrite_rules']);
         
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);

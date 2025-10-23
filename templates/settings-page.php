@@ -317,6 +317,37 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
         </div>
         
+        <!-- x402 Endpoint Diagnostics -->
+        <div class="diagnostics-wrapper" style="margin-bottom: 30px;">
+            <h3><span class="dashicons dashicons-admin-tools"></span> x402 Endpoint Diagnostics</h3>
+            <p>Test if your .well-known endpoints are working correctly. These endpoints allow AI agents to discover your paywall-protected content.</p>
+            
+            <button id="test-endpoints" class="button button-primary" style="margin-bottom: 15px;">
+                <span class="dashicons dashicons-search"></span>
+                Test Endpoints
+            </button>
+            
+            <button id="flush-rewrite-rules" class="button" style="margin-left: 10px;">
+                <span class="dashicons dashicons-update"></span>
+                Flush Rewrite Rules
+            </button>
+            
+            <div id="diagnostics-results" style="display:none; margin-top: 20px;">
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;"></th>
+                            <th>Endpoint</th>
+                            <th>Status</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="diagnostics-results-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <div class="contact-form-wrapper">
             <h3>Send Us a Message</h3>
             <form id="contact-form" class="contact-form">
