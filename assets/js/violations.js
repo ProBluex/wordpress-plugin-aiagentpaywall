@@ -70,13 +70,13 @@
         $('#violations-unpaid').text(formatNumber(data.totals.unpaid_access_violations));
         $('#violations-unique-agents').text(formatNumber(data.totals.unique_agents));
 
-        // Check if we have agents
+        // Check if we have agents - always show table with all agents
         if (!data.agents || data.agents.length === 0) {
             $empty.show();
             return;
         }
 
-        // Build table rows
+        // Build table rows - show ALL agents from bot_registry
         $tbody.empty();
         data.agents.forEach(function(agent) {
             const $row = $('<tr>');

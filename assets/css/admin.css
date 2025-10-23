@@ -1040,6 +1040,25 @@
     margin-bottom: 25px;
 }
 
+/* Fix stat icon colors for violations */
+.stat-icon.error {
+    background: hsla(0, 84%, 60%, 0.1);
+    color: var(--destructive);
+}
+
+.stat-icon.error .dashicons {
+    color: var(--destructive);
+}
+
+.stat-icon.warning {
+    background: hsla(48, 96%, 53%, 0.15);
+    color: hsl(45, 93%, 47%);
+}
+
+.stat-icon.warning .dashicons {
+    color: hsl(45, 93%, 47%);
+}
+
 .violations-header h2 {
     font-size: 24px;
     font-weight: 700;
