@@ -1,4 +1,6 @@
 <?php
+if (!defined('ABSPATH')) { exit; }
+
 namespace AgentHub;
 
 class Admin {
@@ -81,7 +83,7 @@ class Admin {
         );
         
         wp_enqueue_style(
-            'agent-hub-batch-processor',
+            'agent-hub-batch-processor-style',
             AGENT_HUB_PLUGIN_URL . 'assets/css/batch-processor.css',
             [],
             AGENT_HUB_VERSION
@@ -239,7 +241,7 @@ class Admin {
             
             $message = sprintf(
                 'Site registered successfully! Generated %d 402links for your content.',
-                $bulk_result['created']
+                intval($bulk_result['created'] ?? 0)
             );
             
             wp_send_json_success([
@@ -543,6 +545,10 @@ class Admin {
     public static function ajax_get_batch_status() {
         check_ajax_referer('agent_hub_nonce', 'nonce');
         
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
         $status = BatchProcessor::get_status();
         wp_send_json_success($status);
     }
@@ -616,13 +622,43 @@ class Admin {
         
         $policies = $_POST['policies'] ?? [];
         
+        if (!is_array($policies)) {
+            wp_send_json_error(['message' => 'Invalid policies payload']);
+            return;
+        }
+        
         if (empty($policies)) {
             wp_send_json_error(['message' => 'No policies to update']);
             return;
         }
         
+        // Sanitize and validate each policy
+        $clean_policies = [];
+        foreach ($policies as $policy) {
+            if (!is_array($policy)) {
+                continue;
+            }
+            
+            $action = isset($policy['action']) ? sanitize_text_field($policy['action']) : '';
+            
+            // Validate action values
+            if (!in_array($action, ['monetize', 'allow', 'block'], true)) {
+                continue;
+            }
+            
+            $clean_policies[] = [
+                'agent_name' => isset($policy['agent_name']) ? sanitize_text_field($policy['agent_name']) : '',
+                'action' => $action
+            ];
+        }
+        
+        if (empty($clean_policies)) {
+            wp_send_json_error(['message' => 'No valid policies to update']);
+            return;
+        }
+        
         $api = new API();
-        $result = $api->update_site_bot_policies($policies);
+        $result = $api->update_site_bot_policies($clean_policies);
         
         if ($result['success']) {
             wp_send_json_success([
@@ -641,6 +677,10 @@ class Admin {
      */
     public static function ajax_cancel_batch() {
         check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
         
         $result = BatchProcessor::cancel_batch();
         wp_send_json_success($result);
@@ -714,62 +754,6 @@ class Admin {
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);
-        }
-    }
-    
-    /**
-     * AJAX: Get site bot policies
-     */
-    public static function ajax_get_site_bot_policies() {
-        check_ajax_referer('agent_hub_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Unauthorized']);
-            return;
-        }
-        
-        $api = new API();
-        $result = $api->get_site_bot_policies();
-        
-        if ($result['success']) {
-            wp_send_json_success($result['policies'] ?? []);
-        } else {
-            wp_send_json_error([
-                'message' => $result['error'] ?? 'Failed to fetch bot policies'
-            ]);
-        }
-    }
-    
-    /**
-     * AJAX: Update site bot policies
-     */
-    public static function ajax_update_site_bot_policies() {
-        check_ajax_referer('agent_hub_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Unauthorized']);
-            return;
-        }
-        
-        $policies = $_POST['policies'] ?? [];
-        
-        if (empty($policies)) {
-            wp_send_json_error(['message' => 'No policies to update']);
-            return;
-        }
-        
-        $api = new API();
-        $result = $api->update_site_bot_policies($policies);
-        
-        if ($result['success']) {
-            wp_send_json_success([
-                'message' => 'Bot policies updated successfully',
-                'updated' => $result['updated'] ?? 0
-            ]);
-        } else {
-            wp_send_json_error([
-                'message' => $result['error'] ?? 'Failed to update bot policies'
-            ]);
         }
     }
 }
