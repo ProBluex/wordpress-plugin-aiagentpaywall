@@ -3,7 +3,7 @@
  * Plugin Name: 402links Agent Hub
  * Plugin URI: https://402links.com
  * Description: Automatically monetize WordPress content with AI agent payments via x402 protocol
- * Version: 2.2.8
+ * Version: 2.2.9
  * Author: 402links
  * Author URI: https://402links.com
  * License: Proprietary
@@ -105,7 +105,7 @@ function agent_hub_activate() {
             'auto_generate' => true,
             'payment_wallet' => '',
             'network' => 'base',
-            'api_endpoint' => 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1'
+            'api_endpoint' => 'https://api.402links.com/v1'
         ]);
     }
     

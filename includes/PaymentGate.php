@@ -335,7 +335,7 @@ class PaymentGate {
     private static function verify_payment($payment_header, $requirements) {
         $settings = get_option('402links_settings');
         $api_key = get_option('402links_api_key');
-        $api_endpoint = $settings['api_endpoint'] ?? 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1';
+        $api_endpoint = $settings['api_endpoint'] ?? 'https://api.402links.com/v1';
         
         $response = wp_remote_post($api_endpoint . '/verify-wordpress-payment', [
             'timeout' => 30,
@@ -391,7 +391,7 @@ class PaymentGate {
         // Send to backend for aggregation
         $settings = get_option('402links_settings');
         $api_key = get_option('402links_api_key');
-        $api_endpoint = $settings['api_endpoint'] ?? 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1';
+        $api_endpoint = $settings['api_endpoint'] ?? 'https://api.402links.com/v1';
         
         wp_remote_post($api_endpoint . '/log-agent-payment', [
             'timeout' => 15,

@@ -71,7 +71,7 @@ class Installer {
      */
     private static function attempt_provision() {
         $settings = get_option('402links_settings', []);
-        $api_endpoint = $settings['api_endpoint'] ?? 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1';
+        $api_endpoint = $settings['api_endpoint'] ?? 'https://api.402links.com/v1';
         
         $payload = [
             'site_url' => get_site_url(),

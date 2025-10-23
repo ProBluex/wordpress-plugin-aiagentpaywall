@@ -8,7 +8,7 @@ class API {
     public function __construct() {
         $this->api_key = get_option('402links_api_key');
         $settings = get_option('402links_settings');
-        $this->api_endpoint = $settings['api_endpoint'] ?? 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1';
+        $this->api_endpoint = $settings['api_endpoint'] ?? 'https://api.402links.com/v1';
     }
     
     /**
