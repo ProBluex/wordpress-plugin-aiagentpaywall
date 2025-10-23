@@ -410,6 +410,37 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
         </div>
         
+        <div class="agent-hub-info-box">
+            <h3>
+                <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                What Counts as a Violation?
+            </h3>
+            <p>The plugin tracks three types of violations:</p>
+            <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
+                <li><strong>Robots.txt Violations:</strong> AI agents accessing pages explicitly disallowed in your robots.txt file</li>
+                <li><strong>Unpaid Access:</strong> Agents attempting to access 402-protected content without making the required payment</li>
+                <li><strong>Unauthorized Access:</strong> Other attempts to bypass payment or access controls</li>
+            </ul>
+            <p style="margin-top: 15px;">This data helps you identify which AI agents are respecting web standards and which may need to be blocked or monitored more closely.</p>
+            
+            <h4 style="margin-top: 24px; color: var(--primary); font-size: 16px;">
+                <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Agent Action Control
+            </h4>
+            <p>Use the action dropdowns to control how each AI agent can access your content:</p>
+            <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
+                <li><strong>💰 Monetize:</strong> Agent must pay the configured price to access content (default)</li>
+                <li><strong>✓ Allow:</strong> Agent can access content freely without payment</li>
+                <li><strong>⛔ Block:</strong> Agent is completely blocked from accessing any content</li>
+            </ul>
+            <p style="margin-top: 15px;">Changes are saved to your site-specific policies and apply immediately after clicking "Save Agent Actions".</p>
+    </div>
     
     <!-- Toast Notification -->
     <div id="agent-hub-toast" style="display:none;"></div>

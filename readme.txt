@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.22
+Stable tag: 2.3.16
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,42 +63,6 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
-
-= 2.3.22 =
-* CRITICAL FIX: Corrected Supabase join syntax in get-site-bot-policies (bot_registry:bot_registry_id → bot_registry!bot_registry_id)
-* FIXED: 400 Bad Request error when loading bot policies from database
-* RESOLVED: Silent edge function failures preventing violations tab from working
-
-= 2.3.21 =
-* CRITICAL FIX: Added bot_registry_id to violations API response (was causing 400 errors)
-* CRITICAL FIX: Added default_action field to enable proper policy initialization
-* IMPROVED: Added validation to skip agents with invalid bot_registry_id values
-* IMPROVED: Enhanced error logging for debugging violations data flow
-* FIXED: Violations tab now loads and saves agent policies correctly
-
-= 2.3.20 =
-* CRITICAL FIX: Fixed policy update data structure mismatch causing 400 errors
-* CRITICAL FIX: Fixed GET request query parameter handling for violations API
-* IMPROVED: Added UUID validation for bot_registry_id fields
-* IMPROVED: Enhanced error logging for violations and policy operations
-* FIXED: Violations tab now properly loads and saves agent policies
-
-= 2.3.19 =
-* CRITICAL FIX: Fixed JavaScript syntax error in violations.js preventing data from loading
-* IMPROVED: Removed instructional info box from Violations tab for cleaner UI
-* FIXED: Violations tab now loads agent violation data correctly
-
-= 2.3.18 =
-* CRITICAL FIX: Corrected namespace declaration order to comply with PHP syntax requirements
-* FIXED: Moved ABSPATH security check after namespace declaration
-
-= 2.3.17 =
-* CRITICAL FIX: Removed duplicate method declarations causing fatal redeclare error
-* FIXED: Script/style handle collision for batch processor assets
-* SECURITY: Added capability checks to ajax_get_batch_status() and ajax_cancel_batch()
-* SECURITY: Added ABSPATH guard to prevent direct file access
-* SECURITY: Enhanced input validation and sanitization for bot policy updates
-* IMPROVED: Added defensive array access in ajax_register_site()
 
 = 2.3.16 =
 * CRITICAL FIX: Resolved fatal parse error in Admin.php caused by extra closing brace
