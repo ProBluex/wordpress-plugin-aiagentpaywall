@@ -134,6 +134,14 @@ class Admin {
             true
         );
         
+        wp_enqueue_script(
+            'agent-hub-bot-management',
+            AGENT_HUB_PLUGIN_URL . 'assets/js/bot-management.js',
+            ['jquery'],
+            AGENT_HUB_VERSION,
+            true
+        );
+        
         wp_localize_script('agent-hub-admin', 'agentHubData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('agent_hub_nonce'),
@@ -586,11 +594,67 @@ class Admin {
                 'remote_wallet' => $result['data']['agent_payment_wallet']
             ]);
         } else {
-            wp_send_json_success([
-                'synced' => false,
-                'wallet' => $local_wallet,
-                'reason' => 'api_error'
-            ]);
+        wp_send_json_success([
+            'synced' => false,
+            'wallet' => $local_wallet,
+            'reason' => 'api_error'
+        ]);
+    }
+}
+    
+    /**
+     * AJAX: Get bot statistics
+     */
+    public static function ajax_get_bot_stats() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            wp_send_json_error(['message' => 'Site not registered']);
+        }
+        
+        $api = new API();
+        $result = $api->get_bot_stats($site_id, $timeframe);
+        
+        if ($result['success']) {
+            wp_send_json_success($result['data']);
+        } else {
+            wp_send_json_error($result);
         }
     }
+    
+    /**
+     * AJAX: Update bot policy
+     */
+    public static function ajax_update_bot_policy() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $bot_id = sanitize_text_field($_POST['bot_id'] ?? '');
+        $action = sanitize_text_field($_POST['bot_action'] ?? '');
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id || !$bot_id || !$action) {
+            wp_send_json_error(['message' => 'Missing required parameters']);
+        }
+        
+        $api = new API();
+        $result = $api->update_bot_policy($site_id, $bot_id, $action);
+        
+        if ($result['success']) {
+            wp_send_json_success(['message' => 'Bot policy updated successfully']);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+}
 }

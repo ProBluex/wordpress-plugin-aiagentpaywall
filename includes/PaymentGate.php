@@ -84,7 +84,7 @@ class PaymentGate {
         // Determine if we should show 402
         $should_block = false;
         
-        if ($agent_check['is_agent']) {
+        if ($agent_check['is_bot']) {
             error_log('402links: AGENT DETECTED - Will block');
             $should_block = true;
         } else {
@@ -121,7 +121,7 @@ class PaymentGate {
         $short_url = get_post_meta($post->ID, '_402links_url', true);
         
         if (!empty($short_url)) {
-            if ($agent_check['is_agent']) {
+            if ($agent_check['is_bot']) {
                 error_log('402links: REDIRECTING AGENT to ' . $short_url);
             } else {
                 error_log('402links: REDIRECTING HUMAN to ' . $short_url);

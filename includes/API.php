@@ -209,6 +209,34 @@ class API {
     }
     
     /**
+     * Get bot registry from backend
+     */
+    public function get_bot_registry() {
+        return $this->request('GET', '/get-bot-registry');
+    }
+    
+    /**
+     * Get bot statistics for site
+     */
+    public function get_bot_stats($site_id, $timeframe = '30d') {
+        return $this->request('POST', '/get-bot-stats', [
+            'site_id' => $site_id,
+            'timeframe' => $timeframe
+        ]);
+    }
+    
+    /**
+     * Update bot policy for site
+     */
+    public function update_bot_policy($site_id, $bot_registry_id, $action) {
+        return $this->request('POST', '/manage-bot-policy', [
+            'site_id' => $site_id,
+            'bot_registry_id' => $bot_registry_id,
+            'action' => $action
+        ]);
+    }
+    
+    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {

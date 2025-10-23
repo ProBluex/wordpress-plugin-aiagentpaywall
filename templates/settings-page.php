@@ -38,6 +38,10 @@ $is_connected = !empty($api_key) && !empty($site_id);
             <span class="dashicons dashicons-chart-line"></span>
             Analytics
         </button>
+        <button class="tab-button" data-tab="bot-management">
+            <span class="dashicons dashicons-shield"></span>
+            Bot Management
+        </button>
         <button class="tab-button" data-tab="contact">
             <span class="dashicons dashicons-email"></span>
             Contact Us
@@ -228,6 +232,57 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+    
+    <!-- Bot Management Tab -->
+    <div id="bot-management" class="tab-content">
+        <div class="bot-management-header">
+            <h2><span class="dashicons dashicons-shield"></span> AI Agent & Bot Management</h2>
+            <p>Configure how your site responds to AI agents and web crawlers. All bots default to "Monetize" mode.</p>
+            <button id="refresh-bot-stats" class="button">
+                <span class="dashicons dashicons-update-alt"></span>
+                Refresh Stats
+            </button>
+        </div>
+        
+        <table class="wp-list-table widefat fixed striped bot-management-table" id="bot-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"><input type="checkbox" id="select-all-bots"></th>
+                    <th>Crawler</th>
+                    <th>Category</th>
+                    <th>Requests</th>
+                    <th>Robots.txt Violations</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="bot-table-body">
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        <span class="spinner is-active" style="float: none; margin: 20px auto;"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="bulk-actions" style="margin-top: 20px;">
+            <select id="bulk-action-select" class="config-input" style="width: auto;">
+                <option value="">Bulk Actions</option>
+                <option value="monetize">Set to Monetize</option>
+                <option value="allow">Set to Allow</option>
+                <option value="block">Set to Block</option>
+            </select>
+            <button id="apply-bulk-action" class="button">Apply</button>
+        </div>
+        
+        <div class="agent-hub-info-box" style="margin-top: 30px;">
+            <h3><span class="dashicons dashicons-info-outline"></span> Bot Action Modes</h3>
+            <ul>
+                <li><strong>Monetize:</strong> Bot must pay to access content (recommended for AI agents)</li>
+                <li><strong>Allow:</strong> Bot can access content for free (use for search engines)</li>
+                <li><strong>Block:</strong> Bot is completely denied access (403 response)</li>
+            </ul>
         </div>
     </div>
     

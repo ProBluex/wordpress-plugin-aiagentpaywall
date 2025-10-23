@@ -2,44 +2,35 @@
 namespace AgentHub;
 
 class AgentDetector {
-    // Known AI agent patterns - expanded for better detection
-    private static $agent_patterns = [
-        // Major AI agents
-        'GPTBot',
-        'ClaudeBot',
-        'Claude-Web',
-        'anthropic-ai',
-        'ChatGPT-User',
-        'cohere-ai',
-        'Perplexitybot',
-        'Bytespider',
-        'Google-Extended',
-        'Applebot-Extended',
-        'CCBot',
-        'Diffbot',
-        'omgili',
-        'omgilibot',
-        'YouBot',
-        'Timpibot',
-        'PetalBot',
-        'AdsBot',
+    // Bot registry will be loaded from backend
+    private static $bot_registry = null;
+    
+    /**
+     * Get bot registry from API with caching
+     * 
+     * @return array Bot registry
+     */
+    private static function get_bot_registry() {
+        // Check cache first
+        $registry = get_transient('402links_bot_registry');
+        if (false !== $registry) {
+            return $registry;
+        }
         
-        // Generic patterns for catch-all detection
-        'bot/',
-        'Bot/',
-        'crawler',
-        'Crawler',
-        'spider',
-        'Spider',
-        'scraper',
-        'Scraper',
-        'agent/',
-        'Agent/',
+        // Fetch from API
+        $api = new API();
+        $result = $api->get_bot_registry();
         
-        // Our own test agent
-        'x402-agent',
-        'x402-crawler'
-    ];
+        if ($result['success'] && isset($result['data'])) {
+            $registry = $result['data'];
+            set_transient('402links_bot_registry', $registry, HOUR_IN_SECONDS);
+            return $registry;
+        }
+        
+        // Fallback to empty array if API fails
+        error_log('402links: Failed to fetch bot registry from API');
+        return [];
+    }
     
     /**
      * Check if the user agent is an AI agent
@@ -49,33 +40,46 @@ class AgentDetector {
      */
     public static function is_ai_agent($user_agent) {
         if (empty($user_agent)) {
-            return ['is_agent' => false, 'agent_name' => null];
+            return ['is_bot' => false, 'bot_name' => null, 'bot_id' => null, 'company' => null, 'category' => null];
         }
         
-        $ua_lower = strtolower($user_agent);
+        $registry = self::get_bot_registry();
         
-        // Check specific patterns first (case-insensitive)
-        foreach (self::$agent_patterns as $pattern) {
-            if (stripos($user_agent, $pattern) !== false) {
-                return [
-                    'is_agent' => true,
-                    'agent_name' => $pattern
-                ];
+        // Match against bot registry patterns
+        foreach ($registry as $bot) {
+            if (!isset($bot['user_agent_patterns']) || !is_array($bot['user_agent_patterns'])) {
+                continue;
+            }
+            
+            foreach ($bot['user_agent_patterns'] as $pattern) {
+                if (stripos($user_agent, $pattern) !== false) {
+                    return [
+                        'is_bot' => true,
+                        'bot_id' => $bot['id'],
+                        'bot_name' => $bot['bot_name'],
+                        'company' => $bot['company'],
+                        'category' => $bot['bot_category']
+                    ];
+                }
             }
         }
         
-        // Fallback: detect generic bot/crawler/spider patterns
+        // Fallback: generic bot detection
         $generic_keywords = ['bot', 'crawler', 'spider', 'scraper'];
+        $ua_lower = strtolower($user_agent);
         foreach ($generic_keywords as $keyword) {
             if (strpos($ua_lower, $keyword) !== false) {
                 return [
-                    'is_agent' => true,
-                    'agent_name' => 'Generic Agent'
+                    'is_bot' => true,
+                    'bot_id' => null,
+                    'bot_name' => 'Generic Agent',
+                    'company' => 'Unknown',
+                    'category' => 'Other'
                 ];
             }
         }
         
-        return ['is_agent' => false, 'agent_name' => null];
+        return ['is_bot' => false, 'bot_name' => null, 'bot_id' => null, 'company' => null, 'category' => null];
     }
     
     /**
