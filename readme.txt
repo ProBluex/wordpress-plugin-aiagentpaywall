@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.3
+Stable tag: 2.3.4
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,12 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.4 =
+* Fixed wallet sync status persistence - now shows "Synced" immediately on page load if wallet is saved
+* Eliminated unnecessary backend API calls on every page refresh
+* Improved UI reliability by using server-side sync detection instead of AJAX checks
+* Wallet status now accurately reflects database state without delays
 
 = 2.3.3 =
 * Fixed JavaScript syntax error in overview.js (missing closing brace)

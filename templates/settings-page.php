@@ -88,13 +88,29 @@ $is_connected = !empty($api_key) && !empty($site_id);
                         <strong>Payment Wallet Address (Base Network)</strong>
                         <span class="required-indicator">*</span>
                     </label>
+                    <?php
+                    // Determine initial sync status based on saved wallet
+                    $saved_wallet = $settings['payment_wallet'] ?? '';
+                    $has_wallet = !empty(trim($saved_wallet));
+                    
+                    // Set indicator state
+                    if ($has_wallet) {
+                        $indicator_class = 'wallet-sync-indicator wallet-status-synced';
+                        $dot_color = 'green';
+                        $status_text = 'Synced';
+                    } else {
+                        $indicator_class = 'wallet-sync-indicator wallet-status-empty';
+                        $dot_color = 'gray';
+                        $status_text = 'Not synced';
+                    }
+                    ?>
                     <div class="wallet-input-wrapper">
                         <input type="text" id="overview-payment-wallet" class="config-input" 
                                value="<?php echo esc_attr($settings['payment_wallet'] ?? ''); ?>" 
                                placeholder="0x..." />
-                        <div id="wallet-sync-indicator" class="wallet-sync-indicator wallet-status-empty">
-                            <span class="status-dot gray"></span>
-                            <span class="status-text">Not synced</span>
+                        <div id="wallet-sync-indicator" class="<?php echo esc_attr($indicator_class); ?>" data-server-rendered="true">
+                            <span class="status-dot <?php echo esc_attr($dot_color); ?>"></span>
+                            <span class="status-text"><?php echo esc_html($status_text); ?></span>
                         </div>
                     </div>
                     <p class="config-description">

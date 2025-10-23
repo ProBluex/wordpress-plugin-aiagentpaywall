@@ -32,9 +32,13 @@
             }
         });
         
-        // Check initial wallet state on page load - verify sync status from backend
+        // Check initial wallet state on page load - only if not server-rendered
         const initialWallet = $('#overview-payment-wallet').val().trim();
-        if (initialWallet) {
+        const indicator = $('#wallet-sync-indicator');
+        const isServerRendered = indicator.data('server-rendered');
+        
+        // Only run AJAX check if server didn't render the state
+        if (!isServerRendered && initialWallet) {
             checkWalletSyncStatus();
         }
         
