@@ -124,6 +124,11 @@
      * Show error message
      */
     function showError(message) {
+        console.error('[Violations] Error:', message);
+        console.log('[Violations] Debug - AJAX URL:', ajaxurl);
+        console.log('[Violations] Debug - Nonce:', agentHubData?.nonce);
+        console.log('[Violations] Debug - Site URL:', agentHubData?.siteUrl);
+        
         $('#violations-error-message').text(message);
         $('#violations-error').show();
     }

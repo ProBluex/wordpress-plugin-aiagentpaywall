@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.12
+Stable tag: 2.3.13
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,14 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.13 =
+* CRITICAL FIX: Added missing API proxy routes for violations dashboard (/v1/get-agent-violations-summary, /v1/report-violation)
+* FIXED: Red alert box display issue on violations tab (changed .error class to .robots-violation for proper icon styling)
+* FIXED: "Not Found" error preventing violations data from loading
+* FIXED: Agents table now properly displays all 30+ bots from registry with zero violations
+* IMPROVED: Better error logging for debugging violations API calls (console logs for AJAX URL, nonce, site URL)
+* ENHANCED: Stat card icon styling with proper circular badge appearance and HSL colors
 
 = 2.3.12 =
 * FIXED: Violations tab now displays ALL agents from bot_registry (20+ bots)

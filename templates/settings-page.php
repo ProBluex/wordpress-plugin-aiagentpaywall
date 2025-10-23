@@ -271,7 +271,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon error"><span class="dashicons dashicons-dismiss"></span></div>
+                <div class="stat-icon robots-violation"><span class="dashicons dashicons-dismiss"></span></div>
                 <div class="stat-content">
                     <div class="stat-label">Robots.txt Violations</div>
                     <div class="stat-value" id="violations-robots">0</div>
