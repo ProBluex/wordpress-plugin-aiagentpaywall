@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.7
+Stable tag: 2.3.8
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,15 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.8 =
+* Enhanced bot detection with database-driven pattern matching from bot_registry
+* Added get_bot_from_registry() method for comprehensive bot identification
+* Updated is_ai_agent() to return bot ID, category, and company information
+* Added check_robots_txt_compliance() method to detect robots.txt violations
+* Improved bot matching algorithm with caching for better performance
+* Added support for tracking robots.txt violations in agent logs
+* Performance optimization: 1-hour cache for bot registry data
 
 = 2.3.7 =
 * Phase 1: Populated bot registry with 27 AI agents and web crawlers

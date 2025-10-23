@@ -209,6 +209,21 @@ class API {
     }
     
     /**
+     * Get bot registry from Supabase
+     * Returns all active bots with their detection patterns
+     */
+    public function get_bot_registry() {
+        $result = $this->request('GET', '/get-bot-registry');
+        
+        if ($result['success'] && isset($result['bots'])) {
+            return $result['bots'];
+        }
+        
+        error_log('402links: Failed to fetch bot registry: ' . ($result['error'] ?? 'Unknown error'));
+        return [];
+    }
+    
+    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {
