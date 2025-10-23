@@ -5,9 +5,16 @@
 (function($) {
     'use strict';
     
+    let isCheckingSyncStatus = false;
+    
     $(document).ready(function() {
         // Real-time wallet validation
         $('#overview-payment-wallet').on('input', function() {
+            // Skip if we're checking backend sync status
+            if (isCheckingSyncStatus) {
+                return;
+            }
+            
             const wallet = $(this).val().trim();
             const indicator = $('#wallet-sync-indicator');
             
@@ -81,10 +88,18 @@
                         
                         // Check if sync was successful
                         if (response.data.sync_success) {
+                            // Set flag to prevent input handler interference
+                            isCheckingSyncStatus = true;
+                            
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
                             indicator.find('.status-dot').removeClass().addClass('status-dot green');
                             indicator.find('.status-text').html('Synced <span class="dashicons dashicons-yes-alt"></span>');
                             window.showToast('Success', response.data.message, 'success');
+                            
+                            // Clear flag after a moment
+                            setTimeout(function() {
+                                isCheckingSyncStatus = false;
+                            }, 1000);
                         } else {
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
                             indicator.find('.status-dot').removeClass().addClass('status-dot red');
@@ -137,6 +152,14 @@
             return;
         }
         
+        // Set flag to prevent input handler from overwriting
+        isCheckingSyncStatus = true;
+        
+        // Show checking state
+        indicator.removeClass().addClass('wallet-sync-indicator wallet-status-checking');
+        indicator.find('.status-dot').removeClass().addClass('status-dot yellow');
+        indicator.find('.status-text').text('Checking sync status...');
+        
         // Check backend sync status
         $.ajax({
             url: agentHubData.ajaxUrl,
@@ -154,15 +177,19 @@
                 } else {
                     // Not synced - show "click Save to sync"
                     indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                    indicator.find('.status-text').text('Valid format - click Save to sync');
+                    indicator.find('.status-dot').removeClass().addClass('status-dot yellow');
+                    indicator.find('.status-text').text('Click Save to sync');
                 }
             },
             error: function() {
-                // On error, just show valid format
+                // On error, show need to sync
                 indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                indicator.find('.status-text').text('Valid format - click Save to sync');
+                indicator.find('.status-dot').removeClass().addClass('status-dot yellow');
+                indicator.find('.status-text').text('Click Save to sync');
+            },
+            complete: function() {
+                // Clear flag after check completes
+                isCheckingSyncStatus = false;
             }
         });
     }
