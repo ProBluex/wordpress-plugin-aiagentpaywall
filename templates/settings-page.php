@@ -144,12 +144,13 @@ $is_connected = !empty($api_key) && !empty($site_id);
         <div class="content-toolbar">
             <button id="bulk-generate-links" class="button button-primary">
                 <span class="dashicons dashicons-update"></span>
-                Generate Paid Links
+                Generate Paid Links (Posts Only)
             </button>
             <button id="refresh-content" class="button">
                 <span class="dashicons dashicons-update-alt"></span>
                 Refresh
             </button>
+            <span id="post-count-indicator" style="margin-left: 15px; font-weight: 500; color: #666;"></span>
         </div>
         
         <table class="wp-list-table widefat fixed striped" id="content-table">

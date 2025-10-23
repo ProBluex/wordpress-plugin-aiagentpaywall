@@ -36,6 +36,12 @@ class Core {
         add_action('wp_ajax_agent_hub_get_content', [Admin::class, 'ajax_get_content']);
         add_action('wp_ajax_agent_hub_bulk_generate', [Admin::class, 'ajax_bulk_generate']);
         
+        // Batch processing AJAX handlers
+        add_action('wp_ajax_agent_hub_start_batch_generation', [Admin::class, 'ajax_start_batch_generation']);
+        add_action('wp_ajax_agent_hub_process_batch', [Admin::class, 'ajax_process_batch']);
+        add_action('wp_ajax_agent_hub_get_batch_status', [Admin::class, 'ajax_get_batch_status']);
+        add_action('wp_ajax_agent_hub_cancel_batch', [Admin::class, 'ajax_cancel_batch']);
+        
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);
     }

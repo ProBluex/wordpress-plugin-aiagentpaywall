@@ -79,6 +79,13 @@ class Admin {
             AGENT_HUB_VERSION
         );
         
+        wp_enqueue_style(
+            'agent-hub-batch-processor',
+            AGENT_HUB_PLUGIN_URL . 'assets/css/batch-processor.css',
+            [],
+            AGENT_HUB_VERSION
+        );
+        
         wp_enqueue_script(
             'agent-hub-admin',
             AGENT_HUB_PLUGIN_URL . 'assets/js/admin.js',
@@ -114,6 +121,14 @@ class Admin {
         wp_enqueue_script(
             'agent-hub-contact',
             AGENT_HUB_PLUGIN_URL . 'assets/js/contact.js',
+            ['jquery'],
+            AGENT_HUB_VERSION,
+            true
+        );
+        
+        wp_enqueue_script(
+            'agent-hub-batch-processor',
+            AGENT_HUB_PLUGIN_URL . 'assets/js/batch-processor.js',
             ['jquery'],
             AGENT_HUB_VERSION,
             true
@@ -314,7 +329,7 @@ class Admin {
         }
         
         $posts = get_posts([
-            'post_type' => ['post', 'page'],
+            'post_type' => 'post',  // ✅ ONLY posts, not pages
             'post_status' => 'publish',
             'posts_per_page' => 100,
             'orderby' => 'date',
@@ -480,5 +495,56 @@ class Admin {
         }
     }
     
+    /**
+     * AJAX: Start batch generation
+     */
+    public static function ajax_start_batch_generation() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $progress = BatchProcessor::start_batch();
+        wp_send_json_success($progress);
+    }
     
+    /**
+     * AJAX: Process next batch
+     */
+    public static function ajax_process_batch() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $result = BatchProcessor::process_next_batch();
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+    
+    /**
+     * AJAX: Get batch status
+     */
+    public static function ajax_get_batch_status() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        $status = BatchProcessor::get_status();
+        wp_send_json_success($status);
+    }
+    
+    /**
+     * AJAX: Cancel batch
+     */
+    public static function ajax_cancel_batch() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        $result = BatchProcessor::cancel_batch();
+        wp_send_json_success($result);
+    }
 }

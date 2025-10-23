@@ -121,7 +121,7 @@ class ContentSync {
      */
     public static function bulk_sync_all() {
         $posts = get_posts([
-            'post_type' => ['post', 'page'],
+            'post_type' => 'post',  // ✅ ONLY posts, not pages
             'post_status' => 'publish',
             'posts_per_page' => -1,
             'fields' => 'ids'
