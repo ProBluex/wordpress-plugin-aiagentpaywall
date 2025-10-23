@@ -561,9 +561,19 @@ class Admin {
         $api = new API();
         $result = $api->get_violations_summary();
         
+        error_log('402links: Violations AJAX handler - API result: ' . print_r($result, true));
+        
         if ($result['success']) {
-            wp_send_json_success($result['data']);
+            // Extract agents and totals from flat result structure
+            $response_data = [
+                'agents' => $result['agents'] ?? [],
+                'totals' => $result['totals'] ?? []
+            ];
+            
+            error_log('402links: Violations AJAX handler - Sending response: ' . print_r($response_data, true));
+            wp_send_json_success($response_data);
         } else {
+            error_log('402links: Violations AJAX handler - Error: ' . ($result['error'] ?? 'Unknown error'));
             wp_send_json_error([
                 'message' => $result['error'] ?? 'Failed to fetch violations data'
             ]);
