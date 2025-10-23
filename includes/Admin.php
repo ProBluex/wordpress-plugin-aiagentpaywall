@@ -184,18 +184,7 @@ class Admin {
      * AJAX: Save settings
      */
     public static function ajax_save_settings() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_save_settings]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -222,18 +211,7 @@ class Admin {
      * AJAX: Register site
      */
     public static function ajax_register_site() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_register_site]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -269,18 +247,7 @@ class Admin {
      * AJAX: Generate link for post
      */
     public static function ajax_generate_link() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_generate_link]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -304,18 +271,7 @@ class Admin {
      * AJAX: Get analytics
      */
     public static function ajax_get_analytics() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_get_analytics]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -349,18 +305,7 @@ class Admin {
      * AJAX: Get content list
      */
     public static function ajax_get_content() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_get_content]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -425,30 +370,7 @@ class Admin {
      * AJAX: Save wallet address
      */
     public static function ajax_save_wallet() {
-        // Add logging BEFORE nonce check
-        error_log('402links [Admin::ajax_save_wallet]: === AJAX HANDLER CALLED ===');
-        error_log('402links [Admin::ajax_save_wallet]: Received nonce: ' . ($_POST['nonce'] ?? 'MISSING'));
-        error_log('402links [Admin::ajax_save_wallet]: Wallet: ' . ($_POST['wallet'] ?? 'MISSING'));
-        error_log('402links [Admin::ajax_save_wallet]: Default Price: ' . ($_POST['default_price'] ?? 'MISSING'));
-        
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        error_log('402links [Admin::ajax_save_wallet]: Nonce verification result: ' . var_export($nonce_verified, true));
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_save_wallet]: NONCE VERIFICATION FAILED - Invalid nonce');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
-        
-        if ($nonce_verified === 2) {
-            error_log('402links [Admin::ajax_save_wallet]: NONCE WARNING - Nonce in second half of lifespan (may expire soon)');
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -484,16 +406,13 @@ class Admin {
         
         // Sync to Supabase
         $site_id = get_option('402links_site_id');
-        error_log('402links [Admin::ajax_save_wallet]: Retrieved site_id=' . ($site_id ?: 'NOT SET'));
+        error_log('402links: Site ID: ' . ($site_id ?: 'NOT SET'));
         
         if ($site_id) {
-            error_log('402links [Admin::ajax_save_wallet]: Creating API instance...');
             $api = new API();
-            error_log('402links [Admin::ajax_save_wallet]: API instance created, calling sync_wallet()...');
-            
             $result = $api->sync_wallet($site_id, $wallet);
             
-            error_log('402links [Admin::ajax_save_wallet]: sync_wallet() returned: ' . json_encode($result));
+            error_log('402links: Sync wallet API result: ' . json_encode($result));
             
             if ($result['success']) {
                 $sync_success = true;
@@ -519,18 +438,7 @@ class Admin {
      * AJAX: Toggle human access for a post
      */
     public static function ajax_toggle_human_access() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_toggle_human_access]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -555,18 +463,7 @@ class Admin {
      * AJAX: Bulk generate links
      */
     public static function ajax_bulk_generate() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_bulk_generate]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -602,18 +499,7 @@ class Admin {
      * AJAX: Start batch generation
      */
     public static function ajax_start_batch_generation() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_start_batch_generation]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -627,18 +513,7 @@ class Admin {
      * AJAX: Process next batch
      */
     public static function ajax_process_batch() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_process_batch]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
@@ -657,18 +532,7 @@ class Admin {
      * AJAX: Get batch status
      */
     public static function ajax_get_batch_status() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_get_batch_status]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         $status = BatchProcessor::get_status();
         wp_send_json_success($status);
@@ -678,18 +542,7 @@ class Admin {
      * AJAX: Cancel batch
      */
     public static function ajax_cancel_batch() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_cancel_batch]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         $result = BatchProcessor::cancel_batch();
         wp_send_json_success($result);
@@ -700,18 +553,7 @@ class Admin {
      * Returns whether the current wallet is already synced to Supabase
      */
     public static function ajax_check_wallet_sync_status() {
-        // Explicit nonce verification with error handling
-        $nonce = $_POST['nonce'] ?? '';
-        $nonce_verified = wp_verify_nonce($nonce, 'agent_hub_nonce');
-        
-        if ($nonce_verified === false) {
-            error_log('402links [Admin::ajax_check_wallet_sync_status]: NONCE VERIFICATION FAILED');
-            wp_send_json_error([
-                'message' => 'Security verification failed. Please refresh the page and try again.',
-                'error_type' => 'nonce_invalid'
-            ]);
-            return;
-        }
+        check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
