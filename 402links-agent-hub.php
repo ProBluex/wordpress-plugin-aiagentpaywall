@@ -1,13 +1,12 @@
 <?php
 /**
- * Plugin Name: 402links Agent Hub
+ * Plugin Name: 402links Agent Hub (AI Agent Paywall)
  * Plugin URI: https://402links.com
- * Description: Automatically monetize WordPress content with AI agent payments via x402 protocol
- * Version: 2.3.10
- * Author: 402links
+ * Description: Convert any WordPress page into a paid API endpoint using HTTP 402 - requiring payment before AI agents access your content.
+ * Version: 2.3.11
+ * Author: 402links Team
  * Author URI: https://402links.com
- * License: Proprietary
- * Text Domain: 402links-agent-hub
+ * License: MIT
  */
 
 // Exit if accessed directly
@@ -21,7 +20,7 @@ if (!function_exists('get_plugin_data')) {
     require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 }
 $plugin_data = get_plugin_data(__FILE__);
-define('AGENT_HUB_VERSION', '2.3.10');
+define('AGENT_HUB_VERSION', '2.3.11');
 define('AGENT_HUB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AGENT_HUB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AGENT_HUB_PLUGIN_FILE', __FILE__);

@@ -45,6 +45,7 @@ class Core {
         
         // Violations AJAX handler
         add_action('wp_ajax_agent_hub_get_violations', [Admin::class, 'ajax_get_violations']);
+        add_action('wp_ajax_agent_hub_get_violations_summary', [Admin::class, 'ajax_get_violations_summary']);
         
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);

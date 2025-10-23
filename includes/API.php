@@ -418,6 +418,24 @@ class API {
     }
     
     /**
+     * Get violations summary from backend
+     */
+    public function get_violations_summary() {
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            return [
+                'success' => false,
+                'error' => 'Site not registered. Please complete setup first.'
+            ];
+        }
+        
+        return $this->request('GET', '/get-agent-violations-summary', [
+            'site_id' => $site_id
+        ]);
+    }
+    
+    /**
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {

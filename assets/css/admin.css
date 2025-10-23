@@ -1034,3 +1034,75 @@
         padding: 20px;
     }
 }
+
+/* Violations Tab Styling */
+.violations-header {
+    margin-bottom: 25px;
+}
+
+.violations-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 10px;
+}
+
+.violations-description {
+    color: var(--gray-600);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.violations-table-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.violations-table-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--gray-900);
+}
+
+.violation-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 40px;
+}
+
+.violation-badge.violation-total {
+    background: hsla(217, 91%, 60%, 0.1);
+    color: var(--primary);
+    border: 1px solid hsla(217, 91%, 60%, 0.3);
+}
+
+.violation-badge.violation-robots {
+    background: hsla(0, 84%, 60%, 0.1);
+    color: var(--destructive);
+    border: 1px solid hsla(0, 84%, 60%, 0.3);
+}
+
+.violation-badge.violation-unpaid {
+    background: hsla(48, 96%, 53%, 0.15);
+    color: hsl(45, 93%, 47%);
+    border: 1px solid hsla(48, 96%, 53%, 0.4);
+}
+
+.violation-badge.violation-none {
+    background: hsla(142, 76%, 36%, 0.1);
+    color: var(--success);
+    border: 1px solid hsla(142, 76%, 36%, 0.3);
+}
+
+#violations-table tbody tr:hover {
+    background-color: var(--muted);
+}
+

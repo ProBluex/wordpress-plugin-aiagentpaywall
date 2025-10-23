@@ -62,35 +62,14 @@ class Admin {
             'dashicons-shield-alt',
             30
         );
-        
-        // Add Violations submenu
-        add_submenu_page(
-            'agent-hub',
-            'Agent Violations',
-            'Violations',
-            'manage_options',
-            'agent-hub-violations',
-            [self::class, 'render_violations']
-        );
     }
     
-    /**
-     * Render violations dashboard
-     */
-    public static function render_violations() {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-        
-        include AGENT_HUB_PLUGIN_DIR . 'templates/violations-page.php';
-    }
     
     /**
      * Enqueue admin assets
      */
     public static function enqueue_assets($hook) {
-        $allowed_pages = ['toplevel_page_agent-hub', 'ai-agent-paywall_page_agent-hub-violations'];
-        if (!in_array($hook, $allowed_pages)) {
+        if ($hook !== 'toplevel_page_agent-hub') {
             return;
         }
         
@@ -143,6 +122,14 @@ class Admin {
         wp_enqueue_script(
             'agent-hub-contact',
             AGENT_HUB_PLUGIN_URL . 'assets/js/contact.js',
+            ['jquery'],
+            AGENT_HUB_VERSION,
+            true
+        );
+        
+        wp_enqueue_script(
+            'agent-hub-violations',
+            AGENT_HUB_PLUGIN_URL . 'assets/js/violations.js',
             ['jquery'],
             AGENT_HUB_VERSION,
             true
@@ -558,6 +545,29 @@ class Admin {
         
         $status = BatchProcessor::get_status();
         wp_send_json_success($status);
+    }
+    
+    /**
+     * AJAX: Get violations summary
+     */
+    public static function ajax_get_violations_summary() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->get_violations_summary();
+        
+        if ($result['success']) {
+            wp_send_json_success($result['data']);
+        } else {
+            wp_send_json_error([
+                'message' => $result['error'] ?? 'Failed to fetch violations data'
+            ]);
+        }
     }
     
     /**

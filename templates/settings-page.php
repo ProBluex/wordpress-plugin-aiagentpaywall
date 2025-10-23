@@ -38,6 +38,10 @@ $is_connected = !empty($api_key) && !empty($site_id);
             <span class="dashicons dashicons-chart-line"></span>
             Analytics
         </button>
+        <button class="tab-button" data-tab="violations">
+            <span class="dashicons dashicons-shield-alt"></span>
+            Violations
+        </button>
         <button class="tab-button" data-tab="contact">
             <span class="dashicons dashicons-email"></span>
             Contact Us
@@ -244,6 +248,88 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+    
+    <!-- Violations Tab -->
+    <div id="tab-violations" class="tab-content">
+        <div class="violations-header">
+            <h2>
+                <span class="dashicons dashicons-shield-alt"></span>
+                Agent Violations Dashboard
+            </h2>
+            <p class="violations-description">Track and monitor AI agents that violate robots.txt rules, ignore 402 payment requirements, or attempt unauthorized access to your content.</p>
+        </div>
+        
+        <div class="agent-hub-stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon warning"><span class="dashicons dashicons-warning"></span></div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Violations</div>
+                    <div class="stat-value" id="violations-total">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon error"><span class="dashicons dashicons-dismiss"></span></div>
+                <div class="stat-content">
+                    <div class="stat-label">Robots.txt Violations</div>
+                    <div class="stat-value" id="violations-robots">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon warning"><span class="dashicons dashicons-money-alt"></span></div>
+                <div class="stat-content">
+                    <div class="stat-label">Unpaid Access Attempts</div>
+                    <div class="stat-value" id="violations-unpaid">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><span class="dashicons dashicons-admin-users"></span></div>
+                <div class="stat-content">
+                    <div class="stat-label">Unique Violating Agents</div>
+                    <div class="stat-value" id="violations-unique-agents">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="violations-table-section">
+            <h3>Agent Violation Summary</h3>
+            <div id="violations-loading" style="text-align: center; padding: 40px;">
+                <span class="spinner is-active"></span> Loading violations data...
+            </div>
+            <div id="violations-error" class="notice notice-error" style="display:none; margin: 20px 0;">
+                <p><strong>Error:</strong> <span id="violations-error-message"></span></p>
+            </div>
+            <table class="wp-list-table widefat fixed striped" id="violations-table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Agent Name</th>
+                        <th>Total Violations</th>
+                        <th>Robots.txt Violations</th>
+                        <th>Unpaid Access</th>
+                        <th>Last Seen</th>
+                    </tr>
+                </thead>
+                <tbody id="violations-table-body">
+                </tbody>
+            </table>
+            <div id="violations-empty" class="notice notice-info" style="display:none; margin: 20px 0;">
+                <p>✅ <strong>Great news!</strong> No violations detected. All AI agents are respecting your site's access rules.</p>
+            </div>
+        </div>
+        
+        <div class="agent-hub-info-box">
+            <h3><span class="dashicons dashicons-info-outline"></span> What Counts as a Violation?</h3>
+            <p>The plugin tracks three types of violations:</p>
+            <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
+                <li><strong>Robots.txt Violations:</strong> AI agents accessing pages explicitly disallowed in your robots.txt file</li>
+                <li><strong>Unpaid Access:</strong> Agents attempting to access 402-protected content without making the required payment</li>
+                <li><strong>Unauthorized Access:</strong> Other attempts to bypass payment or access controls</li>
+            </ul>
+            <p style="margin-top: 15px;">This data helps you identify which AI agents are respecting web standards and which may need to be blocked or monitored more closely.</p>
         </div>
     </div>
     
