@@ -581,6 +581,62 @@ class Admin {
     }
     
     /**
+     * AJAX: Get site bot policies
+     */
+    public static function ajax_get_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->get_site_bot_policies();
+        
+        if ($result['success']) {
+            wp_send_json_success($result['policies'] ?? []);
+        } else {
+            wp_send_json_error([
+                'message' => $result['error'] ?? 'Failed to fetch bot policies'
+            ]);
+        }
+    }
+    
+    /**
+     * AJAX: Update site bot policies
+     */
+    public static function ajax_update_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+            return;
+        }
+        
+        $policies = $_POST['policies'] ?? [];
+        
+        if (empty($policies)) {
+            wp_send_json_error(['message' => 'No policies to update']);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->update_site_bot_policies($policies);
+        
+        if ($result['success']) {
+            wp_send_json_success([
+                'message' => 'Bot policies updated successfully',
+                'updated' => $result['updated'] ?? 0
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => $result['error'] ?? 'Failed to update bot policies'
+            ]);
+        }
+    }
+    
+    /**
      * AJAX: Cancel batch
      */
     public static function ajax_cancel_batch() {
@@ -658,6 +714,63 @@ class Admin {
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);
+        }
+    }
+    }
+    
+    /**
+     * AJAX: Get site bot policies
+     */
+    public static function ajax_get_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->get_site_bot_policies();
+        
+        if ($result['success']) {
+            wp_send_json_success($result['policies'] ?? []);
+        } else {
+            wp_send_json_error([
+                'message' => $result['error'] ?? 'Failed to fetch bot policies'
+            ]);
+        }
+    }
+    
+    /**
+     * AJAX: Update site bot policies
+     */
+    public static function ajax_update_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+            return;
+        }
+        
+        $policies = $_POST['policies'] ?? [];
+        
+        if (empty($policies)) {
+            wp_send_json_error(['message' => 'No policies to update']);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->update_site_bot_policies($policies);
+        
+        if ($result['success']) {
+            wp_send_json_success([
+                'message' => 'Bot policies updated successfully',
+                'updated' => $result['updated'] ?? 0
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => $result['error'] ?? 'Failed to update bot policies'
+            ]);
         }
     }
 }

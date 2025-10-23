@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.14
+Stable tag: 2.3.15
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,24 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.15 =
+* MAJOR FEATURE: Added action filters (Monetize/Allow/Block) for all AI agents in Violations tab
+* MAJOR FEATURE: Implemented bulk selection with checkboxes - select multiple agents and apply actions at once
+* NEW: "Select All" and "Deselect All" buttons for quick agent management
+* NEW: Bulk actions dropdown to apply Monetize/Allow/Block to multiple agents simultaneously
+* NEW: Individual action dropdowns per agent with real-time updates
+* NEW: "Save Agent Actions" button with unsaved changes indicator
+* IMPROVED: Replaced all emoji icons with professional Feather icons throughout Violations tab
+* IMPROVED: Modern, clean UI with premium styling - no more childish emoji overload
+* IMPROVED: Enhanced stat cards with professional SVG icons (shield, alert, currency, users)
+* IMPROVED: Responsive design for bulk actions toolbar and controls
+* BACKEND: Created new edge functions (get-site-bot-policies, update-site-bot-policies)
+* BACKEND: Added API methods for fetching and updating site-specific bot policies
+* BACKEND: Integrated with site_bot_policies table for per-site agent access control
+* DEFAULT: All agents start as "Monetize" by default until explicitly changed
+* UX: Toast notifications for successful saves
+* UX: Smooth transitions and hover effects on all interactive elements
 
 = 2.3.14 =
 * CRITICAL FIX: Corrected AJAX handler response structure - API returns agents/totals at root level, not nested under 'data' key
