@@ -564,10 +564,13 @@ class Admin {
             return;
         }
         
+        $site_id = get_option('402links_site_id');
+        error_log('402links: [ajax_get_violations_summary] Site ID: ' . ($site_id ?: 'NOT SET'));
+        
         $api = new API();
         $result = $api->get_violations_summary();
         
-        error_log('402links: Violations AJAX handler - API result: ' . print_r($result, true));
+        error_log('402links: [ajax_get_violations_summary] API result: ' . print_r($result, true));
         
         if ($result['success']) {
             // Extract agents and totals from flat result structure
@@ -576,10 +579,11 @@ class Admin {
                 'totals' => $result['totals'] ?? []
             ];
             
-            error_log('402links: Violations AJAX handler - Sending response: ' . print_r($response_data, true));
+            error_log('402links: [ajax_get_violations_summary] Agents count: ' . count($response_data['agents']));
+            error_log('402links: [ajax_get_violations_summary] Sending response with totals: ' . json_encode($response_data['totals']));
             wp_send_json_success($response_data);
         } else {
-            error_log('402links: Violations AJAX handler - Error: ' . ($result['error'] ?? 'Unknown error'));
+            error_log('402links: [ajax_get_violations_summary] Error: ' . ($result['error'] ?? 'Unknown error'));
             wp_send_json_error([
                 'message' => $result['error'] ?? 'Failed to fetch violations data'
             ]);
@@ -597,12 +601,20 @@ class Admin {
             return;
         }
         
+        $site_id = get_option('402links_site_id');
+        error_log('402links: [ajax_get_site_bot_policies] Site ID: ' . ($site_id ?: 'NOT SET'));
+        
         $api = new API();
         $result = $api->get_site_bot_policies();
         
+        error_log('402links: [ajax_get_site_bot_policies] API result: ' . print_r($result, true));
+        
         if ($result['success']) {
-            wp_send_json_success($result['policies'] ?? []);
+            $policies = $result['policies'] ?? [];
+            error_log('402links: [ajax_get_site_bot_policies] Policies count: ' . count($policies));
+            wp_send_json_success($policies);
         } else {
+            error_log('402links: [ajax_get_site_bot_policies] Error: ' . ($result['error'] ?? 'Unknown error'));
             wp_send_json_error([
                 'message' => $result['error'] ?? 'Failed to fetch bot policies'
             ]);
@@ -622,12 +634,16 @@ class Admin {
         
         $policies = $_POST['policies'] ?? [];
         
+        error_log('402links: [ajax_update_site_bot_policies] Raw policies received: ' . print_r($policies, true));
+        
         if (!is_array($policies)) {
+            error_log('402links: [ajax_update_site_bot_policies] Invalid policies payload - not an array');
             wp_send_json_error(['message' => 'Invalid policies payload']);
             return;
         }
         
         if (empty($policies)) {
+            error_log('402links: [ajax_update_site_bot_policies] No policies to update');
             wp_send_json_error(['message' => 'No policies to update']);
             return;
         }
@@ -640,25 +656,40 @@ class Admin {
             }
             
             $action = isset($policy['action']) ? sanitize_text_field($policy['action']) : '';
+            $bot_registry_id = isset($policy['bot_registry_id']) ? sanitize_text_field($policy['bot_registry_id']) : '';
             
             // Validate action values
             if (!in_array($action, ['monetize', 'allow', 'block'], true)) {
+                error_log('402links: Invalid action value: ' . $action);
+                continue;
+            }
+            
+            // Validate UUID format (basic check)
+            if (empty($bot_registry_id) || strlen($bot_registry_id) < 32) {
+                error_log('402links: Invalid bot_registry_id: ' . $bot_registry_id);
                 continue;
             }
             
             $clean_policies[] = [
-                'agent_name' => isset($policy['agent_name']) ? sanitize_text_field($policy['agent_name']) : '',
+                'bot_registry_id' => $bot_registry_id,
                 'action' => $action
             ];
         }
         
+        error_log('402links: Cleaned policies count: ' . count($clean_policies));
+        
         if (empty($clean_policies)) {
+            error_log('402links: [ajax_update_site_bot_policies] No valid policies after sanitization');
             wp_send_json_error(['message' => 'No valid policies to update']);
             return;
         }
         
+        error_log('402links: [ajax_update_site_bot_policies] Sending ' . count($clean_policies) . ' policies to API');
+        
         $api = new API();
         $result = $api->update_site_bot_policies($clean_policies);
+        
+        error_log('402links: [ajax_update_site_bot_policies] API result: ' . print_r($result, true));
         
         if ($result['success']) {
             wp_send_json_success([

@@ -430,9 +430,9 @@ class API {
             ];
         }
         
-        return $this->request('GET', '/get-agent-violations-summary', [
-            'site_id' => $site_id
-        ]);
+        error_log('402links: [get_violations_summary] Site ID: ' . $site_id);
+        
+        return $this->request('GET', '/get-agent-violations-summary?site_id=' . urlencode($site_id));
     }
     
     /**
@@ -448,7 +448,9 @@ class API {
             ];
         }
         
-        return $this->request('GET', '/get-site-bot-policies?site_id=' . $site_id);
+        error_log('402links: [get_site_bot_policies] Site ID: ' . $site_id);
+        
+        return $this->request('GET', '/get-site-bot-policies?site_id=' . urlencode($site_id));
     }
     
     /**
@@ -478,10 +480,12 @@ class API {
     private function request($method, $endpoint, $data = []) {
         $url = $this->api_endpoint . $endpoint;
         
-        // For GET requests, append data as query parameters
-        if ($method === 'GET' && !empty($data)) {
+        // For GET requests, append data as query parameters (only if not already in endpoint)
+        if ($method === 'GET' && !empty($data) && strpos($endpoint, '?') === false) {
             $url = add_query_arg($data, $url);
         }
+        
+        error_log('402links: [API request] Method: ' . $method . ', URL: ' . $url);
         
         $args = [
             'method' => $method,
