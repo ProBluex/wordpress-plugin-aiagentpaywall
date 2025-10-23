@@ -143,6 +143,7 @@ class API {
         }
         
         return $this->request('PUT', '/update-wordpress-link', [
+            'site_url' => get_site_url(),
             'link_id' => $link_id,
             'post_id' => $post_id,
             'title' => get_the_title($post_id),
