@@ -10,6 +10,21 @@ class PaymentGate {
      * DUAL DETECTION: AI agents always see 402, humans see 402 only if blocked
      */
     public static function intercept_request() {
+        try {
+            self::intercept_request_inner();
+        } catch (\Exception $e) {
+            error_log('402links CRITICAL ERROR: ' . $e->getMessage());
+            error_log('402links Stack trace: ' . $e->getTraceAsString());
+            // Graceful fallback: allow access and log error instead of crashing site
+            return;
+        }
+    }
+    
+    /**
+     * Inner method containing the actual interception logic
+     * Wrapped by try-catch in intercept_request() for safety
+     */
+    private static function intercept_request_inner() {
         // Skip if not singular post/page
         if (!is_singular(['post', 'page'])) {
             return;

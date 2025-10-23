@@ -33,12 +33,12 @@ class AgentDetector {
     }
     
     /**
-     * Check if the user agent is an AI agent
+     * Check if the user agent is a bot
      * 
      * @param string $user_agent
-     * @return array ['is_agent' => bool, 'agent_name' => string|null]
+     * @return array ['is_bot' => bool, 'bot_name' => string|null, 'bot_id' => string|null, 'company' => string|null, 'category' => string|null]
      */
-    public static function is_ai_agent($user_agent) {
+    public static function is_bot($user_agent) {
         if (empty($user_agent)) {
             return ['is_bot' => false, 'bot_name' => null, 'bot_id' => null, 'company' => null, 'category' => null];
         }
@@ -111,7 +111,7 @@ class AgentDetector {
             $table_name,
             [
                 'post_id' => $post_id,
-                'agent_name' => $agent_info['agent_name'],
+                'agent_name' => $agent_info['bot_name'] ?? 'Unknown',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
                 'ip_address' => self::get_client_ip(),
                 'payment_status' => $payment_status,
