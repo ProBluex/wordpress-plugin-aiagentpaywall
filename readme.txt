@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.2.9
+Stable tag: 2.3.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,11 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.0 =
+* Fixed BatchProcessor class file naming for proper autoloading
+* Resolved "Network error" during batch content protection
+* Improved batch processing reliability
 
 = 2.2.9 =
 * Enhanced security: migrated all WordPress plugin endpoints to public API infrastructure
