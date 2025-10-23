@@ -89,6 +89,9 @@
                     originalPolicies = $.extend({}, agentPolicies);
                 }
 
+                console.log('[Violations] Sample agent data:', violations.data.agents[0]);
+                console.log('[Violations] Agent policies map:', agentPolicies);
+                
                 displayViolations(violations.data);
                 $toolbar.show();
                 $saveWrapper.show();
@@ -125,6 +128,13 @@
         $tbody.empty();
         data.agents.forEach(function(agent) {
             const botRegistryId = agent.bot_registry_id;
+            
+            // Skip agents without valid bot_registry_id
+            if (!botRegistryId || botRegistryId.length < 32) {
+                console.warn('[Violations] Skipping agent with invalid bot_registry_id:', agent.agent_name, botRegistryId);
+                return;
+            }
+            
             const currentAction = agentPolicies[botRegistryId] || agent.default_action || 'monetize';
             
             const $row = $('<tr>').attr('data-bot-id', botRegistryId);
