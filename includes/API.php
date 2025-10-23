@@ -195,10 +195,17 @@ class API {
      * Sync payment wallet to Supabase
      */
     public function sync_wallet($site_id, $wallet) {
-        return $this->request('POST', '/sync-site-wallet', [
+        error_log('402links [API::sync_wallet]: CALLED with site_id=' . $site_id . ', wallet=' . $wallet);
+        error_log('402links [API::sync_wallet]: API endpoint=' . $this->api_endpoint);
+        error_log('402links [API::sync_wallet]: API key prefix=' . substr($this->api_key, 0, 12) . '...');
+        
+        $result = $this->request('POST', '/sync-site-wallet', [
             'site_id' => $site_id,
             'payment_wallet' => $wallet
         ]);
+        
+        error_log('402links [API::sync_wallet]: COMPLETED with result=' . json_encode($result));
+        return $result;
     }
     
     /**
@@ -344,9 +351,14 @@ class API {
     private function request($method, $endpoint, $data = []) {
         $url = $this->api_endpoint . $endpoint;
         
+        error_log('402links [API::request]: START - Method=' . $method . ', Endpoint=' . $endpoint);
+        error_log('402links [API::request]: Full URL=' . $url);
+        error_log('402links [API::request]: Request data=' . json_encode($data));
+        
         // For GET requests, append data as query parameters
         if ($method === 'GET' && !empty($data)) {
             $url = add_query_arg($data, $url);
+            error_log('402links [API::request]: GET URL with params=' . $url);
         }
         
         $args = [
@@ -360,9 +372,12 @@ class API {
         
         if ($method === 'POST' || $method === 'PUT') {
             $args['body'] = json_encode($data);
+            error_log('402links [API::request]: Request body=' . $args['body']);
         }
         
+        error_log('402links [API::request]: Calling wp_remote_request()...');
         $response = wp_remote_request($url, $args);
+        error_log('402links [API::request]: wp_remote_request() returned');
         
         if (is_wp_error($response)) {
             $error_msg = $response->get_error_message();

@@ -406,13 +406,16 @@ class Admin {
         
         // Sync to Supabase
         $site_id = get_option('402links_site_id');
-        error_log('402links: Site ID: ' . ($site_id ?: 'NOT SET'));
+        error_log('402links [Admin::ajax_save_wallet]: Retrieved site_id=' . ($site_id ?: 'NOT SET'));
         
         if ($site_id) {
+            error_log('402links [Admin::ajax_save_wallet]: Creating API instance...');
             $api = new API();
+            error_log('402links [Admin::ajax_save_wallet]: API instance created, calling sync_wallet()...');
+            
             $result = $api->sync_wallet($site_id, $wallet);
             
-            error_log('402links: Sync wallet API result: ' . json_encode($result));
+            error_log('402links [Admin::ajax_save_wallet]: sync_wallet() returned: ' . json_encode($result));
             
             if ($result['success']) {
                 $sync_success = true;
