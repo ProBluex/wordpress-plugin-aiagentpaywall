@@ -32,10 +32,10 @@
             }
         });
         
-        // Check initial wallet state on page load
+        // Check initial wallet state on page load - verify sync status from backend
         const initialWallet = $('#overview-payment-wallet').val().trim();
         if (initialWallet) {
-            $('#overview-payment-wallet').trigger('input');
+            checkWalletSyncStatus();
         }
         
         // Save configuration button
@@ -110,9 +110,61 @@
                     indicator.find('.status-text').text('Sync failed - connection error');
                     window.showToast('Error', 'Failed to save configuration: ' + error, 'error');
                     button.prop('disabled', false).html(originalHtml);
-                }
-            });
+            }
         });
     });
+    
+    /**
+     * Check wallet sync status from backend
+     */
+    function checkWalletSyncStatus() {
+        const wallet = $('#overview-payment-wallet').val().trim();
+        const indicator = $('#wallet-sync-indicator');
+        
+        if (!wallet) {
+            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-empty');
+            indicator.find('.status-dot').removeClass().addClass('status-dot gray');
+            indicator.find('.status-text').text('Enter wallet address');
+            return;
+        }
+        
+        // Validate format first
+        const isValid = /^0x[a-fA-F0-9]{40}$/.test(wallet);
+        if (!isValid) {
+            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-invalid');
+            indicator.find('.status-dot').removeClass().addClass('status-dot red');
+            indicator.find('.status-text').text('Invalid address format');
+            return;
+        }
+        
+        // Check backend sync status
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_check_wallet_sync_status',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data.synced) {
+                    // Already synced - show green checkmark
+                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
+                    indicator.find('.status-dot').removeClass().addClass('status-dot green');
+                    indicator.find('.status-text').html('Synced <span class="dashicons dashicons-yes-alt"></span>');
+                } else {
+                    // Not synced - show "click Save to sync"
+                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
+                    indicator.find('.status-dot').removeClass().addClass('status-dot green');
+                    indicator.find('.status-text').text('Valid format - click Save to sync');
+                }
+            },
+            error: function() {
+                // On error, just show valid format
+                indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
+                indicator.find('.status-dot').removeClass().addClass('status-dot green');
+                indicator.find('.status-text').text('Valid format - click Save to sync');
+            }
+        });
+    }
     
 })(jQuery);

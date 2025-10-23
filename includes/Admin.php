@@ -547,4 +547,50 @@ class Admin {
         $result = BatchProcessor::cancel_batch();
         wp_send_json_success($result);
     }
+    
+    /**
+     * AJAX: Check wallet sync status
+     * Returns whether the current wallet is already synced to Supabase
+     */
+    public static function ajax_check_wallet_sync_status() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $settings = get_option('402links_settings', []);
+        $local_wallet = $settings['payment_wallet'] ?? '';
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id || !$local_wallet) {
+            wp_send_json_success([
+                'synced' => false,
+                'wallet' => $local_wallet,
+                'reason' => 'no_site_or_wallet'
+            ]);
+            return;
+        }
+        
+        // Check if wallet matches what's in Supabase
+        $api = new API();
+        $result = $api->get_site_info($site_id);
+        
+        if ($result['success'] && isset($result['data']['agent_payment_wallet'])) {
+            $remote_wallet = strtolower($result['data']['agent_payment_wallet'] ?? '');
+            $is_synced = (strtolower($local_wallet) === $remote_wallet);
+            
+            wp_send_json_success([
+                'synced' => $is_synced,
+                'wallet' => $local_wallet,
+                'remote_wallet' => $result['data']['agent_payment_wallet']
+            ]);
+        } else {
+            wp_send_json_success([
+                'synced' => false,
+                'wallet' => $local_wallet,
+                'reason' => 'api_error'
+            ]);
+        }
+    }
 }

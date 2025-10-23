@@ -202,6 +202,13 @@ class API {
     }
     
     /**
+     * Get site info from Supabase
+     */
+    public function get_site_info($site_id) {
+        return $this->request('GET', '/get-site-info?site_id=' . $site_id);
+    }
+    
+    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {

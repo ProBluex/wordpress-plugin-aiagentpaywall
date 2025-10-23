@@ -126,13 +126,26 @@
     }
     
     /**
-     * Update stat cards
+     * Update stat cards - now showing combined AI + Human stats
      */
     function updateStatCards(data) {
-        $('#stat-total-crawls').text(formatNumber(data.total_crawls || 0));
-        $('#stat-paid-crawls').text(formatNumber(data.paid_crawls || 0));
-        $('#stat-total-revenue').text('$' + formatMoney(data.total_revenue || 0));
+        const totalCrawls = data.total_crawls || 0;
+        const totalPaid = data.paid_crawls || 0;
+        const totalRevenue = data.total_revenue || 0;
+        const agentRevenue = data.agent_revenue || 0;
+        const humanRevenue = data.human_revenue || 0;
+        
+        $('#stat-total-crawls').text(formatNumber(totalCrawls));
+        $('#stat-paid-crawls').text(formatNumber(totalPaid));
+        $('#stat-total-revenue').text('$' + formatMoney(totalRevenue));
         $('#stat-conversion-rate').text(formatPercent(data.conversion_rate || 0));
+        
+        // Add revenue breakdown tooltip if we have both sources
+        if (agentRevenue > 0 && humanRevenue > 0) {
+            $('#stat-total-revenue').attr('title', 
+                `AI Agents: $${formatMoney(agentRevenue)} | Humans: $${formatMoney(humanRevenue)}`
+            );
+        }
     }
     
     /**
