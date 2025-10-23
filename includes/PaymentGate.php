@@ -81,6 +81,20 @@ class PaymentGate {
         
         error_log('Agent Check Result: ' . json_encode($agent_check));
         
+        // Check robots.txt compliance for AI agents
+        $violation_data = null;
+        if ($agent_check['is_agent']) {
+            $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '/';
+            $violation_check = AgentDetector::check_robots_txt_compliance($user_agent, $request_path);
+            
+            if ($violation_check !== null) {
+                error_log('402links: ROBOTS.TXT VIOLATION DETECTED - ' . json_encode($violation_check));
+                $violation_data = $violation_check;
+            } else {
+                error_log('402links: Robots.txt compliant or no rules found');
+            }
+        }
+        
         // Determine if we should show 402
         $should_block = false;
         
@@ -107,8 +121,8 @@ class PaymentGate {
         
         error_log('===== 402links PaymentGate: BLOCKING REQUEST =====');
         
-        // Log the crawl attempt
-        AgentDetector::log_crawl($post->ID, $agent_check, 'pending');
+        // Log the crawl attempt with violation data if present
+        AgentDetector::log_crawl($post->ID, $agent_check, 'pending', $violation_data);
         
         // Check if blacklisted
         $settings = get_option('402links_settings');

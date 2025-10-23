@@ -224,6 +224,40 @@ class API {
     }
     
     /**
+     * Report agent violation to backend
+     * 
+     * @param array $violation_data {
+     *     @type string $site_id Site UUID
+     *     @type int $wordpress_post_id WordPress post ID
+     *     @type string $agent_name Bot/Agent name
+     *     @type string $user_agent Full user agent string
+     *     @type string $ip_address Client IP address
+     *     @type string $requested_url The URL that was accessed
+     *     @type string $violation_type Type: 'unpaid_access', 'ignored_402', 'scraped_content', 'robots_txt'
+     *     @type string $detected_at ISO 8601 timestamp
+     *     @type string $robots_txt_directive Optional robots.txt rule that was violated
+     * }
+     * @return array Response from backend
+     */
+    public function report_violation($violation_data) {
+        $site_id = get_option('402links_site_id');
+        if (!$site_id) {
+            error_log('402links: Cannot report violation - site not registered');
+            return ['success' => false, 'error' => 'Site not registered'];
+        }
+        
+        // Ensure required fields
+        $payload = array_merge([
+            'site_id' => $site_id,
+            'detected_at' => gmdate('Y-m-d\TH:i:s\Z')
+        ], $violation_data);
+        
+        error_log('402links: Reporting violation: ' . json_encode($payload));
+        
+        return $this->request('POST', '/report-violation', $payload);
+    }
+    
+    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {

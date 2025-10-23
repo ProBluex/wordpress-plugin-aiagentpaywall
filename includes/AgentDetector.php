@@ -270,9 +270,41 @@ class AgentDetector {
             $data['violation_type'] = $violation_data['violation_type'] ?? null;
             $data['expected_behavior'] = $violation_data['expected_behavior'] ?? null;
             $data['actual_behavior'] = $violation_data['actual_behavior'] ?? null;
+            
+            // Report violation to backend
+            self::report_violation_to_backend($post_id, $agent_info, $violation_data);
         }
         
         $wpdb->insert($table_name, $data, ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']);
+    }
+    
+    /**
+     * Report violation to 402links backend
+     * 
+     * @param int $post_id WordPress post ID
+     * @param array $agent_info Agent detection info
+     * @param array $violation_data Violation details
+     */
+    private static function report_violation_to_backend($post_id, $agent_info, $violation_data) {
+        $api = new API();
+        
+        $payload = [
+            'wordpress_post_id' => $post_id,
+            'agent_name' => $agent_info['agent_name'] ?? 'Unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'ip_address' => self::get_client_ip(),
+            'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
+            'violation_type' => $violation_data['violation_type'] ?? 'unknown',
+            'robots_txt_directive' => $violation_data['robots_txt_directive'] ?? null
+        ];
+        
+        $result = $api->report_violation($payload);
+        
+        if (!$result['success']) {
+            error_log('402links: Failed to report violation: ' . ($result['error'] ?? 'Unknown error'));
+        } else {
+            error_log('402links: Violation reported successfully (ID: ' . ($result['violation_id'] ?? 'unknown') . ')');
+        }
     }
     
     /**
