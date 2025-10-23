@@ -6,8 +6,17 @@
     'use strict';
     
     $(document).ready(function() {
-        // Real-time wallet validation
-        $('#overview-payment-wallet').on('input', function() {
+        // Track if user has started editing
+        let userIsEditing = false;
+        
+        // Only show validation when user actively types (keydown/keyup)
+        $('#overview-payment-wallet').on('keydown', function() {
+            userIsEditing = true;
+        });
+        
+        $('#overview-payment-wallet').on('keyup', function() {
+            if (!userIsEditing) return; // Don't run if user hasn't typed
+            
             const wallet = $(this).val().trim();
             const indicator = $('#wallet-sync-indicator');
             
@@ -27,20 +36,10 @@
                 indicator.find('.status-text').text('Invalid address format');
             } else {
                 indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                indicator.find('.status-dot').removeClass().addClass('status-dot green');
+                indicator.find('.status-dot').removeClass().addClass('status-dot orange');
                 indicator.find('.status-text').text('Valid format - click Save to sync');
             }
         });
-        
-        // Check initial wallet state on page load - only if not server-rendered
-        const initialWallet = $('#overview-payment-wallet').val().trim();
-        const indicator = $('#wallet-sync-indicator');
-        const isServerRendered = indicator.data('server-rendered');
-        
-        // Only run AJAX check if server didn't render the state
-        if (!isServerRendered && initialWallet) {
-            checkWalletSyncStatus();
-        }
         
         // Save configuration button
         $(document).on('click', '#save-overview-config', function(e) {
@@ -88,6 +87,7 @@
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
                             indicator.find('.status-dot').removeClass().addClass('status-dot green');
                             indicator.find('.status-text').text('Synced');
+                            userIsEditing = false; // Reset editing flag
                             window.showToast('Success', response.data.message, 'success');
                         } else {
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
@@ -118,58 +118,5 @@
             });
         });
     });
-    
-    /**
-     * Check wallet sync status from backend
-     */
-    function checkWalletSyncStatus() {
-        const wallet = $('#overview-payment-wallet').val().trim();
-        const indicator = $('#wallet-sync-indicator');
-        
-        if (!wallet) {
-            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-empty');
-            indicator.find('.status-dot').removeClass().addClass('status-dot gray');
-            indicator.find('.status-text').text('Not synced');
-            return;
-        }
-        
-        // Validate format first
-        const isValid = /^0x[a-fA-F0-9]{40}$/.test(wallet);
-        if (!isValid) {
-            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-invalid');
-            indicator.find('.status-dot').removeClass().addClass('status-dot red');
-            indicator.find('.status-text').text('Invalid address format');
-            return;
-        }
-        
-        // Check backend sync status
-        $.ajax({
-            url: agentHubData.ajaxUrl,
-            type: 'POST',
-            data: {
-                action: 'agent_hub_check_wallet_sync_status',
-                nonce: agentHubData.nonce
-            },
-            success: function(response) {
-                if (response.success && response.data.synced) {
-                    // Already synced - show green checkmark
-                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                    indicator.find('.status-text').text('Synced');
-                } else {
-                    // Not synced - show "click Save to sync"
-                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                    indicator.find('.status-text').text('Valid format - click Save to sync');
-                }
-            },
-            error: function() {
-                // On error, just show valid format
-                indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                indicator.find('.status-text').text('Valid format - click Save to sync');
-            }
-        });
-    }
     
 })(jQuery);
