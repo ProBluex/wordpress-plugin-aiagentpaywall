@@ -2,7 +2,6 @@
 namespace AgentHub;
 
 class PaymentGate {
-    use PaymentGateHelpers;
     /**
      * Intercept requests and apply 402 payment gate
      * Called on 'template_redirect' hook
@@ -10,21 +9,6 @@ class PaymentGate {
      * DUAL DETECTION: AI agents always see 402, humans see 402 only if blocked
      */
     public static function intercept_request() {
-        try {
-            self::intercept_request_inner();
-        } catch (\Exception $e) {
-            error_log('402links CRITICAL ERROR: ' . $e->getMessage());
-            error_log('402links Stack trace: ' . $e->getTraceAsString());
-            // Graceful fallback: allow access and log error instead of crashing site
-            return;
-        }
-    }
-    
-    /**
-     * Inner method containing the actual interception logic
-     * Wrapped by try-catch in intercept_request() for safety
-     */
-    private static function intercept_request_inner() {
         // Skip if not singular post/page
         if (!is_singular(['post', 'page'])) {
             return;
@@ -93,56 +77,15 @@ class PaymentGate {
         }
         
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        $agent_check = AgentDetector::is_bot($user_agent);
+        $agent_check = AgentDetector::is_ai_agent($user_agent);
         
         error_log('Agent Check Result: ' . json_encode($agent_check));
-        
-        // For detected bots, check robots.txt compliance and policy
-        if ($agent_check['is_bot']) {
-            $site_id = get_option('402links_site_id');
-            
-            // Check robots.txt compliance
-            $robots_check = self::check_robots_txt_compliance($request_uri, $agent_check['bot_name']);
-            
-            // Get bot policy
-            $api = new API();
-            $policy_result = $api->get_bot_registry();
-            
-            $bot_action = 'monetize'; // Default
-            if ($policy_result['success'] && !empty($policy_result['data'])) {
-                foreach ($policy_result['data'] as $registry_bot) {
-                    if ($registry_bot['bot_name'] === $agent_check['bot_name']) {
-                        $bot_action = $registry_bot['default_action'] ?? 'monetize';
-                        break;
-                    }
-                }
-            }
-            
-            // Log the bot crawl with detailed info
-            self::log_bot_crawl($site_id, $agent_check, $robots_check, $bot_action, $request_uri, $user_agent);
-            
-            // Apply bot-specific policy
-            if ($bot_action === 'block') {
-                error_log('402links: BOT BLOCKED by policy');
-                status_header(403);
-                wp_die(
-                    '<h1>Access Denied</h1><p>This site blocks access from ' . esc_html($agent_check['bot_name']) . '.</p>',
-                    'Forbidden',
-                    ['response' => 403]
-                );
-            } elseif ($bot_action === 'allow') {
-                error_log('402links: BOT ALLOWED by policy (free access)');
-                return; // Allow free access
-            }
-            // If 'monetize', continue with normal 402 flow
-        }
         
         // Determine if we should show 402
         $should_block = false;
         
-        if ($agent_check['is_bot']) {
-            error_log('402links: AGENT DETECTED - Will monetize');
+        if ($agent_check['is_agent']) {
+            error_log('402links: AGENT DETECTED - Will block');
             $should_block = true;
         } else {
             // For humans, check the block_humans flag
@@ -178,7 +121,7 @@ class PaymentGate {
         $short_url = get_post_meta($post->ID, '_402links_url', true);
         
         if (!empty($short_url)) {
-            if ($agent_check['is_bot']) {
+            if ($agent_check['is_agent']) {
                 error_log('402links: REDIRECTING AGENT to ' . $short_url);
             } else {
                 error_log('402links: REDIRECTING HUMAN to ' . $short_url);
@@ -361,9 +304,6 @@ class PaymentGate {
         // Set headers with x402 discovery info
         header('WWW-Authenticate: x402="' . $www_auth_payload . '"');
         header('X-402-Version: 1');
-        header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
-        header('X-402-Payment-Required: true');
-        header('X-402-Facilitator: CDP');
         header('X-402-Scheme: exact');
         header('X-402-Network: ' . $requirements['network']);
         header('X-402-Amount: ' . $requirements['maxAmountRequired']);
@@ -371,8 +311,9 @@ class PaymentGate {
         header('X-402-Asset: ' . $requirements['asset']);
         header('X-402-PayTo: ' . $requirements['payTo']);
         header('X-402-Resource: ' . $requirements['resource']);
+        header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery, X-402-Payment-Required, X-402-Facilitator');
+        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery');
         
         // BROWSER vs AGENT: Return HTML for browsers, JSON for agents
         if (self::is_browser_request()) {

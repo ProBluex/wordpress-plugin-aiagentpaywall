@@ -209,34 +209,6 @@ class API {
     }
     
     /**
-     * Get bot registry from backend
-     */
-    public function get_bot_registry() {
-        return $this->request('GET', '/get-bot-registry');
-    }
-    
-    /**
-     * Get bot statistics for site
-     */
-    public function get_bot_stats($site_id, $timeframe = '30d') {
-        return $this->request('POST', '/get-bot-stats', [
-            'site_id' => $site_id,
-            'timeframe' => $timeframe
-        ]);
-    }
-    
-    /**
-     * Update bot policy for site
-     */
-    public function update_bot_policy($site_id, $bot_registry_id, $action) {
-        return $this->request('POST', '/manage-bot-policy', [
-            'site_id' => $site_id,
-            'bot_registry_id' => $bot_registry_id,
-            'action' => $action
-        ]);
-    }
-    
-    /**
      * Register REST API routes
      */
     public static function register_rest_routes() {
@@ -364,39 +336,6 @@ class API {
             'updated' => $updated,
             'message' => "Synced {$updated} posts"
         ];
-    }
-    
-    /**
-     * Log agent/bot crawl to backend via edge function
-     */
-    public function log_agent_crawl($data) {
-        $supabase_url = defined('VITE_SUPABASE_URL') ? constant('VITE_SUPABASE_URL') : getenv('VITE_SUPABASE_URL');
-        $supabase_key = defined('VITE_SUPABASE_ANON_KEY') ? constant('VITE_SUPABASE_ANON_KEY') : getenv('VITE_SUPABASE_ANON_KEY');
-        
-        if (empty($supabase_url) || empty($supabase_key)) {
-            error_log('402links: Supabase credentials not configured');
-            return ['success' => false, 'error' => 'Supabase not configured'];
-        }
-        
-        $url = rtrim($supabase_url, '/') . '/functions/v1/log-agent-crawl';
-        
-        $response = wp_remote_post($url, [
-            'timeout' => 15,
-            'blocking' => false, // Don't wait for response
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $supabase_key,
-                'apikey' => $supabase_key
-            ],
-            'body' => json_encode($data)
-        ]);
-        
-        if (is_wp_error($response)) {
-            error_log('402links: Failed to log agent crawl: ' . $response->get_error_message());
-            return ['success' => false, 'error' => $response->get_error_message()];
-        }
-        
-        return ['success' => true];
     }
     
     /**

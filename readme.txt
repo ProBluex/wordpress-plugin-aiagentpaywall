@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.4.2
+Stable tag: 2.3.3
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,35 +63,6 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
-
-= 2.4.2 =
-* 🔥 CRITICAL FIX: Resolved fatal error causing WordPress white screen of death
-* Fixed method name mismatch between PaymentGate and AgentDetector (is_bot vs is_ai_agent)
-* Fixed array key mismatch in bot detection logging (bot_name vs agent_name)
-* Added error handling wrapper to prevent future crashes
-* Improved error logging for debugging
-
-= 2.4.1 =
-* 🔧 Fixed: .well-known endpoints now work correctly with automatic rewrite flush
-* ✨ Enhanced: /.well-known/402.json now fully x402 spec compliant with version support
-* ✨ New: /.well-known/402-root.json platform discovery endpoint
-* ✨ New: Endpoint diagnostics panel for testing .well-known URLs
-* 📝 Improved: Enhanced x402 HTTP headers on all 402 responses
-* 🐛 Fixed: Rewrite rules automatically flush on plugin activation
-* 🔍 Added: "Test Endpoints" button to verify x402 discovery endpoints
-* 🔄 Added: "Flush Rewrite Rules" button for manual endpoint refresh
-
-= 2.4.0 =
-* 🎉 Major Feature: Comprehensive Bot Management System
-* Added 26 pre-configured AI agents and web crawlers to bot registry
-* New "Bot Management" tab with granular per-bot controls
-* Robots.txt violation tracking and reporting
-* Per-bot action controls: Allow, Block, or Monetize
-* Bulk bot policy management with select-all functionality
-* Enhanced bot detection with company/category classification
-* Bot statistics dashboard showing requests, violations, and actions
-* Database schema updates for bot registry and site-specific policies
-* Improved analytics with bot-specific breakdowns
 
 = 2.3.3 =
 * Fixed wallet sync status not persisting across page refreshes
