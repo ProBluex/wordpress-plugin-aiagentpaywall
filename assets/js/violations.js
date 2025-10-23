@@ -84,7 +84,7 @@
                 // Store policies
                 if (policies.success && policies.data) {
                     policies.data.forEach(function(policy) {
-                        agentPolicies[policy.bot_registry:bot_registry_id.id] = policy.action;
+                        agentPolicies[policy.bot_registry_id] = policy.action;
                     });
                     originalPolicies = $.extend({}, agentPolicies);
                 }
