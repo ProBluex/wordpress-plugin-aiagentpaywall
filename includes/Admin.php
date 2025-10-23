@@ -1,7 +1,7 @@
 <?php
-if (!defined('ABSPATH')) { exit; }
-
 namespace AgentHub;
+
+if (!defined('ABSPATH')) { exit; }
 
 class Admin {
     /**
