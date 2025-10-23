@@ -476,6 +476,15 @@ class API {
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {
+        // Validate API key exists
+        if (empty($this->api_key)) {
+            error_log('402links: API request blocked - No API key configured');
+            return [
+                'success' => false,
+                'error' => 'No API key configured. Please complete setup in the AI Agent Paywall dashboard.'
+            ];
+        }
+        
         $url = $this->api_endpoint . $endpoint;
         
         // For GET requests, append data as query parameters

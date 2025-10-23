@@ -93,7 +93,12 @@
                 $toolbar.show();
                 $saveWrapper.show();
             } else {
-                showError(violations.data?.message || 'Failed to load violations data');
+                const errorMsg = violations.data?.message || 'Failed to load violations data';
+                if (errorMsg.includes('No API key') || errorMsg.includes('not registered')) {
+                    showError('Setup incomplete: Please complete registration in the Overview tab.');
+                } else {
+                    showError(errorMsg);
+                }
             }
         }).fail(function(xhr, status, error) {
             $loading.hide();
