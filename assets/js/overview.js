@@ -14,7 +14,7 @@
             if (!wallet) {
                 indicator.removeClass().addClass('wallet-sync-indicator wallet-status-empty');
                 indicator.find('.status-dot').removeClass().addClass('status-dot gray');
-                indicator.find('.status-text').text('Enter wallet address');
+                indicator.find('.status-text').text('Not synced');
                 return;
             }
             
@@ -72,7 +72,7 @@
                 beforeSend: function() {
                     button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Saving...');
                     indicator.removeClass().addClass('wallet-sync-indicator wallet-status-syncing');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot yellow pulsing');
+                    indicator.find('.status-dot').removeClass().addClass('status-dot orange pulsing');
                     indicator.find('.status-text').text('Syncing...');
                 },
                 success: function(response) {
@@ -83,7 +83,7 @@
                         if (response.data.sync_success) {
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
                             indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                            indicator.find('.status-text').html('Synced <span class="dashicons dashicons-yes-alt"></span>');
+                            indicator.find('.status-text').text('Synced');
                             window.showToast('Success', response.data.message, 'success');
                         } else {
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
@@ -110,7 +110,8 @@
                     indicator.find('.status-text').text('Sync failed - connection error');
                     window.showToast('Error', 'Failed to save configuration: ' + error, 'error');
                     button.prop('disabled', false).html(originalHtml);
-            }
+                }
+            });
         });
     });
     
@@ -124,7 +125,7 @@
         if (!wallet) {
             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-empty');
             indicator.find('.status-dot').removeClass().addClass('status-dot gray');
-            indicator.find('.status-text').text('Enter wallet address');
+            indicator.find('.status-text').text('Not synced');
             return;
         }
         
@@ -150,7 +151,7 @@
                     // Already synced - show green checkmark
                     indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
                     indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                    indicator.find('.status-text').html('Synced <span class="dashicons dashicons-yes-alt"></span>');
+                    indicator.find('.status-text').text('Synced');
                 } else {
                     // Not synced - show "click Save to sync"
                     indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');

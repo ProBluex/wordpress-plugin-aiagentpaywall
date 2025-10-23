@@ -94,7 +94,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
                                placeholder="0x..." />
                         <div id="wallet-sync-indicator" class="wallet-sync-indicator wallet-status-empty">
                             <span class="status-dot gray"></span>
-                            <span class="status-text">Enter wallet address</span>
+                            <span class="status-text">Not synced</span>
                         </div>
                     </div>
                     <p class="config-description">

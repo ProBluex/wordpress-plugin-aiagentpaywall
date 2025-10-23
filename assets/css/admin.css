@@ -756,6 +756,12 @@
     box-shadow: 0 0 8px hsl(142 76% 36% / 0.3);
 }
 
+.status-dot.orange {
+    background-color: hsl(30 100% 50%);
+    border: 2px solid hsl(30 100% 50%);
+    box-shadow: 0 0 8px hsl(30 100% 50% / 0.3);
+}
+
 /* Pulsing animation for syncing state */
 .status-dot.pulsing {
     animation: pulse 1.5s ease-in-out infinite;
@@ -792,9 +798,9 @@
 }
 
 .wallet-status-syncing {
-    background-color: hsl(48 96% 53% / 0.1);
-    color: hsl(48 96% 40%);
-    border: 1px solid var(--warning);
+    background-color: hsl(30 100% 50% / 0.1);
+    color: hsl(30 100% 40%);
+    border: 1px solid hsl(30 100% 50%);
 }
 
 .wallet-status-synced {
