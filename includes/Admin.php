@@ -660,4 +660,60 @@ class Admin {
             wp_send_json_error($result);
         }
     }
+    
+    /**
+     * AJAX: Get site bot policies
+     */
+    public static function ajax_get_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $site_id = get_option('402links_site_id');
+        if (!$site_id) {
+            wp_send_json_error(['message' => 'Site not registered']);
+        }
+        
+        $api = new API();
+        $result = $api->get_site_bot_policies($site_id);
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+    
+    /**
+     * AJAX: Update site bot policies
+     */
+    public static function ajax_update_site_bot_policies() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $site_id = get_option('402links_site_id');
+        if (!$site_id) {
+            wp_send_json_error(['message' => 'Site not registered']);
+        }
+        
+        $policies = $_POST['policies'] ?? [];
+        
+        if (empty($policies)) {
+            wp_send_json_error(['message' => 'No policies provided']);
+        }
+        
+        $api = new API();
+        $result = $api->update_site_bot_policies($site_id, $policies);
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
 }
