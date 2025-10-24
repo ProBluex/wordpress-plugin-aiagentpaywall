@@ -496,7 +496,7 @@ class PaymentGate {
      * Validate invoice with 402links API
      */
     private static function validate_invoice($invoice_id, $post_id, $site_url) {
-        $api_url = 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/validate-invoice';
+        $api_url = 'https://402links.com/api/v1/invoices/validate';
         
         $response = wp_remote_post($api_url, [
             'timeout' => 15,
@@ -517,6 +517,17 @@ class PaymentGate {
         
         $body = wp_remote_retrieve_body($response);
         $result = json_decode($body, true);
+        
+        // Handle new public API response format
+        if (isset($result['success']) && $result['success'] === true) {
+            // Convert new format to old format for backward compatibility
+            $result['isValid'] = true;
+            if (isset($result['data'])) {
+                $result = array_merge($result, $result['data']);
+            }
+        } elseif (isset($result['success']) && $result['success'] === false) {
+            $result['isValid'] = false;
+        }
         
         if (json_last_error() !== JSON_ERROR_NONE) {
             error_log('402links: Invalid JSON response from validate-invoice: ' . $body);
