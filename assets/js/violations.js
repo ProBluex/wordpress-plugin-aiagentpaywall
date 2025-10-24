@@ -424,9 +424,14 @@
      * Format datetime string
      */
     function formatDateTime(dateStr) {
-        if (!dateStr) return 'Never';
+        // Return "Never" for null, undefined, or empty strings
+        if (!dateStr || dateStr === null) return 'Never';
         
         const date = new Date(dateStr);
+        
+        // Validate date is actually valid
+        if (isNaN(date.getTime())) return 'Never';
+        
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);
