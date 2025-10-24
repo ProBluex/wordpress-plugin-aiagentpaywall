@@ -297,17 +297,6 @@ $is_connected = !empty($api_key) && !empty($site_id);
         
         <div class="violations-table-section">
             <h3>Agent Violation Summary</h3>
-            
-            <div class="notice notice-warning" style="margin: 20px 0; padding: 12px 15px; border-left: 4px solid #ffb900;">
-                <p><strong>⚠️ Important:</strong> Violation tracking requires proper integration. This dashboard shows detected violations, but full enforcement depends on:</p>
-                <ul style="list-style: disc; margin-left: 25px; margin-top: 8px; margin-bottom: 0;">
-                    <li>Your site generating a valid robots.txt file with agent-specific rules</li>
-                    <li>The plugin properly intercepting agent requests and enforcing 402 payment requirements</li>
-                    <li>Payment verification through CDP facilitator integration</li>
-                </ul>
-                <p style="margin-top: 10px; margin-bottom: 0;"><em>"Never" in Last Seen indicates no violations have been tracked for that agent yet.</em></p>
-            </div>
-            
             <div id="violations-loading" style="text-align: center; padding: 40px;">
                 <span class="spinner is-active"></span> Loading violations data...
             </div>
