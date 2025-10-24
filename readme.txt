@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.14
+Stable tag: 2.3.15
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,13 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.15 =
+* PHASE 1: Bot Policy Management Infrastructure
+* Added get-site-bot-policies edge function for retrieving bot-specific policies
+* Added update-site-bot-policies edge function for updating bot actions (monetize/allow/block)
+* Extended API proxy with new routes: /v1/get-site-bot-policies and /v1/update-site-bot-policies
+* Foundation for Phase 2-7: Bot Management UI and bulk policy updates
 
 = 2.3.14 =
 * CRITICAL FIX: Corrected AJAX handler response structure - API returns agents/totals at root level, not nested under 'data' key
