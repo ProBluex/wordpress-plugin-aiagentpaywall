@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,14 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.4.1 =
+* 🐛 CRITICAL FIX: Resolved "Fatal error: Non-static method cannot be called statically" in PaymentGate.php:210
+* ✅ FEATURE: Added static wrapper method for violation reporting (API::report_violation_static)
+* ✅ FEATURE: Enhanced error handling - 402 response now sends even if violation logging fails
+* 🔧 IMPROVEMENT: Better error logging for debugging static method calls
+* 🔧 IMPROVEMENT: Non-blocking violation reporting prevents secondary failures
+* 📚 TESTED: Confirmed fix resolves 500 errors on agent/human access attempts
 
 = 2.4.0 =
 * 🚀 MAJOR: Native x402 protocol implementation - replaces redirect-based flow

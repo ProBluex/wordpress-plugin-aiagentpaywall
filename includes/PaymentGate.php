@@ -206,15 +206,20 @@ class PaymentGate {
             'resource' => $requirements['resource']
         ]));
         
-        // Report unpaid access attempt
-        API::report_violation([
-            'wordpress_post_id' => $post->ID,
-            'agent_name' => $agent_check['is_agent'] ? ($agent_check['agent_name'] ?? 'Unknown Agent') : 'Human',
-            'user_agent' => $user_agent,
-            'ip_address' => AgentDetector::get_client_ip(),
-            'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
-            'violation_type' => $agent_check['is_agent'] ? 'unpaid_access' : 'human_blocked'
-        ]);
+        // Report unpaid access attempt (wrapped in try-catch for safety)
+        try {
+            API::report_violation_static([
+                'wordpress_post_id' => $post->ID,
+                'agent_name' => $agent_check['is_agent'] ? ($agent_check['agent_name'] ?? 'Unknown Agent') : 'Human',
+                'user_agent' => $user_agent,
+                'ip_address' => AgentDetector::get_client_ip(),
+                'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
+                'violation_type' => $agent_check['is_agent'] ? 'unpaid_access' : 'human_blocked'
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't block 402 response
+            error_log('402links: Failed to report violation: ' . $e->getMessage());
+        }
         
         // Send x402-compliant 402 response with payment requirements
         self::send_402_response($requirements);

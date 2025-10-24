@@ -258,6 +258,34 @@ class API {
     }
     
     /**
+     * Static wrapper for report_violation() for use in PaymentGate
+     * Creates temporary API instance and reports violation
+     * Non-blocking - failures won't prevent 402 response
+     * 
+     * @param array $violation_data Violation data array
+     * @return array Response from backend (or error array)
+     */
+    public static function report_violation_static($violation_data) {
+        error_log('402links: Static violation report called');
+        
+        try {
+            $api = new self();
+            $result = $api->report_violation($violation_data);
+            
+            if (isset($result['success']) && $result['success']) {
+                error_log('402links: Violation reported successfully');
+            } else {
+                error_log('402links: Violation report failed: ' . json_encode($result));
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            error_log('402links: EXCEPTION in report_violation_static: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    /**
      * Get agent violations from backend
      * 
      * @param string $site_id Site UUID
