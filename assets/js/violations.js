@@ -149,6 +149,7 @@
 
         // Check if we have agents - always show table with all agents
         if (!data.agents || data.agents.length === 0) {
+            $('#violations-policy-actions').hide();
             $empty.show();
             return;
         }
@@ -228,7 +229,7 @@
             $tbody.append($row);
         });
 
-        console.log('[Violations] Rendering', violations.length, 'violations');
+        console.log('[Violations] Rendering', data.agents.length, 'agents');
         $table.show();
         
         // Show policy actions container when table has data
@@ -287,10 +288,13 @@
                     $saveBtn.hide();
                     
                     // Show success message
-                    $('#violations-save-success').show();
-                    setTimeout(function() {
-                        $('#violations-save-success').fadeOut();
-                    }, 3000);
+                    const $success = $('#violations-save-success');
+                    if ($success.length) {
+                        $success.show();
+                        setTimeout(function() {
+                            $success.fadeOut();
+                        }, 3000);
+                    }
                 } else {
                     console.error('[Violations] Failed to save policies:', response.data);
                     if ($error.length) {
@@ -309,7 +313,8 @@
                 
                 console.error('[Violations] Network error saving policies:', error);
                 if ($error.length) {
-                    $error.text('Network error: ' + error).show();
+                    $('#violations-save-error-message').text('Network error: ' + error);
+                    $error.show();
                 }
             }
         });
