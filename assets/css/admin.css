@@ -324,9 +324,9 @@
     gap: 8px;
     margin-top: 24px;
     padding: 14px 28px;
-    background: var(--gray-800) !important;
+    background: #000000 !important;
     color: white !important;
-    border: 2px solid var(--gray-900) !important;
+    border: 2px solid #000000 !important;
     border-radius: 10px;
     font-weight: 600;
     font-size: 14px;
@@ -337,7 +337,7 @@
 
 #save-overview-config:hover,
 #force-wallet-sync:hover {
-    background: var(--gray-900) !important;
+    background: #1a1a1a !important;
     color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25) !important;
@@ -506,14 +506,14 @@
 }
 
 .content-toolbar .button-primary {
-    background: var(--gray-800) !important;
-    border: 2px solid var(--gray-900) !important;
+    background: #000000 !important;
+    border: 2px solid #000000 !important;
     color: white !important;
     box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15) !important;
 }
 
 .content-toolbar .button-primary:hover {
-    background: var(--gray-900) !important;
+    background: #1a1a1a !important;
     color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25) !important;
@@ -539,7 +539,7 @@
 }
 
 #content-table thead {
-    background: var(--gray-800) !important;
+    background: #000000 !important;
 }
 
 #content-table th {
@@ -550,12 +550,12 @@
     text-transform: uppercase;
     font-size: 11px;
     letter-spacing: 0.5px;
-    background: var(--gray-800) !important;
+    background: #000000 !important;
 }
 
 /* Ensure header cells maintain dark background */
 #content-table thead th {
-    background-color: var(--gray-800) !important;
+    background-color: #000000 !important;
     color: white !important;
 }
 
