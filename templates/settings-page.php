@@ -262,32 +262,40 @@ $is_connected = !empty($api_key) && !empty($site_id);
         </div>
         
         <div class="agent-hub-stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon warning"><span class="dashicons dashicons-warning"></span></div>
+            <div class="stat-card stat-card-violations">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-warning"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Total Violations</div>
                     <div class="stat-value" id="violations-total">0</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon robots-violation"><span class="dashicons dashicons-dismiss"></span></div>
+            <div class="stat-card stat-card-violations">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-shield-alt"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Robots.txt Violations</div>
                     <div class="stat-value" id="violations-robots">0</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon warning"><span class="dashicons dashicons-money-alt"></span></div>
+            <div class="stat-card stat-card-violations">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-money-alt"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Unpaid Access Attempts</div>
                     <div class="stat-value" id="violations-unpaid">0</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon"><span class="dashicons dashicons-admin-users"></span></div>
+            <div class="stat-card stat-card-violations">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-groups"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Unique Violating Agents</div>
                     <div class="stat-value" id="violations-unique-agents">0</div>

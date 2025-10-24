@@ -1230,39 +1230,51 @@
     margin-bottom: 25px;
 }
 
-/* Fix stat icon colors for violations */
-.stat-icon.error {
-    background: hsla(0, 84%, 60%, 0.1);
-    color: var(--destructive);
-}
-
-.stat-icon.error .dashicons {
-    color: var(--destructive);
-}
-
-.stat-icon.robots-violation {
-    background: hsla(0, 84%, 60%, 0.1);
-    color: hsl(0, 84%, 60%);
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
+/* Violations Section - Flat Monochrome Icons */
+.stat-card-violations .stat-icon-flat {
+    background: var(--gray-100);
+    border: 2px solid var(--gray-200);
+    color: var(--gray-600);
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
 }
 
-.stat-icon.robots-violation .dashicons {
-    color: hsl(0, 84%, 60%);
-    font-size: 24px;
+.stat-card-violations .stat-icon-flat .dashicons {
+    color: var(--gray-600);
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
 }
 
-.stat-icon.warning {
-    background: hsla(48, 96%, 53%, 0.15);
-    color: hsl(45, 93%, 47%);
+/* Violations Section - Professional Typography */
+.stat-card-violations .stat-label {
+    color: var(--gray-600);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
-.stat-icon.warning .dashicons {
-    color: hsl(45, 93%, 47%);
+.stat-card-violations .stat-value {
+    color: var(--gray-900);
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Remove old colorful styles */
+.stat-icon.warning,
+.stat-icon.robots-violation,
+.stat-icon.error {
+    background: none !important;
+    border: none !important;
 }
 
 .violations-header h2 {
@@ -1293,38 +1305,34 @@
     color: var(--gray-900);
 }
 
+/* Violation Table Badge Numbers - Flat Grey Style */
 .violation-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    padding: 6px 12px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    text-align: center;
-    min-width: 40px;
+    color: var(--gray-700);
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
 }
 
 .violation-badge.violation-total {
-    background: hsla(217, 91%, 60%, 0.1);
-    color: var(--primary);
-    border: 1px solid hsla(217, 91%, 60%, 0.3);
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+    color: var(--gray-800);
 }
 
-.violation-badge.violation-robots {
-    background: hsla(0, 84%, 60%, 0.1);
-    color: var(--destructive);
-    border: 1px solid hsla(0, 84%, 60%, 0.3);
-}
-
-.violation-badge.violation-unpaid {
-    background: hsla(48, 96%, 53%, 0.15);
-    color: hsl(45, 93%, 47%);
-    border: 1px solid hsla(48, 96%, 53%, 0.4);
-}
-
+.violation-badge.violation-robots,
+.violation-badge.violation-unpaid,
 .violation-badge.violation-none {
-    background: hsla(142, 76%, 36%, 0.1);
-    color: var(--success);
-    border: 1px solid hsla(142, 76%, 36%, 0.3);
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+    color: var(--gray-600);
 }
 
 #violations-table tbody tr:hover {
