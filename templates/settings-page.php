@@ -255,9 +255,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
     <div id="tab-violations" class="tab-content">
         <div class="violations-header">
             <h2>
-                <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 28px; height: 28px; margin-right: 12px;">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
+                <span class="dashicons dashicons-shield-alt"></span>
                 Agent Violations Dashboard
             </h2>
             <p class="violations-description">Track and monitor AI agents that violate robots.txt rules, ignore 402 payment requirements, or attempt unauthorized access to your content.</p>
@@ -265,13 +263,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
         
         <div class="agent-hub-stats-grid">
             <div class="stat-card">
-                <div class="stat-icon warning">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                </div>
+                <div class="stat-icon warning"><span class="dashicons dashicons-warning"></span></div>
                 <div class="stat-content">
                     <div class="stat-label">Total Violations</div>
                     <div class="stat-value" id="violations-total">0</div>
@@ -279,13 +271,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon robots-violation">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
-                </div>
+                <div class="stat-icon robots-violation"><span class="dashicons dashicons-dismiss"></span></div>
                 <div class="stat-content">
                     <div class="stat-label">Robots.txt Violations</div>
                     <div class="stat-value" id="violations-robots">0</div>
@@ -293,12 +279,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon warning">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
-                    </svg>
-                </div>
+                <div class="stat-icon warning"><span class="dashicons dashicons-money-alt"></span></div>
                 <div class="stat-content">
                     <div class="stat-label">Unpaid Access Attempts</div>
                     <div class="stat-value" id="violations-unpaid">0</div>
@@ -306,14 +287,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 010 7.75"></path>
-                    </svg>
-                </div>
+                <div class="stat-icon"><span class="dashicons dashicons-admin-users"></span></div>
                 <div class="stat-content">
                     <div class="stat-label">Unique Violating Agents</div>
                     <div class="stat-value" id="violations-unique-agents">0</div>
@@ -322,103 +296,33 @@ $is_connected = !empty($api_key) && !empty($site_id);
         </div>
         
         <div class="violations-table-section">
-            <div class="violations-controls">
-                <h3>
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    Agent Violation Summary & Access Control
-                </h3>
-                <div class="bulk-actions-toolbar" id="bulk-actions-toolbar" style="display:none;">
-                    <button id="select-all-agents" class="button" title="Select all agents">
-                        <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 11l3 3L22 4"></path>
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                        </svg>
-                        Select All
-                    </button>
-                    <button id="deselect-all-agents" class="button" title="Deselect all agents">
-                        <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        </svg>
-                        Deselect All
-                    </button>
-                    <div class="bulk-action-divider"></div>
-                    <select id="bulk-action-select" class="bulk-action-dropdown">
-                        <option value="">Bulk Actions...</option>
-                        <option value="monetize">Set to Monetize</option>
-                        <option value="allow">Set to Allow</option>
-                        <option value="block">Set to Block</option>
-                    </select>
-                    <button id="apply-bulk-action" class="button button-primary">
-                        <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        Apply
-                    </button>
-                    <span id="selected-count" class="selected-count">0 selected</span>
-                </div>
-            </div>
-            
+            <h3>Agent Violation Summary</h3>
             <div id="violations-loading" style="text-align: center; padding: 40px;">
                 <span class="spinner is-active"></span> Loading violations data...
             </div>
             <div id="violations-error" class="notice notice-error" style="display:none; margin: 20px 0;">
                 <p><strong>Error:</strong> <span id="violations-error-message"></span></p>
             </div>
-            <table class="wp-list-table widefat fixed striped violations-action-table" id="violations-table" style="display:none;">
+            <table class="wp-list-table widefat fixed striped" id="violations-table" style="display:none;">
                 <thead>
                     <tr>
-                        <th class="check-column"><input type="checkbox" id="select-all-checkbox" /></th>
                         <th>Agent Name</th>
                         <th>Total Violations</th>
                         <th>Robots.txt Violations</th>
                         <th>Unpaid Access</th>
                         <th>Last Seen</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="violations-table-body">
                 </tbody>
             </table>
             <div id="violations-empty" class="notice notice-info" style="display:none; margin: 20px 0;">
-                <p>
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    <strong>Great news!</strong> No violations detected. All AI agents are respecting your site's access rules.
-                </p>
-            </div>
-            <div class="violations-save-wrapper" id="violations-save-wrapper" style="display:none;">
-                <button id="save-agent-actions" class="button button-primary button-hero">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    Save Agent Actions
-                </button>
-                <span class="unsaved-changes-indicator">
-                    <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Unsaved changes
-                </span>
+                <p>✅ <strong>Great news!</strong> No violations detected. All AI agents are respecting your site's access rules.</p>
             </div>
         </div>
         
         <div class="agent-hub-info-box">
-            <h3>
-                <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                What Counts as a Violation?
-            </h3>
+            <h3><span class="dashicons dashicons-info-outline"></span> What Counts as a Violation?</h3>
             <p>The plugin tracks three types of violations:</p>
             <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
                 <li><strong>Robots.txt Violations:</strong> AI agents accessing pages explicitly disallowed in your robots.txt file</li>
@@ -426,25 +330,8 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 <li><strong>Unauthorized Access:</strong> Other attempts to bypass payment or access controls</li>
             </ul>
             <p style="margin-top: 15px;">This data helps you identify which AI agents are respecting web standards and which may need to be blocked or monitored more closely.</p>
-            
-            <h4 style="margin-top: 24px; color: var(--primary); font-size: 16px;">
-                <svg class="feather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                Agent Action Control
-            </h4>
-            <p>Use the action dropdowns to control how each AI agent can access your content:</p>
-            <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
-                <li><strong>💰 Monetize:</strong> Agent must pay the configured price to access content (default)</li>
-                <li><strong>✓ Allow:</strong> Agent can access content freely without payment</li>
-                <li><strong>⛔ Block:</strong> Agent is completely blocked from accessing any content</li>
-            </ul>
-            <p style="margin-top: 15px;">Changes are saved to your site-specific policies and apply immediately after clicking "Save Agent Actions".</p>
+        </div>
     </div>
-    
-    <!-- Toast Notification -->
-    <div id="agent-hub-toast" style="display:none;"></div>
-</div>
     
     <!-- Contact Us Tab -->
     <div id="tab-contact" class="tab-content">

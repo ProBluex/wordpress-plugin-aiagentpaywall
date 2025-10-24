@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.19
+Stable tag: 2.3.14
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,50 +63,6 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
-
-= 2.3.19 =
-* CRITICAL FIX: Added missing AJAX action registrations for bot policy endpoints
-* CRITICAL FIX: Added API key validation to prevent malformed Authorization headers
-* FIXED: 400 Bad Request errors on violations tab (ajax_get_site_bot_policies, ajax_update_site_bot_policies)
-* FIXED: "Missing or invalid Authorization header" errors on analytics tab
-* IMPROVED: Better error messages when setup is incomplete
-* IMPROVED: User-friendly guidance when API key or site registration is missing
-* Violations tab now loads successfully with proper bot policies
-* Analytics tab shows actionable setup instructions instead of cryptic errors
-
-= 2.3.18 =
-* CRITICAL FIX: Resolved JavaScript syntax error in violations.js line 87
-* FIXED: "Uncaught SyntaxError: Unexpected token ':'" preventing violations tab from loading
-* FIXED: Corrected object property access from `policy.bot_registry:bot_registry_id.id` to `policy.bot_registry_id`
-* Violations tab now loads correctly with proper agent policy mapping
-
-= 2.3.17 =
-* CRITICAL FIX: Removed duplicate method declarations causing Fatal Error
-* FIXED: ajax_get_site_bot_policies() was declared twice in Admin.php
-* FIXED: ajax_update_site_bot_policies() was declared twice in Admin.php
-* Plugin now loads correctly without "Cannot redeclare" PHP errors
-
-= 2.3.16 =
-* CRITICAL FIX: Resolved fatal parse error in Admin.php caused by extra closing brace
-* FIXED: Plugin now loads correctly without syntax errors
-
-= 2.3.15 =
-* MAJOR FEATURE: Added action filters (Monetize/Allow/Block) for all AI agents in Violations tab
-* MAJOR FEATURE: Implemented bulk selection with checkboxes - select multiple agents and apply actions at once
-* NEW: "Select All" and "Deselect All" buttons for quick agent management
-* NEW: Bulk actions dropdown to apply Monetize/Allow/Block to multiple agents simultaneously
-* NEW: Individual action dropdowns per agent with real-time updates
-* NEW: "Save Agent Actions" button with unsaved changes indicator
-* IMPROVED: Replaced all emoji icons with professional Feather icons throughout Violations tab
-* IMPROVED: Modern, clean UI with premium styling - no more childish emoji overload
-* IMPROVED: Enhanced stat cards with professional SVG icons (shield, alert, currency, users)
-* IMPROVED: Responsive design for bulk actions toolbar and controls
-* BACKEND: Created new edge functions (get-site-bot-policies, update-site-bot-policies)
-* BACKEND: Added API methods for fetching and updating site-specific bot policies
-* BACKEND: Integrated with site_bot_policies table for per-site agent access control
-* DEFAULT: All agents start as "Monetize" by default until explicitly changed
-* UX: Toast notifications for successful saves
-* UX: Smooth transitions and hover effects on all interactive elements
 
 = 2.3.14 =
 * CRITICAL FIX: Corrected AJAX handler response structure - API returns agents/totals at root level, not nested under 'data' key

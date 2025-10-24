@@ -85,11 +85,7 @@
                 } else {
                     console.error('[Analytics] Failed to load analytics:', response);
                     const errorMsg = response.data?.error || response.error || 'Unknown error';
-                    if (errorMsg.includes('No API key') || errorMsg.includes('not registered')) {
-                        showError('Setup incomplete: Please configure your API key in the Overview tab.');
-                    } else {
-                        showError('Failed to load analytics: ' + errorMsg);
-                    }
+                    showError('Failed to load analytics: ' + errorMsg);
                 }
             },
             error: function(xhr, status, error) {

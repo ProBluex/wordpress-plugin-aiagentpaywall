@@ -436,55 +436,9 @@ class API {
     }
     
     /**
-     * Get site bot policies from backend
-     */
-    public function get_site_bot_policies() {
-        $site_id = get_option('402links_site_id');
-        
-        if (!$site_id) {
-            return [
-                'success' => false,
-                'error' => 'Site not registered'
-            ];
-        }
-        
-        return $this->request('GET', '/get-site-bot-policies?site_id=' . $site_id);
-    }
-    
-    /**
-     * Update site bot policies
-     * 
-     * @param array $policies Array of policies: [['bot_registry_id' => 'uuid', 'action' => 'monetize|allow|block'], ...]
-     */
-    public function update_site_bot_policies($policies) {
-        $site_id = get_option('402links_site_id');
-        
-        if (!$site_id) {
-            return [
-                'success' => false,
-                'error' => 'Site not registered'
-            ];
-        }
-        
-        return $this->request('POST', '/update-site-bot-policies', [
-            'site_id' => $site_id,
-            'policies' => $policies
-        ]);
-    }
-    
-    /**
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {
-        // Validate API key exists
-        if (empty($this->api_key)) {
-            error_log('402links: API request blocked - No API key configured');
-            return [
-                'success' => false,
-                'error' => 'No API key configured. Please complete setup in the AI Agent Paywall dashboard.'
-            ];
-        }
-        
         $url = $this->api_endpoint . $endpoint;
         
         // For GET requests, append data as query parameters
