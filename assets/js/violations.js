@@ -228,7 +228,11 @@
             $tbody.append($row);
         });
 
+        console.log('[Violations] Rendering', violations.length, 'violations');
         $table.show();
+        
+        // Show policy actions container when table has data
+        $('#violations-policy-actions').show();
     }
 
     /**
@@ -278,15 +282,22 @@
                     
                     // Clear changed policies
                     changedPolicies.clear();
+                    
+                    // Hide save button
                     $saveBtn.hide();
                     
-                    // Show success message (optional)
+                    // Show success message
+                    $('#violations-save-success').show();
+                    setTimeout(function() {
+                        $('#violations-save-success').fadeOut();
+                    }, 3000);
+                } else {
+                    console.error('[Violations] Failed to save policies:', response.data);
                     if ($error.length) {
-                        $error.removeClass('error').addClass('success')
-                            .text('Policies saved successfully!')
-                            .show()
-                            .delay(3000)
-                            .fadeOut();
+                        $('#violations-save-error-message').text(
+                            response.data || 'Failed to save policies'
+                        );
+                        $error.show();
                     }
                 } else {
                     console.error('[Violations] Failed to save policies:', response.data?.message);

@@ -311,11 +311,31 @@ $is_connected = !empty($api_key) && !empty($site_id);
                         <th>Robots.txt Violations</th>
                         <th>Unpaid Access</th>
                         <th>Last Seen</th>
+                        <th>Policy</th>
                     </tr>
                 </thead>
                 <tbody id="violations-table-body">
                 </tbody>
             </table>
+
+            <!-- Policy Management Actions -->
+            <div id="violations-policy-actions" style="display:none; margin-top: 20px;">
+                <button type="button" id="violations-save-policies" class="button button-primary" style="display:none;">
+                    <span class="dashicons dashicons-saved"></span>
+                    Save Policy Changes
+                </button>
+                <span id="violations-save-loading" style="display:none; margin-left: 12px;">
+                    <span class="spinner is-active"></span>
+                    Saving policies...
+                </span>
+                <div id="violations-save-error" class="notice notice-error" style="display:none; margin: 12px 0;">
+                    <p><strong>Error:</strong> <span id="violations-save-error-message"></span></p>
+                </div>
+                <div id="violations-save-success" class="notice notice-success" style="display:none; margin: 12px 0;">
+                    <p>✅ <strong>Success!</strong> Bot policies updated successfully.</p>
+                </div>
+            </div>
+
             <div id="violations-empty" class="notice notice-info" style="display:none; margin: 20px 0;">
                 <p>✅ <strong>Great news!</strong> No violations detected. All AI agents are respecting your site's access rules.</p>
             </div>

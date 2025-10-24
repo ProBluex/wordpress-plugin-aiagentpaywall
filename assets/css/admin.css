@@ -518,6 +518,94 @@
     letter-spacing: 0.5px;
 }
 
+/* Violations Table - Policy Column */
+#violations-table th:last-child,
+#violations-table td:last-child {
+    width: 140px;
+    text-align: left;
+}
+
+.bot-policy-select {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    border: 2px solid var(--gray-300);
+    border-radius: 6px;
+    background: white;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bot-policy-select:hover {
+    border-color: var(--primary);
+}
+
+.bot-policy-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px hsl(217 91% 60% / 0.1);
+}
+
+/* Violations Policy Actions */
+#violations-policy-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--gray-50);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+#violations-save-policies {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px hsl(217 91% 60% / 0.25);
+}
+
+#violations-save-policies:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px hsl(217 91% 60% / 0.35);
+}
+
+#violations-save-policies:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#violations-save-policies .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+#violations-save-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gray-700);
+    font-size: 14px;
+}
+
+#violations-save-success,
+#violations-save-error {
+    flex: 1;
+    margin: 0 !important;
+}
+
 #content-table tbody tr {
     transition: background-color 0.2s ease;
 }
