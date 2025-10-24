@@ -192,68 +192,103 @@
             // Last seen
             $row.append($('<td>').text(formatDateTime(agent.last_seen)));
 
-            // Policy dropdown with status badge
+            // Policy dropdown with custom button
             const currentPolicy = botPolicies[agent.bot_registry_id] || 'monetize';
-            const $policyCell = $('<td>');
-            const $wrapper = $('<div>').addClass('policy-status-wrapper');
+            const $policyCell = $('<td>').addClass('policy-cell');
             
-            // Status badge showing current active policy
+            // Policy labels
             const policyLabels = {
                 'monetize': 'Monetized',
                 'allow': 'Allowed',
                 'block': 'Blocked'
             };
             
-            const $statusBadge = $('<span>')
-                .addClass('policy-status-badge active')
-                .html('<span class="policy-status-dot"></span><span>' + policyLabels[currentPolicy] + '</span>');
-            
-            // Dropdown select
-            const $select = $('<select>')
-                .addClass('bot-policy-select')
-                .attr('data-bot-id', agent.bot_registry_id)
-                .css({
-                    'padding': '4px 8px',
-                    'border': '1px solid #ddd',
-                    'border-radius': '4px',
-                    'background': '#fff'
-                });
-            
-            const options = [
-                { value: 'monetize', label: 'Monetize' },
-                { value: 'allow', label: 'Allow' },
-                { value: 'block', label: 'Block' }
+            const policyOptions = [
+                { value: 'monetize', activeLabel: 'Monetized', inactiveLabel: 'Monetize' },
+                { value: 'allow', activeLabel: 'Allowed', inactiveLabel: 'Allow' },
+                { value: 'block', activeLabel: 'Blocked', inactiveLabel: 'Block' }
             ];
             
-            options.forEach(function(opt) {
-                const $option = $('<option>')
-                    .val(opt.value)
-                    .text(opt.label);
+            // Create custom dropdown container
+            const $dropdownContainer = $('<div>')
+                .addClass('policy-dropdown-container')
+                .attr('data-bot-id', agent.bot_registry_id);
+            
+            // Create dropdown button showing current policy
+            const $dropdownButton = $('<button>')
+                .addClass('policy-dropdown-button')
+                .attr('type', 'button')
+                .html(
+                    '<span class="policy-status-dot"></span>' +
+                    '<span class="policy-label">' + policyLabels[currentPolicy] + '</span>' +
+                    '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
+                    '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    '</svg>'
+                );
+            
+            // Create dropdown menu
+            const $dropdownMenu = $('<div>')
+                .addClass('policy-dropdown-menu')
+                .css('display', 'none');
+            
+            // Add options to menu
+            policyOptions.forEach(function(opt) {
+                const isActive = opt.value === currentPolicy;
+                const $option = $('<div>')
+                    .addClass('policy-dropdown-option')
+                    .attr('data-value', opt.value)
+                    .text(opt.inactiveLabel);
                 
-                if (opt.value === currentPolicy) {
-                    $option.attr('selected', 'selected');
+                if (isActive) {
+                    $option.addClass('active');
                 }
                 
-                $select.append($option);
+                // Click handler for option
+                $option.on('click', function() {
+                    const newValue = $(this).attr('data-value');
+                    
+                    // Update button display
+                    $dropdownButton.html(
+                        '<span class="policy-status-dot"></span>' +
+                        '<span class="policy-label">' + policyLabels[newValue] + '</span>' +
+                        '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
+                        '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                        '</svg>'
+                    );
+                    
+                    // Update active state in menu
+                    $dropdownMenu.find('.policy-dropdown-option').removeClass('active');
+                    $(this).addClass('active');
+                    
+                    // Close menu
+                    $dropdownMenu.hide();
+                    $dropdownContainer.removeClass('open');
+                    
+                    // Mark as changed if different from original
+                    if (botPolicies[agent.bot_registry_id] !== newValue) {
+                        $dropdownContainer.addClass('policy-changed').attr('data-new-value', newValue);
+                        $('#violations-save-policies').show();
+                    }
+                });
+                
+                $dropdownMenu.append($option);
             });
             
-            // Handle policy changes
-            $select.on('change', function() {
-                const $this = $(this);
-                const selectedValue = $this.val();
+            // Toggle dropdown on button click
+            $dropdownButton.on('click', function(e) {
+                e.stopPropagation();
                 
-                // Update status badge
-                $statusBadge.html('<span class="policy-status-dot"></span><span>' + policyLabels[selectedValue] + '</span>');
+                // Close other dropdowns
+                $('.policy-dropdown-container.open').not($dropdownContainer).removeClass('open')
+                    .find('.policy-dropdown-menu').hide();
                 
-                // Mark as changed
-                if (botPolicies[agent.bot_registry_id] !== selectedValue) {
-                    $this.addClass('policy-changed');
-                    $('#violations-save-policies').show();
-                }
+                // Toggle this dropdown
+                $dropdownContainer.toggleClass('open');
+                $dropdownMenu.toggle();
             });
             
-            $wrapper.append($statusBadge).append($select);
-            $policyCell.append($wrapper);
+            $dropdownContainer.append($dropdownButton).append($dropdownMenu);
+            $policyCell.append($dropdownContainer);
             $row.append($policyCell);
 
             $tbody.append($row);
@@ -265,6 +300,14 @@
         // Show policy actions container when table has data
         $('#violations-policy-actions').show();
     }
+
+    // Close dropdowns when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.policy-dropdown-container').length) {
+            $('.policy-dropdown-container.open').removeClass('open')
+                .find('.policy-dropdown-menu').hide();
+        }
+    });
 
     /**
      * Save bot policies to backend
@@ -282,6 +325,13 @@
         if ($error.length) {
             $error.hide();
         }
+
+        // Collect changed policies from dropdowns
+        $('.policy-dropdown-container.policy-changed').each(function() {
+            const botId = $(this).attr('data-bot-id');
+            const newValue = $(this).attr('data-new-value');
+            botPolicies[botId] = newValue;
+        });
 
         // Convert botPolicies object to array format
         const policies = [];
