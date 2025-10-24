@@ -548,6 +548,39 @@
     box-shadow: 0 0 0 3px hsl(217 91% 60% / 0.1);
 }
 
+/* Policy Status Badge - Shows active policy with green dot */
+.policy-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.policy-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--gray-100);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground);
+    white-space: nowrap;
+}
+
+.policy-status-badge.active {
+    background: #dcfce7; /* green-100 */
+    color: #166534; /* green-800 */
+}
+
+.policy-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981; /* green-500 */
+    flex-shrink: 0;
+}
+
 /* Violations Policy Actions */
 #violations-policy-actions {
     display: flex;

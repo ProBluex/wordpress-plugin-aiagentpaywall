@@ -192,9 +192,23 @@
             // Last seen
             $row.append($('<td>').text(formatDateTime(agent.last_seen)));
 
-            // Policy dropdown
+            // Policy dropdown with status badge
             const currentPolicy = botPolicies[agent.bot_registry_id] || 'monetize';
             const $policyCell = $('<td>');
+            const $wrapper = $('<div>').addClass('policy-status-wrapper');
+            
+            // Status badge showing current active policy
+            const policyLabels = {
+                'monetize': 'Monetized',
+                'allow': 'Allowed',
+                'block': 'Blocked'
+            };
+            
+            const $statusBadge = $('<span>')
+                .addClass('policy-status-badge active')
+                .html('<span class="policy-status-dot"></span><span>' + policyLabels[currentPolicy] + '</span>');
+            
+            // Dropdown select
             const $select = $('<select>')
                 .addClass('bot-policy-select')
                 .attr('data-bot-id', agent.bot_registry_id)
@@ -223,7 +237,23 @@
                 $select.append($option);
             });
             
-            $policyCell.append($select);
+            // Handle policy changes
+            $select.on('change', function() {
+                const $this = $(this);
+                const selectedValue = $this.val();
+                
+                // Update status badge
+                $statusBadge.html('<span class="policy-status-dot"></span><span>' + policyLabels[selectedValue] + '</span>');
+                
+                // Mark as changed
+                if (botPolicies[agent.bot_registry_id] !== selectedValue) {
+                    $this.addClass('policy-changed');
+                    $('#violations-save-policies').show();
+                }
+            });
+            
+            $wrapper.append($statusBadge).append($select);
+            $policyCell.append($wrapper);
             $row.append($policyCell);
 
             $tbody.append($row);
