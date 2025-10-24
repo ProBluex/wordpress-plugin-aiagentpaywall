@@ -142,6 +142,37 @@ class PaymentGate {
         
         error_log('===== 402links PaymentGate: BLOCKING REQUEST =====');
         
+        // ============= CHECK FOR 402LINKS INVOICE RECEIPT =============
+        // If agent is returning from 402links.com with invoice receipt, validate it
+        $invoice_id = $_GET['invoice'] ?? '';
+        $verified = $_GET['verified'] ?? '';
+        
+        if ($invoice_id && $verified === 'true') {
+            error_log('402links: Validating invoice receipt from 402links.com redirect: ' . $invoice_id);
+            
+            // Call 402links API to confirm payment
+            $validation = self::validate_invoice($invoice_id, $post->ID, get_site_url());
+            
+            if ($validation['isValid']) {
+                error_log('402links: Invoice valid, granting access');
+                error_log('  - Transaction: ' . ($validation['transaction_hash'] ?? 'none'));
+                error_log('  - Amount: ' . ($validation['amount'] ?? 0) . ' ' . ($validation['currency'] ?? 'USDC'));
+                
+                // Log the access
+                self::log_agent_access($post->ID, $invoice_id, $validation);
+                
+                // Increment usage count
+                self::increment_link_usage($post->ID);
+                
+                // ✅ ALLOW ACCESS - WordPress will serve content normally
+                error_log('===== 402links PaymentGate: INVOICE VERIFIED - SERVING CONTENT =====');
+                return; // Invoice valid, serve content
+            } else {
+                error_log('402links: Invoice invalid or expired: ' . ($validation['error'] ?? 'unknown error'));
+                // Fall through to normal 402 response
+            }
+        }
+        
         // Log the crawl attempt with violation data if present
         AgentDetector::log_crawl($post->ID, $agent_check, 'pending', $violation_data);
         
@@ -191,8 +222,32 @@ class PaymentGate {
             return; // Payment successful, serve content
         }
         
-        // ============= X402 NATIVE 402 RESPONSE =============
-        // No payment header present → send 402 Payment Required response
+        // ============= 402LINKS REDIRECT FLOW FOR AI AGENTS =============
+        // If AI agent detected, redirect to 402links.com for payment
+        if ($agent_check['is_agent']) {
+            $short_id = get_post_meta($post->ID, '_402links_short_id', true);
+            
+            if ($short_id) {
+                error_log('402links: Redirecting agent to 402links.com/p/' . $short_id);
+                
+                // Build return URL for redirect back after payment
+                $return_url = get_permalink($post->ID);
+                $redirect_url = 'https://402links.com/p/' . $short_id . '?return_to=' . urlencode($return_url);
+                
+                error_log('402links: Redirect URL: ' . $redirect_url);
+                error_log('402links: Return URL: ' . $return_url);
+                
+                // Send 302 redirect
+                status_header(302);
+                header('Location: ' . $redirect_url);
+                exit;
+            } else {
+                error_log('402links: WARNING - No short_id meta found, falling back to 402 response');
+            }
+        }
+        
+        // ============= X402 NATIVE 402 RESPONSE (FALLBACK) =============
+        // No payment header present and not redirecting → send 402 Payment Required response
         error_log('402links: No valid payment - Sending 402 Payment Required response');
         
         $requirements = self::get_payment_requirements($post->ID);
@@ -435,6 +490,77 @@ class PaymentGate {
         }
         
         return $data;
+    }
+    
+    /**
+     * Validate invoice with 402links API
+     */
+    private static function validate_invoice($invoice_id, $post_id, $site_url) {
+        $api_url = 'https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/validate-invoice';
+        
+        $response = wp_remote_post($api_url, [
+            'timeout' => 15,
+            'headers' => [
+                'Content-Type' => 'application/json'
+            ],
+            'body' => json_encode([
+                'invoice_id' => $invoice_id,
+                'site_url' => $site_url,
+                'wordpress_post_id' => $post_id
+            ])
+        ]);
+        
+        if (is_wp_error($response)) {
+            error_log('402links: Invoice validation request failed: ' . $response->get_error_message());
+            return ['isValid' => false, 'error' => 'API request failed'];
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $result = json_decode($body, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('402links: Invalid JSON response from validate-invoice: ' . $body);
+            return ['isValid' => false, 'error' => 'Invalid JSON response'];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Log agent access for analytics
+     */
+    private static function log_agent_access($post_id, $invoice_id, $validation) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . '402links_agent_logs';
+        
+        // Insert access log
+        $wpdb->insert(
+            $table_name,
+            [
+                'post_id' => $post_id,
+                'invoice_id' => $invoice_id,
+                'payment_tx_hash' => $validation['transaction_hash'] ?? null,
+                'amount_paid' => $validation['amount'] ?? 0,
+                'payment_status' => 'paid',
+                'accessed_at' => current_time('mysql'),
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+                'ip_address' => AgentDetector::get_client_ip()
+            ],
+            ['%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s']
+        );
+        
+        error_log('402links: Agent access logged to local database');
+    }
+    
+    /**
+     * Increment link usage count
+     */
+    private static function increment_link_usage($post_id) {
+        $current_uses = (int) get_post_meta($post_id, '_402links_usage_count', true);
+        $new_uses = $current_uses + 1;
+        update_post_meta($post_id, '_402links_usage_count', $new_uses);
+        
+        error_log('402links: Link usage incremented: ' . $current_uses . ' → ' . $new_uses);
     }
     
     /**
