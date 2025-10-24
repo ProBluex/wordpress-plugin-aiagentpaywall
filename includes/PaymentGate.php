@@ -9,6 +9,16 @@ class PaymentGate {
      * DUAL DETECTION: AI agents always see 402, humans see 402 only if blocked
      */
     public static function intercept_request() {
+        // Handle OPTIONS preflight requests for CORS
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Headers: X-PAYMENT, Content-Type, Authorization');
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+            header('Access-Control-Max-Age: 86400'); // 24 hours
+            status_header(200);
+            exit;
+        }
+        
         // Skip if not singular post/page
         if (!is_singular(['post', 'page'])) {
             return;
@@ -142,7 +152,61 @@ class PaymentGate {
             wp_die('Access denied: Agent blacklisted', 'Forbidden', ['response' => 403]);
         }
         
-        // Report unpaid access attempt before redirect
+        // ============= X402 NATIVE PAYMENT FLOW =============
+        // Check for X-PAYMENT header (x402 protocol)
+        $payment_header = $_SERVER['HTTP_X_PAYMENT'] ?? '';
+        
+        error_log('402links: X-PAYMENT header present: ' . (!empty($payment_header) ? 'YES' : 'NO'));
+        
+        if (!empty($payment_header)) {
+            error_log('402links: Processing x402 payment with CDP facilitator...');
+            
+            // Get payment requirements for verification
+            $requirements = self::get_payment_requirements($post->ID);
+            
+            // Verify payment with backend CDP facilitator
+            $verification = self::verify_payment($payment_header, $requirements);
+            
+            if (!$verification['isValid']) {
+                error_log('402links: Payment verification FAILED - ' . ($verification['error'] ?? 'unknown error'));
+                self::send_402_response($requirements, $verification['error'] ?? 'Payment verification failed');
+                exit;
+            }
+            
+            error_log('402links: Payment verification SUCCEEDED - txHash: ' . ($verification['transaction'] ?? 'none'));
+            
+            // Log successful payment to Supabase and local DB
+            self::log_agent_payment($post->ID, $verification, $agent_check);
+            
+            // Set settlement header for response
+            add_filter('wp_headers', function($headers) use ($verification) {
+                if (isset($verification['settlement_header'])) {
+                    $headers['X-PAYMENT-RESPONSE'] = $verification['settlement_header'];
+                }
+                return $headers;
+            });
+            
+            // ✅ ALLOW ACCESS - WordPress will serve content normally
+            error_log('===== 402links PaymentGate: PAYMENT VERIFIED - SERVING CONTENT =====');
+            return; // Payment successful, serve content
+        }
+        
+        // ============= X402 NATIVE 402 RESPONSE =============
+        // No payment header present → send 402 Payment Required response
+        error_log('402links: No valid payment - Sending 402 Payment Required response');
+        
+        $requirements = self::get_payment_requirements($post->ID);
+        
+        // Log the 402 response being sent (for debugging)
+        error_log('402links: Payment Requirements: ' . json_encode([
+            'scheme' => $requirements['scheme'],
+            'network' => $requirements['network'],
+            'maxAmountRequired' => $requirements['maxAmountRequired'],
+            'payTo' => $requirements['payTo'],
+            'resource' => $requirements['resource']
+        ]));
+        
+        // Report unpaid access attempt
         API::report_violation([
             'wordpress_post_id' => $post->ID,
             'agent_name' => $agent_check['is_agent'] ? ($agent_check['agent_name'] ?? 'Unknown Agent') : 'Human',
@@ -152,45 +216,9 @@ class PaymentGate {
             'violation_type' => $agent_check['is_agent'] ? 'unpaid_access' : 'human_blocked'
         ]);
         
-        // UNIVERSAL REDIRECT: All unpaid visitors → 402links.com for payment
-        $short_url = get_post_meta($post->ID, '_402links_url', true);
-        
-        if (!empty($short_url)) {
-            if ($agent_check['is_agent']) {
-                error_log('402links: REDIRECTING AGENT to ' . $short_url);
-            } else {
-                error_log('402links: REDIRECTING HUMAN to ' . $short_url);
-            }
-            wp_redirect($short_url, 302);
-            exit;
-        }
-        
-        // Fallback: If no short URL exists, show local paywall as emergency backup
-        error_log('402links: WARNING - No short URL found! Showing fallback paywall.');
-        $requirements = self::get_payment_requirements($post->ID);
+        // Send x402-compliant 402 response with payment requirements
         self::send_402_response($requirements);
         exit;
-        
-        // Verify payment with backend
-        $verification = self::verify_payment($payment_header, $requirements);
-        
-        if (!$verification['isValid']) {
-            self::send_402_response($requirements, $verification['error'] ?? 'Payment verification failed');
-            exit;
-        }
-        
-        // Log successful payment
-        self::log_agent_payment($post->ID, $verification, $agent_check);
-        
-        // Set header for successful payment response
-        add_filter('wp_headers', function($headers) use ($verification) {
-            if (isset($verification['settlement_header'])) {
-                $headers['X-PAYMENT-RESPONSE'] = $verification['settlement_header'];
-            }
-            return $headers;
-        });
-        
-        // Allow access to content (WordPress will serve normally)
     }
     
     /**
@@ -347,8 +375,12 @@ class PaymentGate {
         header('X-402-PayTo: ' . $requirements['payTo']);
         header('X-402-Resource: ' . $requirements['resource']);
         header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
+        
+        // Add CORS headers for x402 protocol
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery');
+        header('Access-Control-Allow-Headers: X-PAYMENT, Content-Type, Authorization');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery, X-PAYMENT-RESPONSE');
         
         // BROWSER vs AGENT: Return HTML for browsers, JSON for agents
         if (self::is_browser_request()) {
@@ -404,6 +436,13 @@ class PaymentGate {
      * Log successful payment to backend and local database
      */
     private static function log_agent_payment($post_id, $verification, $agent_check) {
+        error_log('402links: Logging successful payment:');
+        error_log('  - Post ID: ' . $post_id);
+        error_log('  - Transaction: ' . ($verification['transaction'] ?? 'none'));
+        error_log('  - Payer: ' . ($verification['payer'] ?? 'unknown'));
+        error_log('  - Amount: ' . ($verification['amount'] ?? 0));
+        error_log('  - Agent: ' . ($agent_check['agent_name'] ?? 'unknown'));
+        
         global $wpdb;
         $table_name = $wpdb->prefix . '402links_agent_logs';
         

@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.31
+Stable tag: 2.4.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,19 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.4.0 =
+* 🚀 MAJOR: Native x402 protocol implementation - replaces redirect-based flow
+* ✅ FEATURE: Direct CDP Facilitator integration for payment verification
+* ✅ FEATURE: X-PAYMENT header detection and processing
+* ✅ FEATURE: Native 402 Payment Required responses (x402 spec compliant)
+* ✅ FEATURE: CORS support for AI agent cross-origin requests
+* ✅ FEATURE: OPTIONS preflight handler for payment protocol
+* 🔧 IMPROVEMENT: Real-time payment settlement via CDP
+* 🔧 IMPROVEMENT: Enhanced payment logging with transaction details
+* 🔧 IMPROVEMENT: Removed redirect-based fallback for cleaner x402 flow
+* 📚 BREAKING: Agents must implement x402 protocol (no more redirects)
+* 📚 DOCS: Updated architecture to match 402links.com implementation
 
 = 2.3.31 =
 * Fixed edge function deployment issue with robots_txt_directive database column
