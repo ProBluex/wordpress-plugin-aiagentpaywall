@@ -312,7 +312,7 @@ class AgentDetector {
      * 
      * @return string
      */
-    private static function get_client_ip() {
+    public static function get_client_ip() {
         $ip_keys = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
         
         foreach ($ip_keys as $key) {

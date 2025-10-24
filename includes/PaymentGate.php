@@ -90,6 +90,17 @@ class PaymentGate {
             if ($violation_check !== null) {
                 error_log('402links: ROBOTS.TXT VIOLATION DETECTED - ' . json_encode($violation_check));
                 $violation_data = $violation_check;
+                
+                // Report robots.txt violation immediately
+                API::report_violation([
+                    'wordpress_post_id' => $post->ID,
+                    'agent_name' => $agent_check['agent_name'] ?? 'Unknown',
+                    'user_agent' => $user_agent,
+                    'ip_address' => AgentDetector::get_client_ip(),
+                    'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
+                    'violation_type' => 'robots_txt',
+                    'robots_txt_directive' => $violation_check['robots_txt_directive'] ?? null
+                ]);
             } else {
                 error_log('402links: Robots.txt compliant or no rules found');
             }
@@ -130,6 +141,16 @@ class PaymentGate {
         if (AgentDetector::is_blacklisted($user_agent, $site_id)) {
             wp_die('Access denied: Agent blacklisted', 'Forbidden', ['response' => 403]);
         }
+        
+        // Report unpaid access attempt before redirect
+        API::report_violation([
+            'wordpress_post_id' => $post->ID,
+            'agent_name' => $agent_check['is_agent'] ? ($agent_check['agent_name'] ?? 'Unknown Agent') : 'Human',
+            'user_agent' => $user_agent,
+            'ip_address' => AgentDetector::get_client_ip(),
+            'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
+            'violation_type' => $agent_check['is_agent'] ? 'unpaid_access' : 'human_blocked'
+        ]);
         
         // UNIVERSAL REDIRECT: All unpaid visitors → 402links.com for payment
         $short_url = get_post_meta($post->ID, '_402links_url', true);
