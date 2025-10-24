@@ -436,6 +436,56 @@ class API {
     }
     
     /**
+     * Get site bot policies from backend
+     */
+    public function get_site_bot_policies($site_id) {
+        if (!$site_id) {
+            return [
+                'success' => false,
+                'error' => 'Site ID is required'
+            ];
+        }
+        
+        return $this->request('GET', '/get-site-bot-policies', [
+            'site_id' => $site_id
+        ]);
+    }
+    
+    /**
+     * Update site bot policies
+     */
+    public function update_site_bot_policies($site_id, $policies) {
+        if (!$site_id) {
+            return [
+                'success' => false,
+                'error' => 'Site ID is required'
+            ];
+        }
+        
+        if (!is_array($policies)) {
+            return [
+                'success' => false,
+                'error' => 'Policies must be an array'
+            ];
+        }
+        
+        // Validate policy structure
+        foreach ($policies as $policy) {
+            if (!isset($policy['bot_registry_id']) || !isset($policy['action'])) {
+                return [
+                    'success' => false,
+                    'error' => 'Each policy must have bot_registry_id and action'
+                ];
+            }
+        }
+        
+        return $this->request('POST', '/update-site-bot-policies', [
+            'site_id' => $site_id,
+            'policies' => $policies
+        ]);
+    }
+    
+    /**
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {
