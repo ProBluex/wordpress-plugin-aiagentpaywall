@@ -227,22 +227,6 @@ $is_connected = !empty($api_key) && !empty($site_id);
         </div>
         
         <div class="analytics-section">
-            <h3>AI Agent Breakdown</h3>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th>Agent</th>
-                        <th>Crawls</th>
-                        <th>Revenue</th>
-                    </tr>
-                </thead>
-                <tbody id="agent-breakdown-body">
-                    <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="analytics-section">
             <h3>Top Performing Content</h3>
             <table class="wp-list-table widefat fixed striped">
                 <thead>

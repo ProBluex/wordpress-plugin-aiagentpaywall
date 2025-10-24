@@ -324,35 +324,36 @@
     gap: 8px;
     margin-top: 24px;
     padding: 14px 28px;
-    background: var(--gray-800);
-    color: white;
-    border: 2px solid var(--gray-900);
+    background: var(--gray-800) !important;
+    color: white !important;
+    border: 2px solid var(--gray-900) !important;
     border-radius: 10px;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15);
+    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15) !important;
 }
 
 #save-overview-config:hover,
 #force-wallet-sync:hover {
-    background: var(--gray-900);
+    background: var(--gray-900) !important;
+    color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25);
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25) !important;
 }
 
 #force-wallet-sync {
-    background: white;
-    color: var(--gray-800);
-    border: 2px solid var(--gray-400);
-    box-shadow: none;
+    background: white !important;
+    color: var(--gray-800) !important;
+    border: 2px solid var(--gray-400) !important;
+    box-shadow: none !important;
 }
 
 #force-wallet-sync:hover {
-    background: var(--gray-100);
-    color: var(--gray-900);
-    border-color: var(--gray-500);
+    background: var(--gray-100) !important;
+    color: var(--gray-900) !important;
+    border-color: var(--gray-500) !important;
 }
 
 #save-overview-config:active {
@@ -505,16 +506,17 @@
 }
 
 .content-toolbar .button-primary {
-    background: var(--gray-800);
-    border: 2px solid var(--gray-900);
-    color: white;
-    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15);
+    background: var(--gray-800) !important;
+    border: 2px solid var(--gray-900) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15) !important;
 }
 
 .content-toolbar .button-primary:hover {
-    background: var(--gray-900);
+    background: var(--gray-900) !important;
+    color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25);
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25) !important;
 }
 
 .content-toolbar .button:not(.button-primary) {
@@ -537,7 +539,7 @@
 }
 
 #content-table thead {
-    background: var(--gray-800);
+    background: var(--gray-800) !important;
 }
 
 #content-table th {
@@ -548,6 +550,13 @@
     text-transform: uppercase;
     font-size: 11px;
     letter-spacing: 0.5px;
+    background: var(--gray-800) !important;
+}
+
+/* Ensure header cells maintain dark background */
+#content-table thead th {
+    background-color: var(--gray-800) !important;
+    color: white !important;
 }
 
 /* Violations Table - Policy Column */
