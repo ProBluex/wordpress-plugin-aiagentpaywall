@@ -299,12 +299,6 @@
                         );
                         $error.show();
                     }
-                } else {
-                    console.error('[Violations] Failed to save policies:', response.data?.message);
-                    if ($error.length) {
-                        $error.text('Failed to save: ' + (response.data?.message || 'Unknown error'))
-                            .show();
-                    }
                 }
             },
             error: function(xhr, status, error) {

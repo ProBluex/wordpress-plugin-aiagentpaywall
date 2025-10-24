@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.19
+Stable tag: 2.3.20
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,10 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.20 =
+* Hotfix: Remove duplicate else block in violations.js causing syntax error
+* Fix agent violation dashboard not loading due to JavaScript syntax error
 
 = 2.3.19 =
 * Phase 5: Complete Violations tab UI with policy column header, save button, and professional styling
