@@ -4,6 +4,11 @@
 (function($) {
     'use strict';
 
+    // Store bot policies: key = bot_registry_id, value = action
+    let botPolicies = {};
+    let changedPolicies = new Set();
+    let violationsData = null;
+
     // Initialize when document is ready
     $(document).ready(function() {
         // Load violations when tab becomes active
@@ -15,6 +20,25 @@
         if ($('#tab-violations').hasClass('active')) {
             loadViolations();
         }
+
+        // Event handler for policy dropdown changes
+        $(document).on('change', '.bot-policy-select', function() {
+            const botId = $(this).data('bot-id');
+            const newAction = $(this).val();
+            
+            console.log('[Violations] Policy changed for bot:', botId, 'to:', newAction);
+            
+            botPolicies[botId] = newAction;
+            changedPolicies.add(botId);
+            
+            // Show save button
+            $('#violations-save-policies').show();
+        });
+
+        // Event handler for save button
+        $(document).on('click', '#violations-save-policies', function() {
+            savePolicies();
+        });
     });
 
     /**
@@ -25,14 +49,19 @@
         const $error = $('#violations-error');
         const $table = $('#violations-table');
         const $empty = $('#violations-empty');
+        const $saveBtn = $('#violations-save-policies');
 
         // Show loading state
         $loading.show();
         $error.hide();
         $table.hide();
         $empty.hide();
+        $saveBtn.hide();
 
-        // Make AJAX request
+        // Reset state
+        changedPolicies.clear();
+
+        // Make AJAX request for violations
         $.ajax({
             url: ajaxurl,
             method: 'POST',
@@ -41,17 +70,65 @@
                 nonce: agentHubData.nonce
             },
             success: function(response) {
-                $loading.hide();
-
                 if (response.success && response.data) {
-                    displayViolations(response.data);
+                    violationsData = response.data;
+                    
+                    // Now fetch policies
+                    loadPolicies();
                 } else {
+                    $loading.hide();
                     showError(response.data?.message || 'Failed to load violations data');
                 }
             },
             error: function(xhr, status, error) {
                 $loading.hide();
                 showError('Network error: ' + error);
+            }
+        });
+    }
+
+    /**
+     * Load bot policies from API
+     */
+    function loadPolicies() {
+        const $loading = $('#violations-loading');
+        
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_get_site_bot_policies',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                $loading.hide();
+
+                if (response.success && response.data && response.data.policies) {
+                    // Convert policies array to object for easy lookup
+                    botPolicies = {};
+                    response.data.policies.forEach(function(policy) {
+                        botPolicies[policy.bot_registry_id] = policy.action;
+                    });
+                    
+                    console.log('[Violations] Loaded policies:', botPolicies);
+                    
+                    // Now display violations with policies
+                    displayViolations(violationsData);
+                } else {
+                    console.log('[Violations] No policies found, using defaults');
+                    botPolicies = {};
+                    
+                    // Display violations with default policies
+                    displayViolations(violationsData);
+                }
+            },
+            error: function(xhr, status, error) {
+                $loading.hide();
+                console.error('[Violations] Failed to load policies:', error);
+                
+                // Continue with default policies
+                botPolicies = {};
+                displayViolations(violationsData);
             }
         });
     }
@@ -114,10 +191,123 @@
             // Last seen
             $row.append($('<td>').text(formatDateTime(agent.last_seen)));
 
+            // Policy dropdown
+            const currentPolicy = botPolicies[agent.bot_registry_id] || 'monetize';
+            const $policyCell = $('<td>');
+            const $select = $('<select>')
+                .addClass('bot-policy-select')
+                .attr('data-bot-id', agent.bot_registry_id)
+                .css({
+                    'padding': '4px 8px',
+                    'border': '1px solid #ddd',
+                    'border-radius': '4px',
+                    'background': '#fff'
+                });
+            
+            const options = [
+                { value: 'monetize', label: 'Monetize' },
+                { value: 'allow', label: 'Allow' },
+                { value: 'block', label: 'Block' }
+            ];
+            
+            options.forEach(function(opt) {
+                const $option = $('<option>')
+                    .val(opt.value)
+                    .text(opt.label);
+                
+                if (opt.value === currentPolicy) {
+                    $option.attr('selected', 'selected');
+                }
+                
+                $select.append($option);
+            });
+            
+            $policyCell.append($select);
+            $row.append($policyCell);
+
             $tbody.append($row);
         });
 
         $table.show();
+    }
+
+    /**
+     * Save bot policies to backend
+     */
+    function savePolicies() {
+        const $saveBtn = $('#violations-save-policies');
+        const $loading = $('#violations-save-loading');
+        const $error = $('#violations-save-error');
+
+        // Show loading state
+        $saveBtn.prop('disabled', true);
+        if ($loading.length) {
+            $loading.show();
+        }
+        if ($error.length) {
+            $error.hide();
+        }
+
+        // Convert botPolicies object to array format
+        const policies = [];
+        Object.keys(botPolicies).forEach(function(bot_registry_id) {
+            policies.push({
+                bot_registry_id: bot_registry_id,
+                action: botPolicies[bot_registry_id]
+            });
+        });
+
+        console.log('[Violations] Saving policies:', policies);
+
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_update_site_bot_policies',
+                nonce: agentHubData.nonce,
+                policies: policies
+            },
+            success: function(response) {
+                $saveBtn.prop('disabled', false);
+                if ($loading.length) {
+                    $loading.hide();
+                }
+
+                if (response.success) {
+                    console.log('[Violations] Policies saved successfully');
+                    
+                    // Clear changed policies
+                    changedPolicies.clear();
+                    $saveBtn.hide();
+                    
+                    // Show success message (optional)
+                    if ($error.length) {
+                        $error.removeClass('error').addClass('success')
+                            .text('Policies saved successfully!')
+                            .show()
+                            .delay(3000)
+                            .fadeOut();
+                    }
+                } else {
+                    console.error('[Violations] Failed to save policies:', response.data?.message);
+                    if ($error.length) {
+                        $error.text('Failed to save: ' + (response.data?.message || 'Unknown error'))
+                            .show();
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                $saveBtn.prop('disabled', false);
+                if ($loading.length) {
+                    $loading.hide();
+                }
+                
+                console.error('[Violations] Network error saving policies:', error);
+                if ($error.length) {
+                    $error.text('Network error: ' + error).show();
+                }
+            }
+        });
     }
 
     /**
