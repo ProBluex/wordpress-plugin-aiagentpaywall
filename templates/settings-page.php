@@ -51,32 +51,40 @@ $is_connected = !empty($api_key) && !empty($site_id);
     <!-- Overview Tab -->
     <div id="tab-overview" class="tab-content active">
         <div class="agent-hub-stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon"><span class="dashicons dashicons-visibility"></span></div>
+            <div class="stat-card stat-card-overview">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-visibility"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Total AI Agent Crawls</div>
                     <div class="stat-value" id="total-crawls">Loading...</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon success"><span class="dashicons dashicons-yes-alt"></span></div>
+            <div class="stat-card stat-card-overview">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-yes-alt"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Paid Crawls</div>
                     <div class="stat-value" id="paid-crawls">Loading...</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon revenue"><span class="dashicons dashicons-money-alt"></span></div>
+            <div class="stat-card stat-card-overview">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-money-alt"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Total Revenue</div>
                     <div class="stat-value" id="total-revenue">$0.00</div>
                 </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon"><span class="dashicons dashicons-admin-page"></span></div>
+            <div class="stat-card stat-card-overview">
+                <div class="stat-icon stat-icon-flat">
+                    <span class="dashicons dashicons-admin-page"></span>
+                </div>
                 <div class="stat-content">
                     <div class="stat-label">Protected Pages</div>
                     <div class="stat-value" id="protected-pages">Loading...</div>

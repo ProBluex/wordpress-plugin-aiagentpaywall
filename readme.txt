@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.3.24
+Stable tag: 2.3.25
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,17 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 2.3.25 =
+* Design: Extend professional monochromatic design to Overview and My Content sections
+* Replace all colorful icons with flat, neutral grey icons throughout
+* Update stat cards to use enterprise-grade minimalist design
+* Apply monospace fonts to numerical data for technical precision
+* Replace colored status badges with neutral grey alternatives
+* Update toggle switches to professional neutral design
+* Replace blue buttons and accents with sophisticated grey palette
+* Remove decorative gradients and focus on data presentation
+* Achieve consistent serious, professional appearance across all sections
 
 = 2.3.24 =
 * Design: Convert violations section to flat, monochromatic design for serious professional appearance
