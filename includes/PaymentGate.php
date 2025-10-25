@@ -168,8 +168,21 @@ class PaymentGate {
                 error_log('===== 402links PaymentGate: INVOICE VERIFIED - SERVING CONTENT =====');
                 return; // Invoice valid, serve content
             } else {
-                error_log('402links: Invoice invalid or expired: ' . ($validation['error'] ?? 'unknown error'));
-                // Fall through to normal 402 response
+                // Invoice validation failed - return 403 with clear error
+                $error_code = $validation['code'] ?? 'VALIDATION_FAILED';
+                $error_msg = $validation['error'] ?? 'Invoice validation failed';
+                
+                error_log('402links: Invoice validation failed: ' . $error_msg . ' (Code: ' . $error_code . ')');
+                
+                status_header(403);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'error' => 'Invoice validation failed',
+                    'code' => $error_code,
+                    'message' => $error_msg,
+                    'invoice_id' => $invoice_id
+                ]);
+                exit;
             }
         }
         
@@ -242,7 +255,18 @@ class PaymentGate {
                 header('Location: ' . $redirect_url);
                 exit;
             } else {
-                error_log('402links: WARNING - No short_id meta found, falling back to 402 response');
+                error_log('402links: ERROR - No short_id meta found for post ' . $post->ID);
+                error_log('402links: This post needs to be synced with 402links.com');
+                
+                // Return user-friendly error instead of falling through
+                status_header(500);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'error' => 'Configuration error',
+                    'message' => 'This content is not properly configured for AI agent access. Please contact the site administrator.',
+                    'details' => 'Missing short_id for post ' . $post->ID
+                ]);
+                exit;
             }
         }
         

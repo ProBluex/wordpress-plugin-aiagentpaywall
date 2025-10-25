@@ -349,4 +349,28 @@ jQuery(document).ready(function($) {
     
     // Initial load
     loadOverviewStats();
+    
+    // Manage subscription link handler
+    $('#manage-subscription-link').on('click', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_manage_subscription',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data.url) {
+                    window.location.href = response.data.url;
+                } else {
+                    showToast('Error', response.data?.message || 'Failed to open customer portal', 'error');
+                }
+            },
+            error: function() {
+                showToast('Error', 'Network error. Please try again.', 'error');
+            }
+        });
+    });
 });

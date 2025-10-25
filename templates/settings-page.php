@@ -3,13 +3,29 @@ $settings = get_option('402links_settings');
 $api_key = get_option('402links_api_key');
 $site_id = get_option('402links_site_id');
 $is_connected = !empty($api_key) && !empty($site_id);
+$is_pro = \AgentHub\SubscriptionManager::is_pro_subscriber();
 ?>
 
 <div class="wrap agent-hub-dashboard">
     <h1>
         <span class="dashicons dashicons-shield-alt"></span>
         AI Agent Paywall
+        <?php if ($is_pro): ?>
+            <span class="pro-badge">
+                <span class="dashicons dashicons-star-filled"></span>
+                Pro Member
+            </span>
+        <?php endif; ?>
     </h1>
+    
+    <?php if ($is_pro): ?>
+        <div class="pro-thank-you">
+            ✨ Thank you for being a Pro member!
+            <a href="#" id="manage-subscription-link" class="manage-subscription-link">
+                Manage Subscription
+            </a>
+        </div>
+    <?php endif; ?>
     
     <div class="agent-hub-connection-status">
         <?php if ($is_connected): ?>
@@ -47,6 +63,24 @@ $is_connected = !empty($api_key) && !empty($site_id);
             Contact Us
         </button>
     </div>
+    
+    <?php if (!$is_pro): ?>
+        <div class="upgrade-banner">
+            <div class="upgrade-banner-content">
+                <div class="upgrade-banner-icon">
+                    <span class="dashicons dashicons-star-filled"></span>
+                </div>
+                <div class="upgrade-banner-text">
+                    <h3>Unlock Premium Features</h3>
+                    <p>Get advanced analytics, violation tracking, and priority support for only $9.99/month</p>
+                </div>
+                <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
+                   class="button button-primary button-hero upgrade-button">
+                    Upgrade to Pro
+                </a>
+            </div>
+        </div>
+    <?php endif; ?>
     
     <!-- Overview Tab -->
     <div id="tab-overview" class="tab-content active">
@@ -204,7 +238,21 @@ $is_connected = !empty($api_key) && !empty($site_id);
     </div>
     
     <!-- Analytics Tab -->
-    <div id="tab-analytics" class="tab-content">
+    <div id="tab-analytics" class="tab-content <?php echo !$is_pro ? 'locked-feature' : ''; ?>">
+        <?php if (!$is_pro): ?>
+            <div class="upgrade-overlay">
+                <div class="upgrade-message">
+                    <h2>🔒 Premium Feature</h2>
+                    <p>Upgrade to Pro to unlock advanced analytics and insights</p>
+                    <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
+                       class="button button-primary button-hero">
+                        Upgrade to Pro - $9.99/month
+                    </a>
+                </div>
+            </div>
+            <div class="blurred-content">
+        <?php endif; ?>
+        
         <div class="analytics-filters">
             <label>Timeframe:</label>
             <select id="analytics-timeframe">
@@ -241,10 +289,28 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 </tbody>
             </table>
         </div>
+        
+        <?php if (!$is_pro): ?>
+            </div>
+        <?php endif; ?>
     </div>
     
     <!-- Violations Tab -->
-    <div id="tab-violations" class="tab-content">
+    <div id="tab-violations" class="tab-content <?php echo !$is_pro ? 'locked-feature' : ''; ?>">
+        <?php if (!$is_pro): ?>
+            <div class="upgrade-overlay">
+                <div class="upgrade-message">
+                    <h2>🔒 Premium Feature</h2>
+                    <p>Upgrade to Pro to track AI agent violations and protect your content</p>
+                    <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
+                       class="button button-primary button-hero">
+                        Upgrade to Pro - $9.99/month
+                    </a>
+                </div>
+            </div>
+            <div class="blurred-content">
+        <?php endif; ?>
+        
         <div class="violations-header">
             <h2>
                 <span class="dashicons dashicons-shield-alt"></span>
@@ -351,6 +417,10 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </ul>
             <p style="margin-top: 15px;">This data helps you identify which AI agents are respecting web standards and which may need to be blocked or monitored more closely.</p>
         </div>
+        
+        <?php if (!$is_pro): ?>
+            </div>
+        <?php endif; ?>
     </div>
     
     <!-- Contact Us Tab -->

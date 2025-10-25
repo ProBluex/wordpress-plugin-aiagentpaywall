@@ -6,6 +6,9 @@ class Core {
         // Agent interception (BEFORE WordPress serves content)
         add_action('template_redirect', [PaymentGate::class, 'intercept_request'], 1);
         
+        // Initialize subscription status check
+        add_action('admin_init', [SubscriptionManager::class, 'get_cached_status']);
+        
         // Admin UI
         if (is_admin()) {
             add_action('admin_menu', [Admin::class, 'register_menu']);
@@ -50,6 +53,10 @@ class Core {
         // Bot policy AJAX handlers
         add_action('wp_ajax_agent_hub_get_site_bot_policies', [Admin::class, 'ajax_get_site_bot_policies']);
         add_action('wp_ajax_agent_hub_update_site_bot_policies', [Admin::class, 'ajax_update_site_bot_policies']);
+        
+        // Subscription AJAX handlers
+        add_action('wp_ajax_agent_hub_refresh_subscription', [Admin::class, 'ajax_refresh_subscription']);
+        add_action('wp_ajax_agent_hub_manage_subscription', [Admin::class, 'ajax_manage_subscription']);
         
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);

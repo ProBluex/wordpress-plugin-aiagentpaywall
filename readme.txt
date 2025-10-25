@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.4.1
+Stable tag: 3.0.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,26 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.0.0 =
+* 🚀 MAJOR RELEASE: Native Stripe Subscription Integration
+* ✅ FEATURE: WordPress plugin now integrates with 402links.com Pro subscriptions
+* ✅ FEATURE: Analytics and Violations tabs now require Pro membership
+* ✅ FEATURE: Locked feature overlays with upgrade prompts for free users
+* ✅ FEATURE: Pro Member badge and "Thank you!" message for subscribers
+* ✅ FEATURE: Stripe checkout integration via 402links.com/upgrade
+* ✅ FEATURE: Automatic subscription status checking and caching
+* ✅ FEATURE: "Manage Subscription" link to Stripe Customer Portal
+* ✅ FEATURE: Success redirect handling after subscription activation
+* 🔧 IMPROVEMENT: SubscriptionManager class for centralized subscription logic
+* 🔧 IMPROVEMENT: Real-time subscription status refresh via AJAX
+* 🔧 IMPROVEMENT: Premium feature access control in AJAX handlers
+* 🔧 IMPROVEMENT: Upgrade banner for free users on dashboard
+* 🎨 UI: Professional blurred content overlays for locked premium features
+* 🎨 UI: Color-coded Pro badge with gradient styling
+* 💳 INTEGRATION: Stripe webhook handler for automatic subscription updates
+* 💳 INTEGRATION: Edge functions for checkout, portal, and subscription checking
+* 📦 BREAKING: Analytics and Violations features now require $9.99/month Pro plan
 
 = 2.4.1 =
 * 🐛 CRITICAL FIX: Resolved "Fatal error: Non-static method cannot be called statically" in PaymentGate.php:210

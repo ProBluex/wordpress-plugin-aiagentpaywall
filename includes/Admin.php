@@ -160,6 +160,24 @@ class Admin {
             return;
         }
         
+        // Handle subscription success redirect
+        if (isset($_GET['subscription']) && $_GET['subscription'] === 'success') {
+            // Force refresh subscription status
+            \AgentHub\SubscriptionManager::refresh_subscription_status();
+            
+            // Show success notice
+            add_settings_error(
+                'agent_hub_messages',
+                'subscription_success',
+                '🎉 Welcome to Pro! Your subscription is now active.',
+                'success'
+            );
+            
+            // Redirect to clean URL
+            wp_redirect(admin_url('admin.php?page=agent-hub'));
+            exit;
+        }
+        
         include AGENT_HUB_PLUGIN_DIR . 'templates/settings-page.php';
     }
     
@@ -284,6 +302,16 @@ class Admin {
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        // Check if user is Pro subscriber for premium analytics
+        if (!\AgentHub\SubscriptionManager::is_pro_subscriber()) {
+            $site_id = get_option('402links_site_id');
+            wp_send_json_error([
+                'message' => 'Premium feature. Please upgrade to Pro.',
+                'upgrade_url' => 'https://402links.com/upgrade?site_id=' . $site_id
+            ]);
+            return;
         }
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
@@ -558,6 +586,16 @@ class Admin {
             return;
         }
         
+        // Check if user is Pro subscriber
+        if (!\AgentHub\SubscriptionManager::is_pro_subscriber()) {
+            $site_id = get_option('402links_site_id');
+            wp_send_json_error([
+                'message' => 'Premium feature. Please upgrade to Pro.',
+                'upgrade_url' => 'https://402links.com/upgrade?site_id=' . $site_id
+            ]);
+            return;
+        }
+        
         $api = new API();
         $result = $api->get_violations_summary();
         
@@ -646,6 +684,16 @@ class Admin {
             wp_send_json_error(['message' => 'Unauthorized']);
         }
         
+        // Check if user is Pro subscriber
+        if (!\AgentHub\SubscriptionManager::is_pro_subscriber()) {
+            $site_id = get_option('402links_site_id');
+            wp_send_json_error([
+                'message' => 'Premium feature. Please upgrade to Pro.',
+                'upgrade_url' => 'https://402links.com/upgrade?site_id=' . $site_id
+            ]);
+            return;
+        }
+        
         $site_id = get_option('402links_site_id');
         if (!$site_id) {
             wp_send_json_error(['message' => 'Site not registered']);
@@ -714,6 +762,64 @@ class Admin {
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);
+        }
+    }
+    
+    /**
+     * AJAX: Refresh subscription status
+     */
+    public static function ajax_refresh_subscription() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $status = \AgentHub\SubscriptionManager::refresh_subscription_status();
+        wp_send_json_success($status);
+    }
+    
+    /**
+     * AJAX: Manage subscription (open customer portal)
+     */
+    public static function ajax_manage_subscription() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $status = \AgentHub\SubscriptionManager::get_cached_status();
+        
+        if (!isset($status['stripe_customer_id'])) {
+            wp_send_json_error(['message' => 'No active subscription found']);
+            return;
+        }
+        
+        // Call customer-portal edge function
+        $api_key = get_option('402links_api_key');
+        $response = wp_remote_post('https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/customer-portal', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode([
+                'customer_id' => $status['stripe_customer_id']
+            ]),
+            'timeout' => 15
+        ]);
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error(['message' => $response->get_error_message()]);
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($body['url'])) {
+            wp_send_json_success(['url' => $body['url']]);
+        } else {
+            wp_send_json_error(['message' => 'Failed to create portal session']);
         }
     }
 }
