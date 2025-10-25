@@ -5,6 +5,21 @@ All notable changes to the 402links Agent Hub WordPress plugin will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.3] - 2025-10-26
+
+### Fixed
+- **Critical**: Added missing `/v1/wordpress-analytics-enhanced` API route to proxy
+- **Critical**: Fixed response structure double-nesting in Admin.php causing analytics to fail
+- **Critical**: Increased API timeout from 5 to 15 seconds to prevent premature timeouts
+- **Fixed**: Added defensive parsing in analytics.js to handle both nested and direct data structures
+- **Fixed**: Improved error logging for analytics API responses
+
+### Technical Details
+- `api-proxy/index.ts`: Added route mapping for enhanced analytics endpoint
+- `Admin.php`: Removed double-nesting by sending `wp_send_json_success($result)` directly
+- `API.php`: Increased timeout to 15 seconds for complex analytics queries
+- `analytics.js`: Added fallback `response.data.data || response.data` for robust parsing
+
 ## [3.4.2] - 2025-10-26
 
 ### Changed

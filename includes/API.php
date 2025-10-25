@@ -605,7 +605,7 @@ class API {
         
         $args = [
             'method' => $method,
-            'timeout' => 5, // Fast-fail if bot registry API is slow
+            'timeout' => 15, // Increased timeout for analytics queries
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key

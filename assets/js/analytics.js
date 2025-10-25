@@ -83,7 +83,10 @@
                 console.log('[Analytics] Enhanced analytics received:', response);
                 
                 if (response.success && response.data) {
-                    renderAnalytics(response.data);
+                    // Handle both nested and direct data structures
+                    const analyticsData = response.data.data || response.data;
+                    console.log('[Analytics] Parsed analytics data:', analyticsData);
+                    renderAnalytics(analyticsData);
                 } else {
                     console.error('[Analytics] Failed to load analytics:', response);
                     const errorMsg = response.data?.error || response.error || 'Unknown error';
