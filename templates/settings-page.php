@@ -231,6 +231,17 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
         </div>
 
+        <!-- Live Ecosystem Ticker -->
+        <div class="live-ticker">
+            <span class="ticker-label">
+                <span class="dashicons dashicons-media-video"></span>
+                LIVE
+            </span>
+            <span class="ticker-item" id="ticker-last-tx">Last Tx: Loading...</span>
+            <span class="ticker-item" id="ticker-24h-volume">24h Volume: $0</span>
+            <span class="ticker-item" id="ticker-active-now">Active Publishers: 0</span>
+        </div>
+
         <!-- User Position Cards -->
         <div class="user-position-grid">
             <div class="stat-card">
