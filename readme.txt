@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.0.0
+Stable tag: 3.1.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,22 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.1.0 =
+* 🐛 FIX: Dashboard stats now load correctly (no more stuck "Loading..." state)
+* 🚀 FEATURE: Pagination for "My Content" tab - prevents timeouts on sites with 1000+ posts
+* 🚀 FEATURE: In-WordPress modal checkout with personal indie developer message
+* ✅ FIX: Violations tab now loads properly after Pro upgrade (subscription refresh race condition)
+* ✅ FIX: Analytics tab now loads properly after Pro upgrade (subscription refresh race condition)
+* 🔧 IMPROVEMENT: Added ajax_get_dashboard_stats handler for Overview tab stats
+* 🔧 IMPROVEMENT: Content pagination with 50 items per page for better performance
+* 🔧 IMPROVEMENT: Subscription status refreshes before loading premium tabs
+* 🎨 UI: Beautiful upgrade modal with features list and pricing display
+* 🎨 UI: Professional pagination controls in My Content section
+* 💳 INTEGRATION: Modal-based checkout flow keeps users in WordPress admin
+* 📦 API: Added get_basic_stats() method for public dashboard stats
+* 📦 API: Enhanced ajax_get_content() with pagination support
+* 🔐 SECURITY: Subscription verification before all premium AJAX calls
 
 = 3.0.0 =
 * 🚀 MAJOR RELEASE: Native Stripe Subscription Integration
