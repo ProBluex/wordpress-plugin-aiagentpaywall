@@ -173,7 +173,9 @@
         }
         
         const labels = dailyRevenue.map(d => formatDate(d.date));
-        const data = dailyRevenue.map(d => parseFloat(d.revenue) || 0);
+        // Edge function returns revenue in dollars (0.01 = 1 cent)
+        // Use raw values directly, no multiplication needed
+        const data = dailyRevenue.map(d => parseFloat(d.revenue || 0));
         
         $('#revenue-chart-container').show();
         
@@ -210,7 +212,7 @@
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return '$' + formatMoney(context.parsed.y);
+                                return 'Revenue: $' + parseFloat(context.parsed.y).toFixed(2);
                             }
                         }
                     }
@@ -232,7 +234,7 @@
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + formatMoney(value);
+                                return '$' + value.toFixed(2);
                             }
                         }
                     }

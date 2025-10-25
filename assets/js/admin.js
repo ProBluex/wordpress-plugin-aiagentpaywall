@@ -38,8 +38,10 @@ jQuery(document).ready(function($) {
         $(this).addClass('active');
         $(`#tab-${tab}`).addClass('active');
         
-        // Load data when switching to certain tabs
-        if (tab === 'analytics') {
+        // Force refresh on every tab switch
+        if (tab === 'overview') {
+            loadOverviewStats(); // Always refresh Overview
+        } else if (tab === 'analytics') {
             loadAnalytics();
         } else if (tab === 'content') {
             loadContent();
@@ -119,10 +121,12 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',
+            cache: false,
             data: {
                 action: 'agent_hub_get_analytics',
                 nonce: agentHubData.nonce,
-                timeframe: '30d'
+                timeframe: '30d',
+                _nocache: Date.now()
             },
             success: function(response) {
                 if (response.success && response.data) {
@@ -349,4 +353,44 @@ jQuery(document).ready(function($) {
     
     // Initial load
     loadOverviewStats();
+    
+    // AUTO-REFRESH MECHANISM (Phase 4)
+    (function() {
+        let refreshInterval;
+        
+        function startAutoRefresh() {
+            // Refresh every 30 seconds
+            refreshInterval = setInterval(function() {
+                const activeTab = $('.tab-button.active').data('tab');
+                
+                switch(activeTab) {
+                    case 'overview':
+                        loadOverviewStats();
+                        break;
+                    case 'content':
+                        loadContent();
+                        break;
+                    case 'analytics':
+                        loadAnalytics();
+                        break;
+                }
+                
+                console.log('[402links] Auto-refreshed:', activeTab, 'tab at', new Date().toLocaleTimeString());
+            }, 30000); // 30 seconds
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+        
+        // Start on page load
+        startAutoRefresh();
+        
+        // Stop when user leaves page
+        $(window).on('beforeunload', function() {
+            stopAutoRefresh();
+        });
+    })();
 });

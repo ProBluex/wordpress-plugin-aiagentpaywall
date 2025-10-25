@@ -303,6 +303,11 @@ class Admin {
         }
         
         if ($result['success']) {
+            // Add cache-busting headers
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            
             // Unwrap the 'data' key to avoid double-nesting when wp_send_json_success wraps it again
             wp_send_json_success($result['data'] ?? $result);
         } else {
@@ -330,12 +335,17 @@ class Admin {
         $page_stats = [];
         if ($analytics_result['success'] && isset($analytics_result['data']['pages'])) {
             foreach ($analytics_result['data']['pages'] as $page) {
-                $page_stats[$page['wordpress_post_id']] = [
-                    'crawls' => $page['crawls'],
-                    'revenue' => $page['revenue']
+                $wp_post_id = $page['wordpress_post_id'];
+                $page_stats[$wp_post_id] = [
+                    'crawls' => intval($page['crawls'] ?? 0),
+                    'revenue' => floatval($page['revenue'] ?? 0)
                 ];
+                
+                error_log("402links: Page stats for WP Post ID {$wp_post_id}: {$page_stats[$wp_post_id]['crawls']} crawls, \${$page_stats[$wp_post_id]['revenue']} revenue");
             }
         }
+        
+        error_log('402links: Analytics returned stats for post IDs: ' . implode(', ', array_keys($page_stats)));
         
         $posts = get_posts([
             'post_type' => 'post',  // ✅ ONLY posts, not pages
@@ -345,28 +355,42 @@ class Admin {
             'order' => 'DESC'
         ]);
         
+        $wp_post_ids = array_map(function($p) { return $p->ID; }, $posts);
+        error_log('402links: WordPress query returned post IDs: ' . implode(', ', $wp_post_ids));
+        
         $content_list = [];
         
         foreach ($posts as $post) {
-            $link_id = get_post_meta($post->ID, '_402links_id', true);
-            $link_url = get_post_meta($post->ID, '_402links_url', true);
-            $price = get_post_meta($post->ID, '_402links_price', true);
-            $block_humans = get_post_meta($post->ID, '_402link_block_humans', true);
+            $post_id = $post->ID;
             
-            // Get stats from API data
-            $stats = $page_stats[$post->ID] ?? ['crawls' => 0, 'revenue' => 0];
+            $link_id = get_post_meta($post_id, '_402links_id', true);
+            $link_url = get_post_meta($post_id, '_402links_url', true);
+            $price = get_post_meta($post_id, '_402links_price', true);
+            $block_humans = get_post_meta($post_id, '_402link_block_humans', true);
+            
+            // Robust lookup with fallback
+            $crawls = 0;
+            $revenue = 0;
+            
+            if (isset($page_stats[$post_id])) {
+                $crawls = $page_stats[$post_id]['crawls'];
+                $revenue = $page_stats[$post_id]['revenue'];
+                error_log("402links: Post #{$post_id} '{$post->post_title}' - MATCHED: {$crawls} crawls, \${$revenue} revenue");
+            } else {
+                error_log("402links: Post #{$post_id} '{$post->post_title}' - NO MATCH in analytics data");
+            }
             
             $content_list[] = [
-                'id' => $post->ID,
-                'title' => get_the_title($post->ID),
-                'url' => get_permalink($post->ID),
+                'id' => $post_id,
+                'title' => get_the_title($post_id),
+                'url' => get_permalink($post_id),
                 'type' => $post->post_type,
                 'link_id' => $link_id,
                 'link_url' => $link_url,
                 'price' => $price ?: (get_option('402links_settings')['default_price'] ?? 0.10),
                 'has_link' => !empty($link_id),
-                'crawls' => intval($stats['crawls']),
-                'revenue' => floatval($stats['revenue']),
+                'crawls' => $crawls,
+                'revenue' => $revenue,
                 'published' => $post->post_date,
                 'block_humans' => (bool)$block_humans
             ];

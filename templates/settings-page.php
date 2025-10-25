@@ -250,6 +250,13 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 <span class="dashicons dashicons-shield-alt"></span>
                 Agent Violations Dashboard
             </h2>
+            <div class="notice notice-info inline" style="margin: 15px 0; padding: 12px 15px;">
+                <p style="margin: 0;">
+                    ⚠️ <strong>Note:</strong> This tab tracks <em>violations</em> only (robots.txt ignoring, unpaid access attempts).<br>
+                    ✅ <strong>Successful paid crawls</strong> appear in the <strong>Analytics</strong> tab.<br>
+                    📊 Showing <strong>0 violations</strong> means all agents are respecting your 402 payment requirements!
+                </p>
+            </div>
             <p class="violations-description">Track and monitor AI agents that violate robots.txt rules, ignore 402 payment requirements, or attempt unauthorized access to your content.</p>
         </div>
         
