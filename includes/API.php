@@ -375,7 +375,7 @@ class API {
         update_post_meta($post_id, '_402links_short_id', $short_id);
         update_post_meta($post_id, '_402links_url', $link_url);
         update_post_meta($post_id, '_402links_synced_at', current_time('mysql'));
-        update_post_meta($post_id, '_402link_block_humans', $force_human ? '1' : '0');
+        update_post_meta($post_id, '_402links_block_humans', $force_human ? '1' : '0');
         
         error_log('402links: SYNC SUCCESS - Post meta updated for post ' . $post_id);
         error_log('===== 402links REST SYNC COMPLETE =====');
@@ -433,7 +433,7 @@ class API {
             update_post_meta($post_id, '_402links_short_id', $paid_link['short_id']);
             update_post_meta($post_id, '_402links_url', $link_url);
             update_post_meta($post_id, '_402links_synced_at', current_time('mysql'));
-            update_post_meta($post_id, '_402link_block_humans', $page['force_human_payment'] ? '1' : '0');
+            update_post_meta($post_id, '_402links_block_humans', $page['force_human_payment'] ? '1' : '0');
             
             $updated++;
         }

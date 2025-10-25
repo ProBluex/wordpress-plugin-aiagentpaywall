@@ -366,7 +366,7 @@ class Admin {
             $link_id = get_post_meta($post_id, '_402links_id', true);
             $link_url = get_post_meta($post_id, '_402links_url', true);
             $price = get_post_meta($post_id, '_402links_price', true);
-            $block_humans = get_post_meta($post_id, '_402link_block_humans', true);
+            $block_humans = get_post_meta($post_id, '_402links_block_humans', true);
             
             // Robust lookup with fallback
             $crawls = 0;
@@ -524,7 +524,7 @@ class Admin {
             wp_send_json_error(['message' => 'Invalid post ID']);
         }
         
-        update_post_meta($post_id, '_402link_block_humans', $block_humans);
+        update_post_meta($post_id, '_402links_block_humans', $block_humans);
         
         wp_send_json_success([
             'message' => 'Human access updated',

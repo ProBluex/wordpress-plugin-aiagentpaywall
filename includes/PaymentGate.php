@@ -37,7 +37,7 @@ class PaymentGate {
             // If admin is viewing protected post, show preview notice
             if ($has_protection) {
                 add_action('admin_bar_menu', function($wp_admin_bar) use ($post) {
-                    $block_humans = get_post_meta($post->ID, '_402link_block_humans', true);
+                    $block_humans = get_post_meta($post->ID, '_402links_block_humans', true);
                     $protection_type = ($block_humans === '1' || $block_humans === 1) 
                         ? 'Agents + Humans' 
                         : 'Agents Only';
@@ -127,7 +127,7 @@ class PaymentGate {
             $should_block = true;
         } else {
             // For humans, check the block_humans flag
-            $block_humans = get_post_meta($post->ID, '_402link_block_humans', true);
+            $block_humans = get_post_meta($post->ID, '_402links_block_humans', true);
             error_log('Block Humans Meta: ' . ($block_humans ?: '0'));
             
             if ($block_humans === '1' || $block_humans === 1) {
