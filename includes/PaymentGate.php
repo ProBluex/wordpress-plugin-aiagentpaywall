@@ -426,9 +426,13 @@ class PaymentGate {
         // Encode for WWW-Authenticate header
         $www_auth_payload = base64_encode(json_encode($x402_response));
         
-        // Force HTTP 402 status (bypass WordPress status_header which can be overridden)
-        http_response_code(402);
-        header('HTTP/1.1 402 Payment Required', true, 402);
+        // Force HTTP 402 in a protocol-agnostic way
+        $code = 402;
+        http_response_code($code);
+        
+        // For CGI/FastCGI (nginx/php-fpm) compatibility
+        // (Apache handler ignores this safely; HTTP/2 will map via :status)
+        header('Status: 402 Payment Required');
         
         // Anti-cache headers (prevent proxies from caching 402)
         header('Cache-Control: private, no-store, max-age=0, must-revalidate');
