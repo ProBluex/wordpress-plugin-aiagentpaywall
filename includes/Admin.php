@@ -95,6 +95,13 @@ class Admin {
             true
         );
         
+        wp_enqueue_style(
+            'agent-hub-analytics-enhanced',
+            AGENT_HUB_PLUGIN_URL . 'assets/css/analytics-enhanced.css',
+            [],
+            '1.0.0'
+        );
+        
         wp_enqueue_script(
             'agent-hub-analytics',
             AGENT_HUB_PLUGIN_URL . 'assets/js/analytics.js',
@@ -287,13 +294,14 @@ class Admin {
         }
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
+        $enhanced = isset($_POST['enhanced']) ? (bool)$_POST['enhanced'] : true;
         
-        error_log('402links: ajax_get_analytics called');
+        error_log('402links: ajax_get_analytics called (enhanced: ' . ($enhanced ? 'true' : 'false') . ')');
         error_log('402links: Timeframe: ' . $timeframe);
         error_log('402links: Site URL: ' . get_site_url());
         
         $api = new API();
-        $result = $api->get_analytics($timeframe);
+        $result = $enhanced ? $api->get_analytics_enhanced($timeframe) : $api->get_analytics($timeframe);
         
         error_log('402links: get_analytics result success: ' . ($result['success'] ? 'true' : 'false'));
         if (!$result['success']) {
@@ -301,6 +309,9 @@ class Admin {
         } else {
             error_log('402links: get_analytics data keys: ' . implode(', ', array_keys($result['data'] ?? [])));
         }
+        
+        wp_send_json($result);
+    }
         
         if ($result['success']) {
             // Add cache-busting headers

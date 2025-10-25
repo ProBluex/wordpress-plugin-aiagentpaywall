@@ -230,6 +230,16 @@ class API {
             'timeframe' => $timeframe
         ]);
     }
+
+    /**
+     * Get enhanced analytics (user + ecosystem data)
+     */
+    public function get_analytics_enhanced($timeframe = '30d') {
+        return $this->request('POST', '/wordpress-analytics-enhanced', [
+            'site_url' => get_site_url(),
+            'timeframe' => $timeframe
+        ]);
+    }
     
     /**
      * Check if agent is blacklisted

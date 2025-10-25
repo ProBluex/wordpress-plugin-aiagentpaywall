@@ -63,7 +63,7 @@
     function loadAnalyticsData() {
         const timeframe = $('#analytics-timeframe').val() || '30d';
         
-        console.log('[Analytics] Loading analytics data for timeframe:', timeframe);
+        console.log('[Analytics] Loading enhanced analytics for timeframe:', timeframe);
         
         $.ajax({
             url: agentHubData.ajaxUrl,
@@ -71,14 +71,16 @@
             data: {
                 action: 'agent_hub_get_analytics',
                 nonce: agentHubData.nonce,
-                timeframe: timeframe
+                timeframe: timeframe,
+                enhanced: true
             },
             beforeSend: function() {
                 $('.analytics-loading').show();
+                $('.facilitator-loading').show();
                 $('#revenue-chart-container').hide();
             },
             success: function(response) {
-                console.log('[Analytics] Analytics data received:', response);
+                console.log('[Analytics] Enhanced analytics received:', response);
                 
                 if (response.success && response.data) {
                     renderAnalytics(response.data);
@@ -94,6 +96,7 @@
             },
             complete: function() {
                 $('.analytics-loading').hide();
+                $('.facilitator-loading').hide();
             }
         });
     }
@@ -102,10 +105,31 @@
      * Render analytics dashboard
      */
     function renderAnalytics(data) {
-        console.log('[Analytics] Rendering analytics dashboard');
+        console.log('[Analytics] Rendering enhanced analytics dashboard');
         
-        // Update summary stats
-        updateStatCards(data);
+        // Update ecosystem hero section
+        if (data.ecosystem) {
+            renderEcosystemHero(data.ecosystem, data.timeframe);
+            updateEcosystemStats(data.ecosystem);
+        }
+        
+        // Update user position cards
+        if (data.user && data.userPosition) {
+            renderUserPosition(data.user, data.userPosition);
+        }
+        
+        // Render facilitators
+        if (data.ecosystem && data.ecosystem.facilitators) {
+            renderFacilitators(data.ecosystem.facilitators);
+        }
+        
+        // Show motivational message
+        if (data.userPosition) {
+            renderMotivationalBanner(data.userPosition);
+        }
+        
+        // Update summary stats (legacy support)
+        updateStatCards(data.user || data);
         
         // Render revenue chart
         if (data.daily_revenue && data.daily_revenue.length > 0) {
@@ -122,6 +146,118 @@
         // Update top content table
         if (data.top_content) {
             renderTopContent(data.top_content);
+        }
+    }
+    
+    /**
+     * Render ecosystem hero section
+     */
+    function renderEcosystemHero(ecosystem, timeframe) {
+        const volumeFormatted = formatLargeMoney(ecosystem.total_volume || 0);
+        const growthPercentage = ecosystem.growth?.volume || '+0%';
+        const isPositive = !growthPercentage.startsWith('-');
+        
+        $('#ecosystem-volume').text('$' + volumeFormatted);
+        $('#ecosystem-growth').text((isPositive ? '↑ ' : '↓ ') + growthPercentage + ' vs prev')
+            .removeClass('positive negative')
+            .addClass(isPositive ? 'positive' : 'negative');
+    }
+    
+    /**
+     * Render user position cards
+     */
+    function renderUserPosition(user, position) {
+        $('#stat-total-links').text(formatNumber(position.total_links || 0));
+        $('#stat-user-revenue').text('$' + formatMoney(user.total_revenue || 0));
+        $('#stat-market-share').text(formatPercent(position.market_share || 0, 4));
+        
+        if (position.rank) {
+            $('#stat-rank-info').text(`Rank #${position.rank} of ${position.total_sites}`);
+        }
+    }
+    
+    /**
+     * Update ecosystem transaction count
+     */
+    function updateEcosystemStats(ecosystem) {
+        if (ecosystem && ecosystem.total_transactions) {
+            $('#stat-ecosystem-tx').text(formatNumber(ecosystem.total_transactions));
+        }
+    }
+    
+    /**
+     * Render facilitators breakdown
+     */
+    function renderFacilitators(facilitators) {
+        const container = $('#facilitator-bars');
+        container.empty();
+        
+        if (!facilitators || facilitators.length === 0) {
+            container.html('<p style="text-align:center; color:#666; padding:20px;">No facilitator data available</p>');
+            return;
+        }
+        
+        facilitators.forEach(fac => {
+            const volumeFormatted = formatLargeMoney(fac.volume);
+            const row = `
+                <div class="facilitator-row">
+                    <div class="facilitator-info">
+                        <span class="facilitator-name">${escapeHtml(fac.name)}</span>
+                    </div>
+                    <div class="facilitator-bar">
+                        <div class="bar-fill" style="width: ${fac.share}%"></div>
+                    </div>
+                    <div class="facilitator-stats">
+                        <span class="share">${fac.share.toFixed(1)}%</span>
+                        <span class="volume">$${volumeFormatted}</span>
+                    </div>
+                </div>
+            `;
+            container.append(row);
+        });
+    }
+    
+    /**
+     * Render motivational banner
+     */
+    function renderMotivationalBanner(position) {
+        const banner = $('#motivation-banner');
+        const marketShare = position.market_share || 0;
+        const percentile = parseFloat(position.percentile || 0);
+        
+        let message = '';
+        let className = '';
+        
+        if (marketShare < 0.01) {
+            message = `
+                <span class="dashicons dashicons-lightbulb"></span>
+                <strong>You're early!</strong> The x402 ecosystem is growing rapidly. 
+                Add more content to increase your share of this expanding market.
+            `;
+            className = 'motivation-info';
+        } else if (percentile >= 90) {
+            message = `
+                <span class="dashicons dashicons-awards"></span>
+                <strong>Top 10% Publisher!</strong> You're outpacing 90% of the ecosystem. 
+                Keep up the excellent work!
+            `;
+            className = 'motivation-success';
+        } else if (percentile >= 50) {
+            message = `
+                <span class="dashicons dashicons-chart-line"></span>
+                <strong>You're growing!</strong> You're in the top ${(100 - percentile).toFixed(0)}% of publishers. 
+                Keep publishing to climb the ranks!
+            `;
+            className = 'motivation-info';
+        }
+        
+        if (message) {
+            banner.html('<p>' + message + '</p>')
+                .removeClass('motivation-info motivation-success motivation-warning')
+                .addClass(className)
+                .show();
+        } else {
+            banner.hide();
         }
     }
     
@@ -321,10 +457,23 @@
     }
     
     /**
+     * Utility: Format large money amounts (K/M notation)
+     */
+    function formatLargeMoney(amount) {
+        const num = parseFloat(amount || 0);
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(2) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toFixed(2);
+    }
+    
+    /**
      * Utility: Format percentage
      */
-    function formatPercent(percent) {
-        return parseFloat(percent || 0).toFixed(1) + '%';
+    function formatPercent(percent, decimals = 1) {
+        return parseFloat(percent || 0).toFixed(decimals) + '%';
     }
     
     /**
