@@ -123,6 +123,9 @@
         if (data.top_content) {
             renderTopContent(data.top_content);
         }
+        
+        // Load agent purchases
+        loadAgentPurchases();
     }
     
     /**
@@ -307,6 +310,133 @@
     }
     
     /**
+     * Load agent purchases data from API
+     */
+    function loadAgentPurchases() {
+        const timeframe = $('#analytics-timeframe').val() || '30d';
+        const siteId = agentHubData.site_id;
+        
+        if (!siteId) {
+            console.warn('[Analytics] No site_id available for agent purchases');
+            $('#agent-purchases-body').html('<tr><td colspan="5" style="text-align:center; color:#999;">Site not registered</td></tr>');
+            return;
+        }
+        
+        console.log('[Analytics] Loading agent purchases for site:', siteId);
+        
+        // Calculate date range based on timeframe
+        const now = new Date();
+        let startDate = null;
+        
+        if (timeframe === '7d') {
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '30d') {
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '90d') {
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        }
+        
+        const startDateStr = startDate ? startDate.toISOString().split('T')[0] : null;
+        const endDateStr = now.toISOString().split('T')[0];
+        
+        $.ajax({
+            url: agentHubData.supabaseUrl + '/functions/v1/agent-purchase-analytics',
+            method: 'GET',
+            data: { 
+                site_id: siteId, 
+                start_date: startDateStr,
+                end_date: endDateStr
+            },
+            headers: { 
+                'apikey': agentHubData.supabaseAnonKey,
+                'Authorization': 'Bearer ' + agentHubData.supabaseAnonKey
+            },
+            success: function(response) {
+                console.log('[Analytics] Agent purchases received:', response);
+                renderAgentPurchases(response.recent_purchases || []);
+            },
+            error: function(xhr, status, error) {
+                console.error('[Analytics] Error loading agent purchases:', error);
+                $('#agent-purchases-body').html('<tr><td colspan="5" style="text-align:center; color:#c00;">Error loading data</td></tr>');
+            }
+        });
+    }
+    
+    /**
+     * Render agent purchases table
+     */
+    function renderAgentPurchases(purchases) {
+        const tbody = $('#agent-purchases-body');
+        tbody.empty();
+        
+        if (!purchases || purchases.length === 0) {
+            tbody.html('<tr><td colspan="5" style="text-align:center; color:#666;">No agent purchases yet</td></tr>');
+            return;
+        }
+        
+        purchases.forEach(purchase => {
+            const identifier = formatAgentIdentifier(purchase.agent_identifier);
+            const wallet = formatWalletAddress(purchase.agent_wallet);
+            const date = formatPurchaseDate(purchase.purchased_at);
+            
+            const row = `
+                <tr>
+                    <td style="font-family:monospace; font-size:12px;">${identifier}</td>
+                    <td style="font-family:monospace; font-size:12px;">${wallet}</td>
+                    <td>
+                        <a href="${escapeHtml(purchase.page_url)}" target="_blank">
+                            ${escapeHtml(purchase.page_title || 'Untitled')}
+                        </a>
+                    </td>
+                    <td>$${formatMoney(purchase.amount)}</td>
+                    <td>${date}</td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    /**
+     * Format agent identifier for display
+     */
+    function formatAgentIdentifier(identifier) {
+        if (!identifier) return '-';
+        
+        const parts = identifier.split(':');
+        if (parts.length !== 2) return escapeHtml(identifier);
+        
+        const [type, value] = parts;
+        
+        if (type === 'wallet') {
+            return formatWalletAddress(value);
+        } else if (type === 'ua') {
+            return 'UA-' + escapeHtml(value.substring(0, 8));
+        } else if (type === 'ip') {
+            return 'IP-' + escapeHtml(value);
+        }
+        
+        return escapeHtml(identifier);
+    }
+    
+    /**
+     * Format wallet address for display
+     */
+    function formatWalletAddress(wallet) {
+        if (!wallet || wallet === '-') return '-';
+        if (wallet.length < 10) return escapeHtml(wallet);
+        return escapeHtml(wallet.substring(0, 6) + '...' + wallet.substring(wallet.length - 4));
+    }
+    
+    /**
+     * Format purchase date for display
+     */
+    function formatPurchaseDate(dateStr) {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    /**
      * Utility: Format number with commas
      */
     function formatNumber(num) {
@@ -376,11 +506,18 @@
         }
     }
     
+    // Wire up timeframe selector to also refresh agent purchases
+    $(document).on('change', '#analytics-timeframe', function() {
+        loadAnalyticsData(); // Existing call
+        loadAgentPurchases(); // New call
+    });
+    
     // Expose functions globally
     window.agentHubAnalytics = {
         loadAnalyticsData: loadAnalyticsData,
         renderRevenueChart: renderRevenueChart,
-        startAutoRefresh: startAnalyticsAutoRefresh
+        startAutoRefresh: startAnalyticsAutoRefresh,
+        loadAgentPurchases: loadAgentPurchases
     };
     
     console.log('[Analytics] Module loaded successfully');
