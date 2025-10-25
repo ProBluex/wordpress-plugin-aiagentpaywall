@@ -241,27 +241,6 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 </tbody>
             </table>
         </div>
-        
-        <div class="analytics-section" style="margin-top: 30px;">
-            <h3>Agent Content Purchases</h3>
-            <p class="analytics-description" style="margin-bottom: 15px; color: #666;">
-                Track AI agents that purchased content directly from your Agent Hub marketplace listing.
-            </p>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th style="width: 25%;">Agent Identifier</th>
-                        <th style="width: 20%;">Wallet Address</th>
-                        <th style="width: 30%;">Content Purchased</th>
-                        <th style="width: 15%;">Amount</th>
-                        <th style="width: 10%;">Date</th>
-                    </tr>
-                </thead>
-                <tbody id="agent-purchases-body">
-                    <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
     </div>
     
     <!-- Violations Tab -->
