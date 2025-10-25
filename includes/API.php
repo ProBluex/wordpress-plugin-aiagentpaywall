@@ -643,6 +643,10 @@ class API {
             ];
         }
         
+        // Don't double-wrap if edge function already returned proper structure
+        if (isset($result['success'])) {
+            return $result;
+        }
         return array_merge(['success' => true], $result ?? []);
     }
 }

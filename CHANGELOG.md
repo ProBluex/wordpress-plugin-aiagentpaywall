@@ -5,6 +5,19 @@ All notable changes to the 402links Agent Hub WordPress plugin will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.4] - 2025-10-26
+
+### Fixed
+- **Critical**: Fixed triple-nesting bug causing analytics data to be inaccessible
+- **Critical**: Prevented redundant success wrapping in API.php when edge function already returns proper structure
+- **Critical**: Fixed Admin.php to extract data from nested structure before sending to frontend
+- **Fixed**: Analytics now properly parse ecosystem and user data at correct nesting level
+
+### Technical Details
+- `API.php` (line 646): Added check to prevent double-wrapping `{success: true}` if result already contains it
+- `Admin.php` (line 316): Extract `$data = $result['data'] ?? $result` before `wp_send_json_success()` to avoid triple-nesting
+- Root cause: Response chain was nesting data 3 levels deep, causing frontend validation to fail on `data.ecosystem`
+
 ## [3.4.3] - 2025-10-26
 
 ### Fixed

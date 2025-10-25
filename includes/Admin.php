@@ -311,9 +311,10 @@ class Admin {
         }
         
         // Properly format response for WordPress AJAX
-        // Don't double-nest: API already returns {success, data} structure
+        // Extract data from nested structure if present to avoid triple-nesting
         if ($result['success']) {
-            wp_send_json_success($result);
+            $data = $result['data'] ?? $result;
+            wp_send_json_success($data);
         } else {
             wp_send_json_error(['message' => $result['error'] ?? 'Failed to load analytics']);
         }
