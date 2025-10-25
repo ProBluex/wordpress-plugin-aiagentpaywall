@@ -61,6 +61,29 @@
         // Reset state
         changedPolicies.clear();
 
+        // FIRST: Check/refresh subscription status
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_refresh_subscription',
+                nonce: agentHubData.nonce
+            },
+            success: function(subResponse) {
+                // Now that subscription is refreshed, load violations
+                loadViolationsData();
+            },
+            error: function() {
+                // Try to load anyway
+                loadViolationsData();
+            }
+        });
+    }
+    
+    /**
+     * Load violations data after subscription refresh
+     */
+    function loadViolationsData() {
         // Make AJAX request for violations
         $.ajax({
             url: ajaxurl,
@@ -72,16 +95,14 @@
             success: function(response) {
                 if (response.success && response.data) {
                     violationsData = response.data;
-                    
-                    // Now fetch policies
                     loadPolicies();
                 } else {
-                    $loading.hide();
+                    $('#violations-loading').hide();
                     showError(response.data?.message || 'Failed to load violations data');
                 }
             },
             error: function(xhr, status, error) {
-                $loading.hide();
+                $('#violations-loading').hide();
                 showError('Network error: ' + error);
             }
         });

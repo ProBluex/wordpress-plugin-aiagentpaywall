@@ -65,6 +65,27 @@
         
         console.log('[Analytics] Loading analytics data for timeframe:', timeframe);
         
+        // First refresh subscription status
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_refresh_subscription',
+                nonce: agentHubData.nonce
+            },
+            success: function() {
+                loadAnalyticsDataAfterRefresh(timeframe);
+            },
+            error: function() {
+                loadAnalyticsDataAfterRefresh(timeframe);
+            }
+        });
+    }
+    
+    /**
+     * Load analytics data after subscription refresh
+     */
+    function loadAnalyticsDataAfterRefresh(timeframe) {
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',

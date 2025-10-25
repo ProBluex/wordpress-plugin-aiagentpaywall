@@ -480,6 +480,15 @@ class API {
     }
     
     /**
+     * Get basic dashboard stats (no premium required)
+     */
+    public function get_basic_stats($site_id) {
+        return $this->request('GET', '/get-site-basic-stats', [
+            'site_id' => $site_id
+        ]);
+    }
+    
+    /**
      * Update site bot policies
      */
     public function update_site_bot_policies($site_id, $policies) {

@@ -143,6 +143,21 @@ class Admin {
             true
         );
         
+        wp_enqueue_style(
+            'agent-hub-checkout-modal',
+            AGENT_HUB_PLUGIN_URL . 'assets/css/checkout-modal.css',
+            [],
+            AGENT_HUB_VERSION
+        );
+        
+        wp_enqueue_script(
+            'agent-hub-checkout-modal',
+            AGENT_HUB_PLUGIN_URL . 'assets/js/checkout-modal.js',
+            ['jquery'],
+            AGENT_HUB_VERSION,
+            true
+        );
+        
         wp_localize_script('agent-hub-admin', 'agentHubData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('agent_hub_nonce'),
@@ -339,7 +354,7 @@ class Admin {
     }
     
     /**
-     * AJAX: Get content list
+     * AJAX: Get content list with pagination
      */
     public static function ajax_get_content() {
         check_ajax_referer('agent_hub_nonce', 'nonce');
@@ -347,6 +362,15 @@ class Admin {
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Unauthorized']);
         }
+        
+        // Pagination parameters
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 50;
+        $offset = ($page - 1) * $per_page;
+        
+        // Get total count first
+        $total_posts = wp_count_posts('post');
+        $total_count = $total_posts->publish;
         
         // Get site_id
         $site_id = get_option('402links_site_id');
@@ -357,18 +381,20 @@ class Admin {
         
         $page_stats = [];
         if ($analytics_result['success'] && isset($analytics_result['data']['pages'])) {
-            foreach ($analytics_result['data']['pages'] as $page) {
-                $page_stats[$page['wordpress_post_id']] = [
-                    'crawls' => $page['crawls'],
-                    'revenue' => $page['revenue']
+            foreach ($analytics_result['data']['pages'] as $page_data) {
+                $page_stats[$page_data['wordpress_post_id']] = [
+                    'crawls' => $page_data['crawls'],
+                    'revenue' => $page_data['revenue']
                 ];
             }
         }
         
+        // Fetch paginated posts
         $posts = get_posts([
-            'post_type' => 'post',  // ✅ ONLY posts, not pages
+            'post_type' => 'post',
             'post_status' => 'publish',
-            'posts_per_page' => 100,
+            'posts_per_page' => $per_page,
+            'offset' => $offset,
             'orderby' => 'date',
             'order' => 'DESC'
         ]);
@@ -400,7 +426,56 @@ class Admin {
             ];
         }
         
-        wp_send_json_success(['content' => $content_list]);
+        wp_send_json_success([
+            'content' => $content_list,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total_items' => $total_count,
+                'total_pages' => ceil($total_count / $per_page),
+                'has_next' => ($page * $per_page) < $total_count,
+                'has_prev' => $page > 1
+            ]
+        ]);
+    }
+    
+    /**
+     * AJAX: Get dashboard overview stats
+     */
+    public static function ajax_get_dashboard_stats() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            wp_send_json_success([
+                'total_crawls' => 0,
+                'paid_crawls' => 0,
+                'total_revenue' => 0,
+                'protected_pages' => 0
+            ]);
+            return;
+        }
+        
+        // Get basic stats from API
+        $api = new API();
+        $result = $api->get_basic_stats($site_id);
+        
+        if ($result['success'] && isset($result['data'])) {
+            wp_send_json_success($result['data']);
+        } else {
+            // Return zeros instead of error
+            wp_send_json_success([
+                'total_crawls' => 0,
+                'paid_crawls' => 0,
+                'total_revenue' => 0,
+                'protected_pages' => 0
+            ]);
+        }
     }
     
     /**

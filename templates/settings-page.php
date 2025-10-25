@@ -74,10 +74,10 @@ $is_pro = \AgentHub\SubscriptionManager::is_pro_subscriber();
                     <h3>Unlock Premium Features</h3>
                     <p>Get advanced analytics, violation tracking, and priority support for only $9.99/month</p>
                 </div>
-                <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
-                   class="button button-primary button-hero upgrade-button">
-                    Upgrade to Pro
-                </a>
+                    <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
+                       class="button button-primary button-hero upgrade-button">
+                        Upgrade to Pro
+                    </a>
             </div>
         </div>
     <?php endif; ?>
@@ -235,6 +235,9 @@ $is_pro = \AgentHub\SubscriptionManager::is_pro_subscriber();
                 </tr>
             </tbody>
         </table>
+        
+        <!-- Pagination container -->
+        <div id="content-pagination" class="content-pagination"></div>
     </div>
     
     <!-- Analytics Tab -->
@@ -244,8 +247,7 @@ $is_pro = \AgentHub\SubscriptionManager::is_pro_subscriber();
                 <div class="upgrade-message">
                     <h2>🔒 Premium Feature</h2>
                     <p>Upgrade to Pro to unlock advanced analytics and insights</p>
-                    <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
-                       class="button button-primary button-hero">
+                    <a href="#" class="button button-primary button-hero upgrade-button">
                         Upgrade to Pro - $9.99/month
                     </a>
                 </div>
@@ -302,8 +304,7 @@ $is_pro = \AgentHub\SubscriptionManager::is_pro_subscriber();
                 <div class="upgrade-message">
                     <h2>🔒 Premium Feature</h2>
                     <p>Upgrade to Pro to track AI agent violations and protect your content</p>
-                    <a href="https://402links.com/upgrade?site_id=<?php echo esc_attr($site_id); ?>" 
-                       class="button button-primary button-hero">
+                    <a href="#" class="button button-primary button-hero upgrade-button">
                         Upgrade to Pro - $9.99/month
                     </a>
                 </div>

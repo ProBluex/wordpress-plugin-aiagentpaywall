@@ -6,6 +6,16 @@
     'use strict';
     
     $(document).ready(function() {
+        // Load dashboard stats on page load if Overview tab is active
+        if ($('#tab-overview').hasClass('active')) {
+            loadDashboardStats();
+        }
+        
+        // Reload stats when Overview tab is clicked
+        $(document).on('click', '[data-tab="overview"]', function() {
+            setTimeout(loadDashboardStats, 100);
+        });
+        
         // Track if user has started editing
         let userIsEditing = false;
         
@@ -118,5 +128,52 @@
             });
         });
     });
+    
+    /**
+     * Load dashboard stats
+     */
+    function loadDashboardStats() {
+        console.log('[Overview] Loading dashboard stats');
+        
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_get_dashboard_stats',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    
+                    // Update stat values
+                    $('#total-crawls').text(formatNumber(data.total_crawls || 0));
+                    $('#paid-crawls').text(formatNumber(data.paid_crawls || 0));
+                    $('#total-revenue').text('$' + formatMoney(data.total_revenue || 0));
+                    $('#protected-pages').text(formatNumber(data.protected_pages || 0));
+                } else {
+                    // Show zeros on error
+                    $('#total-crawls').text('0');
+                    $('#paid-crawls').text('0');
+                    $('#total-revenue').text('$0.00');
+                    $('#protected-pages').text('0');
+                }
+            },
+            error: function() {
+                $('#total-crawls').text('0');
+                $('#paid-crawls').text('0');
+                $('#total-revenue').text('$0.00');
+                $('#protected-pages').text('0');
+            }
+        });
+    }
+    
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    
+    function formatMoney(amount) {
+        return parseFloat(amount || 0).toFixed(2);
+    }
     
 })(jQuery);
