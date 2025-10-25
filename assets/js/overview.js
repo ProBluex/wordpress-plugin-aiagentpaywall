@@ -94,7 +94,16 @@
                             indicator.find('.status-dot').removeClass().addClass('status-dot red');
                             indicator.find('.status-text').html('Sync failed <span class="dashicons dashicons-warning"></span>');
                             const errorMsg = response.data.sync_error || 'Failed to sync to database';
-                            window.showToast('Warning', response.data.message + ' (Sync: ' + errorMsg + ')', 'warning');
+                            
+                            // Show more helpful error message
+                            let userMessage = response.data.message;
+                            if (errorMsg.includes('not provisioned') || errorMsg.includes('pending')) {
+                                userMessage += ' - Site registration is pending.';
+                            } else if (errorMsg.includes('API key')) {
+                                userMessage += ' - Authentication issue.';
+                            }
+                            
+                            window.showToast('Warning', userMessage + ' (Sync: ' + errorMsg + ')', 'warning');
                         }
                         
                         setTimeout(function() {

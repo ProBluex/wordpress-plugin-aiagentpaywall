@@ -404,43 +404,83 @@ class Admin {
             ]);
         }
         
-        // Save locally
+        // Save locally first
         $settings = get_option('402links_settings', []);
         $settings['payment_wallet'] = $wallet;
         $settings['default_price'] = $default_price;
         update_option('402links_settings', $settings);
         
-        $sync_success = false;
-        $sync_error = null;
-        
-        // Sync to Supabase
+        // CHECK IF SITE IS PROVISIONED
         $site_id = get_option('402links_site_id');
-        error_log('402links: Site ID: ' . ($site_id ?: 'NOT SET'));
+        $api_key = get_option('402links_api_key');
         
-        if ($site_id) {
-            $api = new API();
-            $result = $api->sync_wallet($site_id, $wallet);
+        // SCENARIO 1: Site not provisioned at all
+        if (!$site_id) {
+            error_log('402links: Site not provisioned - triggering auto-provision');
             
-            error_log('402links: Sync wallet API result: ' . json_encode($result));
+            // Trigger auto-provisioning
+            Installer::activate();
             
-            if ($result['success']) {
-                $sync_success = true;
-                error_log('402links: Wallet synced successfully to Supabase');
-            } else {
-                $sync_error = $result['error'] ?? 'Unknown sync error';
-                error_log('402links: Failed to sync wallet to Supabase: ' . $sync_error);
+            // Wait a moment for provisioning to complete
+            sleep(2);
+            
+            // Re-check if provisioning succeeded
+            $site_id = get_option('402links_site_id');
+            $api_key = get_option('402links_api_key');
+            
+            if (!$site_id) {
+                $provision_error = get_option('402links_provisioning_error', 'Auto-provisioning failed');
+                error_log('402links: Auto-provisioning failed: ' . $provision_error);
+                
+                wp_send_json_success([
+                    'message' => 'Configuration saved locally',
+                    'sync_success' => false,
+                    'sync_error' => 'Site registration pending. ' . $provision_error,
+                    'wallet' => $wallet
+                ]);
+                return;
             }
-        } else {
-            $sync_error = 'Site not registered - cannot sync to database';
-            error_log('402links: Cannot sync wallet - no site_id found');
+            
+            error_log('402links: Auto-provisioning completed. Site ID: ' . $site_id);
         }
         
-        wp_send_json_success([
-            'message' => 'Configuration saved successfully',
-            'sync_success' => $sync_success,
-            'sync_error' => $sync_error,
-            'wallet' => $wallet
-        ]);
+        // SCENARIO 2: Site provisioned but no API key
+        if (!$api_key) {
+            error_log('402links: Site provisioned but no API key found');
+            wp_send_json_success([
+                'message' => 'Configuration saved locally',
+                'sync_success' => false,
+                'sync_error' => 'Site registered but API key is missing. Please contact support.',
+                'wallet' => $wallet
+            ]);
+            return;
+        }
+        
+        // SCENARIO 3: Everything is ready - sync to backend
+        error_log('402links: Site ID: ' . $site_id . ' - Syncing wallet to backend');
+        
+        $api = new API();
+        $result = $api->sync_wallet($site_id, $wallet);
+        
+        error_log('402links: Sync wallet API result: ' . json_encode($result));
+        
+        if ($result['success']) {
+            wp_send_json_success([
+                'message' => 'Configuration saved and synced successfully',
+                'sync_success' => true,
+                'wallet' => $wallet
+            ]);
+        } else {
+            $sync_error = $result['error'] ?? 'Unknown sync error';
+            error_log('402links: Failed to sync wallet: ' . $sync_error);
+            
+            wp_send_json_success([
+                'message' => 'Configuration saved locally',
+                'sync_success' => false,
+                'sync_error' => $sync_error,
+                'wallet' => $wallet
+            ]);
+        }
     }
     
     /**
