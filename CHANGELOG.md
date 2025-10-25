@@ -5,6 +5,13 @@ All notable changes to the 402links Agent Hub WordPress plugin will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.1] - 2025-10-26
+
+### Fixed
+- **Critical PHP Syntax Error**: Resolved fatal error in `includes/Admin.php` line 316 caused by orphaned if statement outside function scope
+- **Duplicate Code Cleanup**: Removed duplicate response handling code (lines 316-326) that was accidentally left after refactoring the `ajax_get_analytics()` method
+- WordPress admin now loads correctly without parse errors
+
 ## [3.4.0] - 2025-10-26
 
 ### Added

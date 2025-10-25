@@ -312,19 +312,6 @@ class Admin {
         
         wp_send_json($result);
     }
-        
-        if ($result['success']) {
-            // Add cache-busting headers
-            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-            header('Pragma: no-cache');
-            header('Expires: 0');
-            
-            // Unwrap the 'data' key to avoid double-nesting when wp_send_json_success wraps it again
-            wp_send_json_success($result['data'] ?? $result);
-        } else {
-            wp_send_json_error($result);
-        }
-    }
     
     /**
      * AJAX: Get content list
