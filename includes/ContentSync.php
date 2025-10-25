@@ -97,6 +97,12 @@ class ContentSync {
                 error_log('402links: Saved link_id ' . $result['link_id'] . ' for post ' . $post_id);
             }
             
+            // ⭐ CRITICAL FIX: Store short_id in post meta
+            if (isset($result['short_id'])) {
+                update_post_meta($post_id, '_402links_short_id', $result['short_id']);
+                error_log('402links: Saved short_id ' . $result['short_id'] . ' for post ' . $post_id);
+            }
+            
             // Store the correct 402link URL using production domain
             if (isset($result['link_url'])) {
                 update_post_meta($post_id, '_402links_url', $result['link_url']);
