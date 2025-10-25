@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.4
+Stable tag: 3.3.2
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,34 +63,6 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
-
-= 3.4.2 =
-* 🎨 REDESIGN: Professional enterprise-grade Analytics dashboard with dark, subdued color scheme
-* 🔧 FIX: Overview tab now loads stats correctly (resolved "Loading..." stuck state)
-* 🔧 FIX: Analytics tab API response handling now properly formatted for WordPress AJAX
-* 🎨 IMPROVEMENT: Compact hero section with monospace fonts for numbers
-* 🎨 IMPROVEMENT: All cards and sections updated to match dark enterprise theme
-
-= 3.4.1 =
-* 🔧 CRITICAL FIX: Resolved PHP syntax error in Admin.php causing fatal error on WordPress admin
-* 🔧 IMPROVEMENT: Removed duplicate response handling code from analytics endpoint
-
-= 3.4.0 =
-* 🚀 MAJOR: Enhanced Analytics Dashboard with x402 Ecosystem Integration
-* ✅ FEATURE: Ecosystem Hero Section - Display total x402 volume ($646K+) with growth indicators
-* ✅ FEATURE: Market Share Tracking - See your percentage of the global agent economy
-* ✅ FEATURE: Publisher Rankings - View your rank among all active publishers
-* ✅ FEATURE: Top Facilitators Breakdown - Visual representation of Coinbase (89.2%), PayAI (10.5%), X402rs (0.3%)
-* ✅ FEATURE: Motivational Messaging - Context-aware encouragement based on performance
-* ✅ FEATURE: Live Ecosystem Ticker - Real-time updates on transactions, volume, and active publishers
-* ✅ FEATURE: Auto-Refresh Dashboard - Updates every 5 minutes automatically when tab is active
-* ✅ FEATURE: Animated Number Counters - Smooth transitions for engaging user experience
-* 🔧 IMPROVEMENT: Enhanced loading states with spinners and empty state handling for facilitator data
-* 🔧 IMPROVEMENT: Mobile-optimized layout with responsive ticker and stat cards
-* 🔧 IMPROVEMENT: Better error handling throughout analytics system
-* 📊 DATA: Analytics now fetches from /wordpress-analytics-enhanced endpoint
-* 📊 DATA: Ecosystem data sourced from x402_facilitator_transfers table (Base Mainnet)
-* 🎯 PERFORMANCE: Auto-refresh interval optimized from 30 seconds to 5 minutes
 
 = 3.2.0 =
 * 🚀 CRITICAL FIX: Bot payment flow - agents now receive 402 response instead of redirect

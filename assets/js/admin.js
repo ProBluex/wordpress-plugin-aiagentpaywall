@@ -126,7 +126,6 @@ jQuery(document).ready(function($) {
                 action: 'agent_hub_get_analytics',
                 nonce: agentHubData.nonce,
                 timeframe: '30d',
-                enhanced: false, // Request basic analytics for overview
                 _nocache: Date.now()
             },
             success: function(response) {
@@ -136,9 +135,6 @@ jQuery(document).ready(function($) {
                     $('#total-revenue').text('$' + (parseFloat(response.data.total_revenue || 0).toFixed(2)));
                     $('#protected-pages').text(response.data.protected_pages || 0);
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('[Overview] Failed to load stats:', error);
             }
         });
     }

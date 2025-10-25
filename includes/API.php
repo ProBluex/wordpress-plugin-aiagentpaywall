@@ -230,16 +230,6 @@ class API {
             'timeframe' => $timeframe
         ]);
     }
-
-    /**
-     * Get enhanced analytics (user + ecosystem data)
-     */
-    public function get_analytics_enhanced($timeframe = '30d') {
-        return $this->request('POST', '/wordpress-analytics-enhanced', [
-            'site_url' => get_site_url(),
-            'timeframe' => $timeframe
-        ]);
-    }
     
     /**
      * Check if agent is blacklisted
@@ -605,7 +595,7 @@ class API {
         
         $args = [
             'method' => $method,
-            'timeout' => 15, // Increased timeout for analytics queries
+            'timeout' => 5, // Fast-fail if bot registry API is slow
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key
@@ -643,10 +633,6 @@ class API {
             ];
         }
         
-        // Don't double-wrap if edge function already returned proper structure
-        if (isset($result['success'])) {
-            return $result;
-        }
         return array_merge(['success' => true], $result ?? []);
     }
 }

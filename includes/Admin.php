@@ -95,13 +95,6 @@ class Admin {
             true
         );
         
-        wp_enqueue_style(
-            'agent-hub-analytics-enhanced',
-            AGENT_HUB_PLUGIN_URL . 'assets/css/analytics-enhanced.css',
-            [],
-            '1.0.0'
-        );
-        
         wp_enqueue_script(
             'agent-hub-analytics',
             AGENT_HUB_PLUGIN_URL . 'assets/js/analytics.js',
@@ -294,14 +287,13 @@ class Admin {
         }
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
-        $enhanced = isset($_POST['enhanced']) ? (bool)$_POST['enhanced'] : true;
         
-        error_log('402links: ajax_get_analytics called (enhanced: ' . ($enhanced ? 'true' : 'false') . ')');
+        error_log('402links: ajax_get_analytics called');
         error_log('402links: Timeframe: ' . $timeframe);
         error_log('402links: Site URL: ' . get_site_url());
         
         $api = new API();
-        $result = $enhanced ? $api->get_analytics_enhanced($timeframe) : $api->get_analytics($timeframe);
+        $result = $api->get_analytics($timeframe);
         
         error_log('402links: get_analytics result success: ' . ($result['success'] ? 'true' : 'false'));
         if (!$result['success']) {
@@ -310,13 +302,16 @@ class Admin {
             error_log('402links: get_analytics data keys: ' . implode(', ', array_keys($result['data'] ?? [])));
         }
         
-        // Properly format response for WordPress AJAX
-        // Extract data from nested structure if present to avoid triple-nesting
         if ($result['success']) {
-            $data = $result['data'] ?? $result;
-            wp_send_json_success($data);
+            // Add cache-busting headers
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+            
+            // Unwrap the 'data' key to avoid double-nesting when wp_send_json_success wraps it again
+            wp_send_json_success($result['data'] ?? $result);
         } else {
-            wp_send_json_error(['message' => $result['error'] ?? 'Failed to load analytics']);
+            wp_send_json_error($result);
         }
     }
     
