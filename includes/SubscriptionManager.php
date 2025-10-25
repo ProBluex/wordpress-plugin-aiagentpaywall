@@ -6,7 +6,7 @@ class SubscriptionManager {
     private static $cache_duration = 300; // 5 minutes
     
     /**
-     * Check subscription status from backend API
+     * Check subscription status by polling Stripe API directly
      */
     public static function check_subscription_status() {
         $site_id = get_option('402links_site_id');
@@ -20,6 +20,7 @@ class SubscriptionManager {
             ];
         }
         
+        // First try to get cached Stripe customer ID from our database
         $response = wp_remote_post('https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/check-site-subscription', [
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -43,6 +44,41 @@ class SubscriptionManager {
         // Cache the result
         set_transient(self::$cache_key, $body, self::$cache_duration);
         update_option(self::$cache_key, $body);
+        
+        return $body;
+    }
+    
+    /**
+     * Poll Stripe API directly for latest subscription status
+     * This is called after successful checkout to immediately update status
+     */
+    public static function poll_stripe_for_subscription($site_id) {
+        if (!$site_id) {
+            return ['success' => false, 'error' => 'No site_id provided'];
+        }
+        
+        // Call edge function that polls Stripe API
+        $response = wp_remote_post('https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/poll-stripe-subscription', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode([
+                'site_id' => $site_id
+            ]),
+            'timeout' => 30
+        ]);
+        
+        if (is_wp_error($response)) {
+            error_log('402links: Stripe polling failed: ' . $response->get_error_message());
+            return ['success' => false, 'error' => $response->get_error_message()];
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($body['subscribed']) && $body['subscribed']) {
+            // Update cache immediately
+            self::update_cached_status($body);
+        }
         
         return $body;
     }

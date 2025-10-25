@@ -117,19 +117,16 @@
     
     function proceedToStripeCheckout() {
         const $button = $('#proceed-to-checkout');
-        $button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Loading checkout...');
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Redirecting to Stripe...');
         
         const siteId = agentHubData.siteId;
         
-        // Open Stripe checkout in new tab
-        const checkoutUrl = `https://402links.com/upgrade?site_id=${siteId}`;
-        window.open(checkoutUrl, '_blank');
+        // Redirect directly to Stripe Payment Link with site_id as client_reference_id
+        const stripePaymentUrl = new URL('https://buy.stripe.com/4gM5kE1pjdKb6N95Tk1Fe01');
+        stripePaymentUrl.searchParams.set('client_reference_id', siteId);
         
-        // Close modal after short delay
-        setTimeout(function() {
-            closeModal();
-            $button.prop('disabled', false).html('<span class="dashicons dashicons-cart"></span> Proceed to Secure Checkout');
-        }, 1000);
+        // Redirect current window to Stripe
+        window.location.href = stripePaymentUrl.toString();
     }
     
     function openCustomerPortal() {
