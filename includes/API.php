@@ -110,6 +110,22 @@ class API {
             }
         }
         
+        // Convert post content to agent-readable JSON format
+        $json_content = [
+            'version' => '1.0',
+            'content_type' => 'blog_post',
+            'title' => get_the_title($post_id),
+            'body' => wp_strip_all_tags($post->post_content), // Strip HTML for clean text
+            'excerpt' => $excerpt,
+            'author' => $author,
+            'published_at' => $post->post_date,
+            'modified_at' => $post->post_modified,
+            'word_count' => $word_count,
+            'categories' => $category_names,
+            'tags' => $tags,
+            'featured_image_url' => $featured_image_url ?: null
+        ];
+        
         $payload = [
             'post_id' => $post_id,
             'title' => get_the_title($post_id),
@@ -123,7 +139,8 @@ class API {
             'featured_image_url' => $featured_image_url ?: null,
             'word_count' => $word_count,
             'tags' => $tags,
-            'description' => !empty($category_names) ? 'Filed under: ' . implode(', ', $category_names) : ''
+            'description' => !empty($category_names) ? 'Filed under: ' . implode(', ', $category_names) : '',
+            'json_content' => $json_content  // NEW: Full content in JSON format
         ];
         
         error_log('402links: Creating link for post ' . $post_id . ' with payload: ' . json_encode($payload));
@@ -135,6 +152,7 @@ class API {
      * Update existing 402link
      */
     public function update_link($post_id, $link_id) {
+        $post = get_post($post_id);
         $settings = get_option('402links_settings');
         
         $price = get_post_meta($post_id, '_402links_price', true);
@@ -142,13 +160,64 @@ class API {
             $price = $settings['default_price'] ?? 0.10;
         }
         
+        // Get post metadata
+        $excerpt = $post->post_excerpt;
+        if (empty($excerpt)) {
+            $excerpt = wp_trim_words(strip_tags($post->post_content), 30);
+        }
+        
+        $author = get_the_author_meta('display_name', $post->post_author);
+        $featured_image_url = get_the_post_thumbnail_url($post_id, 'large');
+        $word_count = str_word_count(strip_tags($post->post_content));
+        
+        // Get tags
+        $tags = [];
+        $post_tags = get_the_tags($post_id);
+        if ($post_tags && !is_wp_error($post_tags)) {
+            foreach ($post_tags as $tag) {
+                $tags[] = $tag->name;
+            }
+        }
+        
+        // Get categories
+        $categories = get_the_category($post_id);
+        $category_names = [];
+        if ($categories) {
+            foreach ($categories as $category) {
+                $category_names[] = $category->name;
+            }
+        }
+        
+        // Convert post content to agent-readable JSON format
+        $json_content = [
+            'version' => '1.0',
+            'content_type' => 'blog_post',
+            'title' => get_the_title($post_id),
+            'body' => wp_strip_all_tags($post->post_content),
+            'excerpt' => $excerpt,
+            'author' => $author,
+            'published_at' => $post->post_date,
+            'modified_at' => $post->post_modified,
+            'word_count' => $word_count,
+            'categories' => $category_names,
+            'tags' => $tags,
+            'featured_image_url' => $featured_image_url ?: null
+        ];
+        
         return $this->request('PUT', '/update-wordpress-link', [
             'site_url' => get_site_url(),
             'link_id' => $link_id,
             'post_id' => $post_id,
             'title' => get_the_title($post_id),
             'url' => get_permalink($post_id),
-            'price' => floatval($price)
+            'price' => floatval($price),
+            'excerpt' => $excerpt,
+            'author' => $author,
+            'featured_image_url' => $featured_image_url ?: null,
+            'word_count' => $word_count,
+            'tags' => $tags,
+            'modified_at' => $post->post_modified,
+            'json_content' => $json_content  // NEW: Full content in JSON format
         ]);
     }
     
