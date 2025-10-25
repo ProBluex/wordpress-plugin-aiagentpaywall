@@ -235,74 +235,41 @@ class PaymentGate {
             return; // Payment successful, serve content
         }
         
-        // ============= 402LINKS REDIRECT FLOW FOR AI AGENTS =============
-        // If AI agent detected, redirect to 402links.com for payment
+        // ============= X402 402 RESPONSE FOR AI AGENTS =============
+        // If AI agent detected, send 402 Payment Required with X-402-* headers
         if ($agent_check['is_agent']) {
-            $short_id = get_post_meta($post->ID, '_402links_short_id', true);
+            error_log('402links: Agent detected - sending 402 response with payment requirements');
             
-            if ($short_id) {
-                error_log('402links: Redirecting agent to 402links.com/p/' . $short_id);
-                
-                // Build return URL for redirect back after payment
-                $return_url = get_permalink($post->ID);
-                $redirect_url = 'https://402links.com/p/' . $short_id . '?return_to=' . urlencode($return_url);
-                
-                error_log('402links: Redirect URL: ' . $redirect_url);
-                error_log('402links: Return URL: ' . $return_url);
-                
-                // Send 302 redirect
-                status_header(302);
-                header('Location: ' . $redirect_url);
-                exit;
-            } else {
-                error_log('402links: ERROR - No short_id meta found for post ' . $post->ID);
-                error_log('402links: This post needs to be synced with 402links.com');
-                
-                // Return user-friendly error instead of falling through
-                status_header(500);
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'error' => 'Configuration error',
-                    'message' => 'This content is not properly configured for AI agent access. Please contact the site administrator.',
-                    'details' => 'Missing short_id for post ' . $post->ID
-                ]);
-                exit;
-            }
+            $requirements = self::get_payment_requirements($post->ID);
+            self::send_402_response($requirements);
+            exit;
         }
         
-        // ============= X402 NATIVE 402 RESPONSE (FALLBACK) =============
-        // No payment header present and not redirecting → send 402 Payment Required response
-        error_log('402links: No valid payment - Sending 402 Payment Required response');
+        // ============= 402LINKS.COM REDIRECT FOR HUMANS =============
+        // For humans: redirect to 402links.com payment UI
+        $short_id = get_post_meta($post->ID, '_402links_short_id', true);
         
-        $requirements = self::get_payment_requirements($post->ID);
-        
-        // Log the 402 response being sent (for debugging)
-        error_log('402links: Payment Requirements: ' . json_encode([
-            'scheme' => $requirements['scheme'],
-            'network' => $requirements['network'],
-            'maxAmountRequired' => $requirements['maxAmountRequired'],
-            'payTo' => $requirements['payTo'],
-            'resource' => $requirements['resource']
-        ]));
-        
-        // Report unpaid access attempt (wrapped in try-catch for safety)
-        try {
-            API::report_violation_static([
-                'wordpress_post_id' => $post->ID,
-                'agent_name' => $agent_check['is_agent'] ? ($agent_check['agent_name'] ?? 'Unknown Agent') : 'Human',
-                'user_agent' => $user_agent,
-                'ip_address' => AgentDetector::get_client_ip(),
-                'requested_url' => $_SERVER['REQUEST_URI'] ?? '',
-                'violation_type' => $agent_check['is_agent'] ? 'unpaid_access' : 'human_blocked'
+        if ($short_id) {
+            error_log('402links: Redirecting human to 402links.com/p/' . $short_id);
+            
+            $return_url = get_permalink($post->ID);
+            $redirect_url = 'https://402links.com/p/' . $short_id . '?return_to=' . urlencode($return_url);
+            
+            status_header(302);
+            header('Location: ' . $redirect_url);
+            exit;
+        } else {
+            error_log('402links: ERROR - Missing short_id for post ' . $post->ID);
+            
+            status_header(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => 'Configuration error',
+                'message' => 'This content is not properly configured. Please contact the site administrator.',
+                'details' => 'Missing short_id for post ' . $post->ID
             ]);
-        } catch (\Exception $e) {
-            // Log error but don't block 402 response
-            error_log('402links: Failed to report violation: ' . $e->getMessage());
+            exit;
         }
-        
-        // Send x402-compliant 402 response with payment requirements
-        self::send_402_response($requirements);
-        exit;
     }
     
     /**
@@ -350,13 +317,19 @@ class PaymentGate {
         $bind_hash = self::get_or_create_bind_hash($post_id, $payment_wallet, $price);
         $invoice_id = self::get_or_create_invoice_id($post_id);
         
+        // Get short_id for API resource URL
+        $short_id = get_post_meta($post_id, '_402links_short_id', true);
+        $resource_url = $short_id 
+            ? 'https://api.402links.com/v1/access-link?short_id=' . $short_id
+            : get_permalink($post_id);
+        
         return [
             'scheme' => 'exact',
             'network' => $network,
             'asset' => $config['usdc'],
             'maxAmountRequired' => $maxAmountRequired,
             'payTo' => $payment_wallet,
-            'resource' => get_permalink($post_id),
+            'resource' => $resource_url,
             'description' => get_the_title($post_id),
             'mimeType' => 'text/html',
             'maxTimeoutSeconds' => 60,

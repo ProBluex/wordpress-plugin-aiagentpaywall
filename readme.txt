@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.1.3
+Stable tag: 3.2.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,14 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.2.0 =
+* 🚀 CRITICAL FIX: Bot payment flow - agents now receive 402 response instead of redirect
+* ✅ FIX: Added /v1/access-link route to API proxy (api.402links.com)
+* ✅ FIX: WordPress returns 402 with X-402-Resource pointing to api.402links.com/v1/access-link
+* ✅ FIX: Humans redirected to 402links.com/p/{short_id} payment UI
+* 🔧 ARCHITECTURE: Bots hit API endpoint directly, humans use payment widget
+* 📚 NOTE: No more 302 redirects for bots - proper x402 protocol compliance
 
 = 3.1.1 =
 * 🐛 CRITICAL FIX: Resolved wallet sync failure on fresh installations
