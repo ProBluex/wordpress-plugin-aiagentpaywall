@@ -29,6 +29,10 @@ class Core {
         // robots.txt injection
         add_filter('robots_txt', [WellKnown::class, 'inject_robots_txt'], 10, 2);
         
+        // Initialize components
+        PaymentRequestHandler::init();
+        CheckoutHandler::init();
+        
         // AJAX handlers
         add_action('wp_ajax_agent_hub_save_settings', [Admin::class, 'ajax_save_settings']);
         add_action('wp_ajax_agent_hub_register_site', [Admin::class, 'ajax_register_site']);

@@ -117,16 +117,56 @@
     
     function proceedToStripeCheckout() {
         const $button = $('#proceed-to-checkout');
-        $button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Redirecting to Stripe...');
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Creating session...');
         
         const siteId = agentHubData.siteId;
+        const returnUrl = window.location.href.split('?')[0];
         
-        // Redirect directly to Stripe Payment Link with site_id as client_reference_id
-        const stripePaymentUrl = new URL('https://buy.stripe.com/4gM5kE1pjdKb6N95Tk1Fe01');
-        stripePaymentUrl.searchParams.set('client_reference_id', siteId);
-        
-        // Redirect current window to Stripe
-        window.location.href = stripePaymentUrl.toString();
+        // Call edge function to create checkout session
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_create_checkout',
+                nonce: agentHubData.nonce,
+                site_id: siteId,
+                return_url: returnUrl
+            },
+            success: function(response) {
+                if (response.success && response.data.sessionId) {
+                    // Load Stripe.js if not already loaded
+                    if (typeof Stripe === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = 'https://js.stripe.com/v3/';
+                        script.onload = function() {
+                            redirectToCheckout(response.data.sessionId);
+                        };
+                        document.head.appendChild(script);
+                    } else {
+                        redirectToCheckout(response.data.sessionId);
+                    }
+                } else {
+                    alert('Error: ' + (response.data?.message || 'Failed to create checkout session'));
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-cart"></span> Proceed to Secure Checkout');
+                }
+            },
+            error: function() {
+                alert('Error: Failed to connect to checkout service');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-cart"></span> Proceed to Secure Checkout');
+            }
+        });
+    }
+    
+    function redirectToCheckout(sessionId) {
+        const stripe = Stripe(agentHubData.stripePublishableKey);
+        stripe.redirectToCheckout({ sessionId: sessionId })
+            .then(function(result) {
+                if (result.error) {
+                    alert('Error: ' + result.error.message);
+                    const $button = $('#proceed-to-checkout');
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-cart"></span> Proceed to Secure Checkout');
+                }
+            });
     }
     
     function openCustomerPortal() {

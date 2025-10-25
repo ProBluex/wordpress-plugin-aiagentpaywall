@@ -163,7 +163,8 @@ class Admin {
             'nonce' => wp_create_nonce('agent_hub_nonce'),
             'siteUrl' => get_site_url(),
             'siteName' => get_bloginfo('name'),
-            'siteId' => get_option('402links_site_id')  // Add site_id for contact form validation
+            'siteId' => get_option('402links_site_id'),  // Add site_id for contact form validation
+            'stripePublishableKey' => 'pk_live_51IPGyAKaFZbFkxSN2KdKm62TAaIltE5HVMob1Iuy1GSBunX93flgtGDoQYjsYGTRymJZVfOA1RPOqni6rAIfqiBh00lN4Z2fbr'
         ]);
     }
     
@@ -187,13 +188,38 @@ class Admin {
             exit;
         }
         
-        // Handle subscription success redirect (legacy)
+        // Handle subscription success redirect
         if (isset($_GET['subscription']) && $_GET['subscription'] === 'success') {
-            // Force refresh subscription status
-            \AgentHub\SubscriptionManager::refresh_subscription_status();
+            error_log('402links: Subscription success redirect detected');
+            
+            $session_id = isset($_GET['session_id']) ? sanitize_text_field($_GET['session_id']) : null;
+            $site_id = get_option('402links_site_id');
+            
+            if ($site_id && $session_id) {
+                error_log('402links: Polling Stripe with session_id: ' . $session_id);
+                
+                // Poll Stripe API with session_id for immediate verification
+                $poll_result = \AgentHub\SubscriptionManager::poll_stripe_with_session($site_id, $session_id);
+                
+                if (isset($poll_result['subscribed']) && $poll_result['subscribed']) {
+                    error_log('402links: ✅ Subscription confirmed via session poll');
+                } else {
+                    error_log('402links: ⚠️ Session poll returned unsubscribed state');
+                }
+            } else {
+                error_log('402links: Missing session_id or site_id, falling back to standard refresh');
+                \AgentHub\SubscriptionManager::refresh_subscription_status();
+            }
             
             // Redirect to settings page with success parameter
             wp_redirect(admin_url('admin.php?page=agent-hub-settings&upgraded=1'));
+            exit;
+        }
+        
+        // Handle subscription cancellation
+        if (isset($_GET['subscription']) && $_GET['subscription'] === 'cancelled') {
+            error_log('402links: Subscription cancelled by user');
+            wp_redirect(admin_url('admin.php?page=agent-hub-settings'));
             exit;
         }
         

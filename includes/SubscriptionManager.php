@@ -84,6 +84,41 @@ class SubscriptionManager {
     }
     
     /**
+     * Poll Stripe API with session_id for immediate post-checkout verification
+     */
+    public static function poll_stripe_with_session($site_id, $session_id) {
+        if (!$site_id || !$session_id) {
+            return ['success' => false, 'error' => 'Missing site_id or session_id'];
+        }
+        
+        // Call edge function with session_id for direct lookup
+        $response = wp_remote_post('https://cnionwnknwnzpwfuacse.supabase.co/functions/v1/poll-stripe-subscription', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode([
+                'site_id' => $site_id,
+                'session_id' => $session_id
+            ]),
+            'timeout' => 30
+        ]);
+        
+        if (is_wp_error($response)) {
+            error_log('402links: Stripe session polling failed: ' . $response->get_error_message());
+            return ['success' => false, 'error' => $response->get_error_message()];
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($body['subscribed']) && $body['subscribed']) {
+            // Update cache immediately
+            self::update_cached_status($body);
+        }
+        
+        return $body;
+    }
+    
+    /**
      * Get cached subscription status
      */
     public static function get_cached_status() {
