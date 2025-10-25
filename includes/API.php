@@ -526,7 +526,7 @@ class API {
         
         $args = [
             'method' => $method,
-            'timeout' => 30,
+            'timeout' => 5, // Fast-fail if bot registry API is slow
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key

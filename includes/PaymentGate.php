@@ -26,13 +26,16 @@ class PaymentGate {
         
         global $post;
         
-        // Check if post has a 402link (need to check before admin bypass)
-        $link_id = get_post_meta($post->ID, '_402links_id', true);
+        // Accept either meta key for backwards compatibility
+        $short_id = get_post_meta($post->ID, '_402links_short_id', true);
+        $link_id  = get_post_meta($post->ID, '_402links_id', true); // legacy fallback
+        
+        $has_protection = !empty($short_id) || !empty($link_id);
         
         // Skip if user is logged in admin
         if (current_user_can('manage_options')) {
             // If admin is viewing protected post, show preview notice
-            if (!empty($link_id)) {
+            if ($has_protection) {
                 add_action('admin_bar_menu', function($wp_admin_bar) use ($post) {
                     $block_humans = get_post_meta($post->ID, '_402link_block_humans', true);
                     $protection_type = ($block_humans === '1' || $block_humans === 1) 
@@ -77,14 +80,14 @@ class PaymentGate {
         error_log('Post Title: ' . get_the_title($post->ID));
         error_log('User-Agent: ' . ($_SERVER['HTTP_USER_AGENT'] ?? 'NONE'));
         
-        // Link ID already checked above before admin bypass
-        error_log('402links ID meta: ' . ($link_id ?: 'NOT SET'));
-        
-        if (empty($link_id)) {
-            error_log('402links: NOT PROTECTED - No link_id meta found');
+        // Check if content is protected
+        if (!$has_protection) {
+            error_log('402links: NOT PROTECTED - No short_id/link_id meta found');
             error_log('===== 402links PaymentGate: ALLOWING ACCESS =====');
             return; // Not protected
         }
+        
+        error_log('402links ID meta: ' . ($short_id ?: $link_id ?: 'NOT SET'));
         
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $agent_check = AgentDetector::is_ai_agent($user_agent);
@@ -409,6 +412,11 @@ class PaymentGate {
      * Returns HTML paywall for browsers, JSON for agents
      */
     private static function send_402_response($requirements, $error_msg = 'Payment Required') {
+        // Add provider URL to requirements for agent clarity
+        if (!isset($requirements['extra']['provider'])) {
+            $requirements['extra']['provider'] = $requirements['resource'];
+        }
+        
         $x402_response = [
             'x402Version' => 1,
             'error' => $error_msg,
@@ -420,6 +428,11 @@ class PaymentGate {
         
         // Set response code
         status_header(402);
+        
+        // Anti-cache headers (prevent proxies from caching 402)
+        header('Cache-Control: private, no-store, max-age=0, must-revalidate');
+        header('Pragma: no-cache');
+        header('Vary: Accept, User-Agent');
         
         // Set headers with x402 discovery info
         header('WWW-Authenticate: x402="' . $www_auth_payload . '"');
@@ -433,11 +446,15 @@ class PaymentGate {
         header('X-402-Resource: ' . $requirements['resource']);
         header('X-402-Discovery: ' . get_site_url() . '/.well-known/402.json');
         
+        // Advertise payment provider endpoint
+        header('X-402-Provider: ' . ($requirements['resource'] ?? ''));
+        header('Link: <' . ($requirements['resource'] ?? '') . '>; rel="payment"');
+        
         // Add CORS headers for x402 protocol
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Headers: X-PAYMENT, Content-Type, Authorization');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery, X-PAYMENT-RESPONSE');
+        header('Access-Control-Expose-Headers: WWW-Authenticate, X-402-Version, X-402-Scheme, X-402-Network, X-402-Amount, X-402-Currency, X-402-Asset, X-402-PayTo, X-402-Resource, X-402-Discovery, X-402-Provider, Link, X-PAYMENT-RESPONSE');
         
         // BROWSER vs AGENT: Return HTML for browsers, JSON for agents
         if (self::is_browser_request()) {

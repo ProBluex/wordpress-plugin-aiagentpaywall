@@ -8,9 +8,21 @@ class AgentDetector {
     
     // Fallback patterns if registry unavailable
     private static $fallback_patterns = [
-        'GPTBot', 'ClaudeBot', 'Claude-Web', 'anthropic-ai',
-        'ChatGPT-User', 'Perplexitybot', 'Bytespider',
-        'Google-Extended', 'Applebot-Extended', 'CCBot'
+        // AI/Data Agents (Priority)
+        'GPTBot', 'ChatGPT-User', 'OpenAI', 'ClaudeBot', 'Claude-Web', 'anthropic-ai',
+        'Perplexitybot', 'PerplexityBot', 'amazonbot', 'CCBot', 'Bytespider', 'SerpApi',
+        'Google-Extended', 'Applebot-Extended', 'cohere-ai', 'YouBot',
+        
+        // Social/Link Preview Crawlers
+        'facebookexternalhit', 'Facebot', 'Twitterbot', 'LinkedInBot', 'Slackbot',
+        'Discordbot', 'embedly', 'redditbot', 'Quora Link Preview',
+        
+        // Search Engines (Extended Crawlers)
+        'Googlebot', 'AdsBot-Google', 'bingbot', 'DuckDuckBot', 'Baiduspider',
+        'YandexBot', 'Applebot',
+        
+        // Test Agent (for our tests)
+        'x402-agent-crawler'
     ];
     
     /**
@@ -65,17 +77,24 @@ class AgentDetector {
             return $cached;
         }
         
+        // Track bot registry load time for monitoring
+        $start_time = microtime(true);
+        
         // Fetch from API
         $api = new API();
         $registry = $api->get_bot_registry();
         
         if (!empty($registry)) {
+            $elapsed = microtime(true) - $start_time;
+            error_log(sprintf('402links: Bot registry loaded in %.2f seconds (%d bots)', $elapsed, count($registry)));
+            
             // Cache for 1 hour
             set_transient('402links_bot_registry', $registry, self::$cache_duration);
             self::$bot_registry_cache = $registry;
             return $registry;
         }
         
+        error_log('402links: Bot registry API failed or returned empty data');
         return [];
     }
     
@@ -97,7 +116,33 @@ class AgentDetector {
             ];
         }
         
-        // Try registry first
+        // PRIORITY: Detect major AI agents immediately (before API call)
+        $ua_lower = strtolower($user_agent);
+        $priority_agents = [
+            'claude' => ['anthropic', 'claude'],
+            'ChatGPT' => ['gptbot', 'chatgpt-user', 'openai'],
+            'Perplexity' => ['perplexitybot'],
+            'Google AI' => ['google-extended', 'googlebot-news'],
+            'Bing AI' => ['bingbot'],
+        ];
+        
+        foreach ($priority_agents as $name => $patterns) {
+            foreach ($patterns as $pattern) {
+                if (strpos($ua_lower, $pattern) !== false) {
+                    error_log('402links: Major AI agent detected immediately: ' . $name);
+                    return [
+                        'is_agent' => true,
+                        'agent_name' => $name,
+                        'bot_id' => null,
+                        'category' => 'ai_agent',
+                        'company' => null,
+                        'detection_method' => 'priority_pattern'
+                    ];
+                }
+            }
+        }
+        
+        // Try registry next (after priority detection)
         $bot = self::get_bot_from_registry($user_agent);
         if ($bot !== null) {
             return [
