@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.2.0
+Stable tag: 3.1.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -64,65 +64,21 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 
 == Changelog ==
 
-= 3.2.0 =
-* 🎉 MAJOR: Embedded Stripe Checkout with dynamic session generation
-* ✅ FEATURE: Real-time subscription updates via Stripe webhooks
-* ✅ FEATURE: Automatic subscription lifecycle management (renewals, cancellations, failures)
-* 🔐 SECURITY: Webhook signature verification for secure event handling
-* 🚀 IMPROVEMENT: Scalable architecture supports unlimited WordPress sites
-* 🚀 IMPROVEMENT: Immediate post-checkout subscription verification with session_id
-* 💳 INTEGRATION: New create-checkout-session edge function
-* 💳 INTEGRATION: New stripe-webhook edge function
-* 🛠️ FIX: Success redirect flow works correctly with dynamic URLs
-* 🛠️ FIX: Enhanced poll-stripe-subscription to accept session_id parameter
-* ⚡ PERFORMANCE: Faster checkout experience with Stripe.js integration
-* 📊 FEATURE: Subscription history logging for audit trail
-
-= 3.1.1 =
-* 🔧 CRITICAL FIX: Removed webhook dependency - now uses direct Stripe API polling
-* ✅ FEATURE: WordPress directly queries Stripe API for subscription status
-* ✅ FEATURE: Real-time subscription sync after checkout completion
-* 🔐 SECURITY: No more exposed webhook endpoints - API-only architecture
-* 🚀 IMPROVEMENT: Faster subscription verification (no webhook delay)
-* 🚀 IMPROVEMENT: More reliable checkout flow with client_reference_id
-* 💳 INTEGRATION: New poll-stripe-subscription edge function for API queries
-* 🗑️ CLEANUP: Removed stripe-webhook edge function (no longer needed)
-
 = 3.1.0 =
-* 🐛 FIX: Dashboard stats now load correctly (no more stuck "Loading..." state)
-* 🚀 FEATURE: Pagination for "My Content" tab - prevents timeouts on sites with 1000+ posts
-* 🚀 FEATURE: In-WordPress modal checkout with personal indie developer message
-* ✅ FIX: Violations tab now loads properly after Pro upgrade (subscription refresh race condition)
-* ✅ FIX: Analytics tab now loads properly after Pro upgrade (subscription refresh race condition)
-* 🔧 IMPROVEMENT: Added ajax_get_dashboard_stats handler for Overview tab stats
-* 🔧 IMPROVEMENT: Content pagination with 50 items per page for better performance
-* 🔧 IMPROVEMENT: Subscription status refreshes before loading premium tabs
-* 🎨 UI: Beautiful upgrade modal with features list and pricing display
-* 🎨 UI: Professional pagination controls in My Content section
-* 💳 INTEGRATION: Modal-based checkout flow keeps users in WordPress admin
-* 📦 API: Added get_basic_stats() method for public dashboard stats
-* 📦 API: Enhanced ajax_get_content() with pagination support
-* 🔐 SECURITY: Subscription verification before all premium AJAX calls
-
-= 3.0.0 =
-* 🚀 MAJOR RELEASE: Native Stripe Subscription Integration
-* ✅ FEATURE: WordPress plugin now integrates with 402links.com Pro subscriptions
-* ✅ FEATURE: Analytics and Violations tabs now require Pro membership
-* ✅ FEATURE: Locked feature overlays with upgrade prompts for free users
-* ✅ FEATURE: Pro Member badge and "Thank you!" message for subscribers
-* ✅ FEATURE: Stripe checkout integration via 402links.com/upgrade
-* ✅ FEATURE: Automatic subscription status checking and caching
-* ✅ FEATURE: "Manage Subscription" link to Stripe Customer Portal
-* ✅ FEATURE: Success redirect handling after subscription activation
-* 🔧 IMPROVEMENT: SubscriptionManager class for centralized subscription logic
-* 🔧 IMPROVEMENT: Real-time subscription status refresh via AJAX
-* 🔧 IMPROVEMENT: Premium feature access control in AJAX handlers
-* 🔧 IMPROVEMENT: Upgrade banner for free users on dashboard
-* 🎨 UI: Professional blurred content overlays for locked premium features
-* 🎨 UI: Color-coded Pro badge with gradient styling
-* 💳 INTEGRATION: Stripe webhook handler for automatic subscription updates
-* 💳 INTEGRATION: Edge functions for checkout, portal, and subscription checking
-* 📦 BREAKING: Analytics and Violations features now require $9.99/month Pro plan
+* 🔴 CRITICAL ROLLBACK PATCH - Stable Release
+* ✅ RECOMMENDED: Use this version for production deployments
+* ⚠️ ROLLED BACK: Stripe subscription integration (unstable in v3.3.0)
+* 🎯 STABLE: Pure x402 protocol implementation with proven reliability
+* ✅ FEATURE: Complete AI agent payment detection via x402
+* ✅ FEATURE: CDP Facilitator integration for payment verification
+* ✅ FEATURE: 30+ AI bot registry with policy management
+* ✅ FEATURE: Robots.txt compliance tracking
+* ✅ FEATURE: Violation reporting and analytics
+* ✅ FEATURE: Auto-provisioning with 402links.com
+* 📚 NOTE: Stripe subscriptions removed - will return in future stable release
+* 🔧 ARCHITECTURE: Battle-tested x402 payment flow without recurring billing
+* 📊 ANALYTICS: Full payment tracking and agent access logs
+* 🔒 SECURITY: Production-ready with comprehensive bot detection
 
 = 2.4.1 =
 * 🐛 CRITICAL FIX: Resolved "Fatal error: Non-static method cannot be called statically" in PaymentGate.php:210

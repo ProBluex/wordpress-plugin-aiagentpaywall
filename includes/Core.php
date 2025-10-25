@@ -6,9 +6,6 @@ class Core {
         // Agent interception (BEFORE WordPress serves content)
         add_action('template_redirect', [PaymentGate::class, 'intercept_request'], 1);
         
-        // Initialize subscription status check
-        add_action('admin_init', [SubscriptionManager::class, 'get_cached_status']);
-        
         // Admin UI
         if (is_admin()) {
             add_action('admin_menu', [Admin::class, 'register_menu']);
@@ -29,16 +26,11 @@ class Core {
         // robots.txt injection
         add_filter('robots_txt', [WellKnown::class, 'inject_robots_txt'], 10, 2);
         
-        // Initialize components
-        PaymentRequestHandler::init();
-        CheckoutHandler::init();
-        
         // AJAX handlers
         add_action('wp_ajax_agent_hub_save_settings', [Admin::class, 'ajax_save_settings']);
         add_action('wp_ajax_agent_hub_register_site', [Admin::class, 'ajax_register_site']);
         add_action('wp_ajax_agent_hub_generate_link', [Admin::class, 'ajax_generate_link']);
         add_action('wp_ajax_agent_hub_get_analytics', [Admin::class, 'ajax_get_analytics']);
-        add_action('wp_ajax_agent_hub_get_dashboard_stats', [Admin::class, 'ajax_get_dashboard_stats']);
         add_action('wp_ajax_agent_hub_save_wallet', [Admin::class, 'ajax_save_wallet']);
         add_action('wp_ajax_agent_hub_check_wallet_sync_status', [Admin::class, 'ajax_check_wallet_sync_status']);
         add_action('wp_ajax_agent_hub_toggle_human_access', [Admin::class, 'ajax_toggle_human_access']);
@@ -58,10 +50,6 @@ class Core {
         // Bot policy AJAX handlers
         add_action('wp_ajax_agent_hub_get_site_bot_policies', [Admin::class, 'ajax_get_site_bot_policies']);
         add_action('wp_ajax_agent_hub_update_site_bot_policies', [Admin::class, 'ajax_update_site_bot_policies']);
-        
-        // Subscription AJAX handlers
-        add_action('wp_ajax_agent_hub_refresh_subscription', [Admin::class, 'ajax_refresh_subscription']);
-        add_action('wp_ajax_agent_hub_manage_subscription', [Admin::class, 'ajax_manage_subscription']);
         
         // REST API routes
         add_action('rest_api_init', [API::class, 'register_rest_routes']);

@@ -10,8 +10,6 @@
     let filteredContent = [];
     let sortColumn = 'published';
     let sortDirection = 'desc';
-    let currentPage = 1;
-    const perPage = 50;
     
     /**
      * Initialize content manager when DOM is ready
@@ -60,18 +58,15 @@
     /**
      * Load content from WordPress
      */
-    function loadContent(page = 1) {
-        currentPage = page;
-        console.log('[ContentManager] Loading content list page', page);
+    function loadContent() {
+        console.log('[ContentManager] Loading content list');
         
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'agent_hub_get_content',
-                nonce: agentHubData.nonce,
-                page: page,
-                per_page: perPage
+                nonce: agentHubData.nonce
             },
             beforeSend: function() {
                 $('.content-loading').show();
@@ -85,9 +80,6 @@
                     filteredContent = [...currentContent];
                     renderContent();
                     updateStats();
-                    if (response.data.pagination) {
-                        renderPagination(response.data.pagination);
-                    }
                 } else {
                     console.error('[ContentManager] Failed to load content:', response);
                     showError('Failed to load content');
@@ -101,47 +93,6 @@
                 $('.content-loading').hide();
                 $('#content-table-container').show();
             }
-        });
-    }
-    
-    /**
-     * Render pagination controls
-     */
-    function renderPagination(pagination) {
-        const $paginationContainer = $('#content-pagination');
-        $paginationContainer.empty();
-        
-        if (pagination.total_pages <= 1) {
-            return; // No pagination needed
-        }
-        
-        const paginationHtml = `
-            <div class="tablenav-pages">
-                <span class="displaying-num">${pagination.total_items} items</span>
-                <span class="pagination-links">
-                    ${pagination.has_prev ? 
-                        `<a class="prev-page button" data-page="${pagination.current_page - 1}">‹</a>` :
-                        '<span class="prev-page button disabled">‹</span>'
-                    }
-                    <span class="paging-input">
-                        Page <span class="current-page">${pagination.current_page}</span> of 
-                        <span class="total-pages">${pagination.total_pages}</span>
-                    </span>
-                    ${pagination.has_next ?
-                        `<a class="next-page button" data-page="${pagination.current_page + 1}">›</a>` :
-                        '<span class="next-page button disabled">›</span>'
-                    }
-                </span>
-            </div>
-        `;
-        
-        $paginationContainer.html(paginationHtml);
-        
-        // Attach click handlers
-        $paginationContainer.find('.prev-page:not(.disabled), .next-page:not(.disabled)').on('click', function(e) {
-            e.preventDefault();
-            const page = $(this).data('page');
-            loadContent(page);
         });
     }
     
