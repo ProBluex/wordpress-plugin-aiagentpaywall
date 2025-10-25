@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,16 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.1.1 =
+* 🔧 CRITICAL FIX: Removed webhook dependency - now uses direct Stripe API polling
+* ✅ FEATURE: WordPress directly queries Stripe API for subscription status
+* ✅ FEATURE: Real-time subscription sync after checkout completion
+* 🔐 SECURITY: No more exposed webhook endpoints - API-only architecture
+* 🚀 IMPROVEMENT: Faster subscription verification (no webhook delay)
+* 🚀 IMPROVEMENT: More reliable checkout flow with client_reference_id
+* 💳 INTEGRATION: New poll-stripe-subscription edge function for API queries
+* 🗑️ CLEANUP: Removed stripe-webhook edge function (no longer needed)
 
 = 3.1.0 =
 * 🐛 FIX: Dashboard stats now load correctly (no more stuck "Loading..." state)
