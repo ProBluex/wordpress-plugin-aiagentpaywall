@@ -65,17 +65,23 @@ class AgentDetector {
             return $cached;
         }
         
-        // Fetch from API
-        $api = new API();
-        $registry = $api->get_bot_registry();
-        
-        if (!empty($registry)) {
-            // Cache for 1 hour
-            set_transient('402links_bot_registry', $registry, self::$cache_duration);
-            self::$bot_registry_cache = $registry;
-            return $registry;
+        // Fetch from API with error handling
+        try {
+            $api = new API();
+            $registry = $api->get_bot_registry();
+            
+            if (!empty($registry)) {
+                // Cache for 1 hour
+                set_transient('402links_bot_registry', $registry, self::$cache_duration);
+                self::$bot_registry_cache = $registry;
+                error_log('402links: Bot registry loaded successfully (' . count($registry) . ' bots)');
+                return $registry;
+            }
+        } catch (\Exception $e) {
+            error_log('402links: Failed to load bot registry: ' . $e->getMessage());
         }
         
+        error_log('402links: Bot registry unavailable, using fallback patterns');
         return [];
     }
     
@@ -98,15 +104,20 @@ class AgentDetector {
         }
         
         // Try registry first
-        $bot = self::get_bot_from_registry($user_agent);
-        if ($bot !== null) {
-            return [
-                'is_agent' => true,
-                'agent_name' => $bot['bot_name'] ?? 'Unknown Bot',
-                'bot_id' => $bot['id'] ?? null,
-                'category' => $bot['bot_category'] ?? null,
-                'company' => $bot['company'] ?? null
-            ];
+        try {
+            $bot = self::get_bot_from_registry($user_agent);
+            if ($bot !== null) {
+                error_log('402links: Agent detected from registry: ' . ($bot['bot_name'] ?? 'Unknown'));
+                return [
+                    'is_agent' => true,
+                    'agent_name' => $bot['bot_name'] ?? 'Unknown Bot',
+                    'bot_id' => $bot['id'] ?? null,
+                    'category' => $bot['bot_category'] ?? null,
+                    'company' => $bot['company'] ?? null
+                ];
+            }
+        } catch (\Exception $e) {
+            error_log('402links: Error checking bot registry: ' . $e->getMessage());
         }
         
         // Fallback to pattern matching
@@ -123,10 +134,11 @@ class AgentDetector {
             }
         }
         
-        // Generic bot detection
-        $generic_keywords = ['bot', 'crawler', 'spider', 'scraper'];
+        // Generic bot detection (includes x402 agents)
+        $generic_keywords = ['bot', 'crawler', 'spider', 'scraper', 'x402'];
         foreach ($generic_keywords as $keyword) {
             if (strpos($ua_lower, $keyword) !== false) {
+                error_log('402links: Generic agent detected via keyword "' . $keyword . '" in User-Agent: ' . $user_agent);
                 return [
                     'is_agent' => true,
                     'agent_name' => 'Generic Agent',
