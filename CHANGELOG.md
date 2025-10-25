@@ -5,6 +5,28 @@ All notable changes to the 402links Agent Hub WordPress plugin will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.2] - 2025-10-26
+
+### Changed
+- **Analytics Dashboard Redesign**: Complete visual overhaul with professional, enterprise-grade dark theme
+  - Replaced bright purple gradients with subdued dark grays (#1a1f36, #2d3748, #4a5568)
+  - Compact hero section (~80px vs 300px) with horizontal layout
+  - Monospace fonts for all numeric data (SF Mono, Monaco, Courier New)
+  - Reduced hero title from 72px to 24px font size
+  - Updated all stat cards, facilitator bars, and ticker to match dark theme
+  - Improved typography with uppercase labels and consistent letter spacing
+
+### Fixed
+- **Overview Tab Loading**: Fixed stats not loading - added explicit `enhanced: false` parameter to request basic analytics
+- **Analytics API Response**: Properly format AJAX responses using `wp_send_json_success()` and `wp_send_json_error()` instead of raw `wp_send_json()`
+- **Error Handling**: Added error callback to overview stats AJAX request
+
+### Technical Details
+- Updated `Admin.php` line 313 to properly wrap API responses in WordPress AJAX format
+- Updated `admin.js` `loadOverviewStats()` function to explicitly request non-enhanced analytics
+- Redesigned `analytics-enhanced.css` with enterprise color palette and compact spacing
+- Updated `settings-page.php` hero section HTML structure for horizontal layout
+
 ## [3.4.1] - 2025-10-26
 
 ### Fixed

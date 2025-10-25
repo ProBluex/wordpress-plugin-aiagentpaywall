@@ -1,73 +1,88 @@
-/* Enhanced Analytics Styles */
+/* Enhanced Analytics Styles - Enterprise Theme */
 
 .agent-economy-hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    background: #1a1f36;
+    border: 1px solid #2d3748;
+    color: #f7fafc;
+    padding: 16px 24px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .economy-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: 11px;
     font-weight: 600;
-    margin-bottom: 20px;
+    color: #cbd5e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .economy-badge .dashicons {
-    font-size: 18px;
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+.economy-total {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: 1;
 }
 
 .economy-total h1 {
-    font-size: 72px;
-    font-weight: 800;
-    margin: 20px 0 10px;
-    letter-spacing: -2px;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    margin: 0;
     line-height: 1;
+    color: #f7fafc;
 }
 
 .economy-total .currency {
-    font-size: 24px;
-    font-weight: 600;
-    margin-left: 8px;
-    opacity: 0.9;
+    font-size: 14px;
+    font-weight: 500;
+    color: #cbd5e0;
 }
 
 .economy-total .timeframe-label {
-    display: block;
-    font-size: 14px;
-    opacity: 0.8;
-    margin-top: 10px;
+    font-size: 12px;
+    color: #718096;
+    margin-left: 8px;
 }
 
 .economy-growth {
-    margin-top: 15px;
+    display: flex;
+    align-items: center;
 }
 
 .growth-badge {
-    display: inline-block;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
 .growth-badge.positive {
-    background: rgba(0, 208, 145, 0.2);
-    color: #00ff9d;
+    background: rgba(72, 187, 120, 0.15);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.3);
 }
 
 .growth-badge.negative {
-    background: rgba(255, 77, 77, 0.2);
-    color: #ff6b6b;
+    background: rgba(245, 101, 101, 0.15);
+    color: #f56565;
+    border: 1px solid rgba(245, 101, 101, 0.3);
 }
 
 /* User Position Grid */
@@ -79,35 +94,35 @@
 }
 
 .user-position-grid .stat-card {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 24px;
+    background: #1a1f36;
+    border: 1px solid #2d3748;
+    border-radius: 4px;
+    padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .user-position-grid .stat-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    border-color: #4a5568;
+    transform: translateY(-1px);
 }
 
 .user-position-grid .stat-card-highlight {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-color: #667eea;
+    background: #242b42;
+    border-color: #4a5568;
 }
 
 .user-position-grid .stat-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    background: #2d3748;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #cbd5e0;
     flex-shrink: 0;
 }
 
@@ -122,23 +137,26 @@
 }
 
 .user-position-grid .stat-label {
-    font-size: 13px;
-    color: #666;
+    font-size: 11px;
+    color: #718096;
     font-weight: 500;
     margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .user-position-grid .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+    color: #f7fafc;
     line-height: 1;
     margin-bottom: 4px;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
 .user-position-grid .stat-context {
-    font-size: 12px;
-    color: #999;
+    font-size: 11px;
+    color: #718096;
 }
 
 /* Motivational Banner */
@@ -182,26 +200,28 @@
 
 /* Facilitators Section */
 .facilitators-section {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 24px;
+    background: #1a1f36;
+    border: 1px solid #2d3748;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .facilitators-section h3 {
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #2c3e50;
+    color: #f7fafc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .facilitators-section h3 .dashicons {
-    color: #667eea;
+    color: #718096;
 }
 
 .facilitator-bars {
@@ -218,8 +238,8 @@
 
 .facilitator-row {
     display: grid;
-    grid-template-columns: 150px 1fr 150px;
-    gap: 16px;
+    grid-template-columns: 140px 1fr 140px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -230,22 +250,23 @@
 }
 
 .facilitator-name {
-    font-weight: 600;
-    color: #2c3e50;
+    font-weight: 500;
+    font-size: 13px;
+    color: #cbd5e0;
 }
 
 .facilitator-bar {
-    height: 32px;
-    background: #f0f0f0;
-    border-radius: 16px;
+    height: 24px;
+    background: #2d3748;
+    border-radius: 3px;
     overflow: hidden;
     position: relative;
 }
 
 .bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+    background: #4a5568;
+    border-radius: 3px;
     transition: width 0.6s ease;
 }
 
@@ -253,43 +274,48 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
 .facilitator-stats .share {
     font-weight: 600;
-    color: #667eea;
+    color: #cbd5e0;
 }
 
 .facilitator-stats .volume {
-    color: #666;
+    color: #718096;
 }
 
 /* Live Ticker */
 .live-ticker {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: #f8f9fa;
-    border-left: 4px solid #ff0000;
-    border-radius: 4px;
-    font-size: 13px;
-    margin-bottom: 20px;
+    gap: 16px;
+    padding: 10px 16px;
+    background: #242b42;
+    border: 1px solid #2d3748;
+    border-left: 3px solid #f56565;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-bottom: 16px;
 }
 
 .ticker-label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-weight: 700;
-    color: #ff0000;
-    font-size: 12px;
+    font-weight: 600;
+    color: #f56565;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .ticker-item {
-    color: #666;
+    color: #cbd5e0;
     white-space: nowrap;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
 @keyframes pulse {
@@ -331,8 +357,13 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .agent-economy-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
     .economy-total h1 {
-        font-size: 48px;
+        font-size: 20px;
     }
     
     .user-position-grid {

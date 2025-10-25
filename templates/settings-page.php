@@ -224,10 +224,10 @@ $is_connected = !empty($api_key) && !empty($site_id);
             <div class="economy-total">
                 <h1 id="ecosystem-volume">$0</h1>
                 <span class="currency">USDC</span>
-                <span class="timeframe-label">Last 30 Days</span>
+                <span class="timeframe-label">(Last 30 Days)</span>
             </div>
             <div class="economy-growth">
-                <span class="growth-badge" id="ecosystem-growth">↑ +0% vs prev</span>
+                <span class="growth-badge positive" id="ecosystem-growth">↑ +0%</span>
             </div>
         </div>
 

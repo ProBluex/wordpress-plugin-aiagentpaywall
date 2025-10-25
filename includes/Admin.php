@@ -310,7 +310,12 @@ class Admin {
             error_log('402links: get_analytics data keys: ' . implode(', ', array_keys($result['data'] ?? [])));
         }
         
-        wp_send_json($result);
+        // Properly format response for WordPress AJAX
+        if ($result['success']) {
+            wp_send_json_success($result['data'] ?? []);
+        } else {
+            wp_send_json_error(['message' => $result['error'] ?? 'Failed to load analytics']);
+        }
     }
     
     /**
