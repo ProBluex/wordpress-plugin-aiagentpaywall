@@ -65,27 +65,7 @@
         
         console.log('[Analytics] Loading analytics data for timeframe:', timeframe);
         
-        // First refresh subscription status
-        $.ajax({
-            url: agentHubData.ajaxUrl,
-            type: 'POST',
-            data: {
-                action: 'agent_hub_refresh_subscription',
-                nonce: agentHubData.nonce
-            },
-            success: function() {
-                loadAnalyticsDataAfterRefresh(timeframe);
-            },
-            error: function() {
-                loadAnalyticsDataAfterRefresh(timeframe);
-            }
-        });
-    }
-    
-    /**
-     * Load analytics data after subscription refresh
-     */
-    function loadAnalyticsDataAfterRefresh(timeframe) {
+        // Load analytics directly (backend checks subscription)
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',
@@ -101,17 +81,37 @@
             success: function(response) {
                 console.log('[Analytics] Analytics data received:', response);
                 
+                // Check if this is a premium feature error
+                if (!response.success && response.data && response.data.message && 
+                    response.data.message.includes('Premium feature')) {
+                    console.log('[Analytics] Premium feature detected, showing upgrade overlay');
+                    
+                    // Stop auto-refresh if running
+                    if (analyticsRefreshInterval) {
+                        clearInterval(analyticsRefreshInterval);
+                        analyticsRefreshInterval = null;
+                    }
+                    
+                    // Hide loading states
+                    $('.analytics-loading').hide();
+                    
+                    // Show the upgrade overlay (already in template)
+                    $('.upgrade-overlay').show();
+                    
+                    return; // Exit - don't show error
+                }
+                
                 if (response.success && response.data) {
                     renderAnalytics(response.data);
                 } else {
                     console.error('[Analytics] Failed to load analytics:', response);
-                    const errorMsg = response.data?.error || response.error || 'Unknown error';
-                    showError('Failed to load analytics: ' + errorMsg);
+                    const errorMsg = response.data?.message || response.data?.error || 'Unknown error';
+                    showError(errorMsg);
                 }
             },
             error: function(xhr, status, error) {
                 console.error('[Analytics] AJAX error:', error);
-                showError('Error loading analytics: ' + error);
+                showError('Network error: ' + error);
             },
             complete: function() {
                 $('.analytics-loading').hide();
@@ -369,6 +369,12 @@
      * Start auto-refresh for analytics (every 30 seconds)
      */
     function startAnalyticsAutoRefresh() {
+        // Check if premium overlay is visible (non-Pro user)
+        if ($('.upgrade-overlay:visible').length > 0) {
+            console.log('[Analytics] Premium feature locked, not starting auto-refresh');
+            return;
+        }
+        
         // Clear any existing interval
         if (analyticsRefreshInterval) {
             clearInterval(analyticsRefreshInterval);
@@ -389,9 +395,22 @@
      * Show error message
      */
     function showError(message) {
-        console.error('[Analytics]', message);
+        console.error('[Analytics] Error:', message);
+        
+        // Don't show premium errors (already handled by overlay)
+        if (message.includes('Premium feature')) {
+            return;
+        }
+        
+        // User-friendly error messages
+        const userFriendlyMessage = message.includes('Network') 
+            ? 'Unable to connect to analytics server. Please check your internet connection.'
+            : message.includes('Unknown error')
+            ? 'Unable to load analytics data. Please refresh the page and try again.'
+            : message;
+        
         if (typeof showToast === 'function') {
-            showToast('Analytics Error', message, 'error');
+            showToast('Analytics Error', userFriendlyMessage, 'error');
         }
     }
     

@@ -6,6 +6,23 @@
     'use strict';
     
     $(document).ready(function() {
+        // Check for upgrade success
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('upgraded') === '1') {
+            // Show success message
+            if (typeof window.showToast === 'function') {
+                window.showToast('Success', '🎉 Welcome to Pro! Your subscription is now active.', 'success');
+            }
+            
+            // Remove parameter from URL
+            window.history.replaceState({}, document.title, window.location.pathname + '?page=agent-hub-settings');
+            
+            // Reload page after 2 seconds to refresh UI
+            setTimeout(function() {
+                location.reload();
+            }, 2000);
+        }
+        
         // Load dashboard stats on page load if Overview tab is active
         if ($('#tab-overview').hasClass('active')) {
             loadDashboardStats();

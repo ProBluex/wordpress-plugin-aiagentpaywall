@@ -175,21 +175,25 @@ class Admin {
             return;
         }
         
-        // Handle subscription success redirect
+        // Handle upgrade success redirect
+        if (strpos($_SERVER['REQUEST_URI'], '/upgrade/success') !== false && isset($_GET['site_id'])) {
+            error_log('402links: Upgrade success redirect detected');
+            
+            // Force immediate subscription refresh
+            \AgentHub\SubscriptionManager::refresh_subscription_status();
+            
+            // Redirect to settings page with success parameter
+            wp_redirect(admin_url('admin.php?page=agent-hub-settings&upgraded=1'));
+            exit;
+        }
+        
+        // Handle subscription success redirect (legacy)
         if (isset($_GET['subscription']) && $_GET['subscription'] === 'success') {
             // Force refresh subscription status
             \AgentHub\SubscriptionManager::refresh_subscription_status();
             
-            // Show success notice
-            add_settings_error(
-                'agent_hub_messages',
-                'subscription_success',
-                '🎉 Welcome to Pro! Your subscription is now active.',
-                'success'
-            );
-            
-            // Redirect to clean URL
-            wp_redirect(admin_url('admin.php?page=agent-hub'));
+            // Redirect to settings page with success parameter
+            wp_redirect(admin_url('admin.php?page=agent-hub-settings&upgraded=1'));
             exit;
         }
         

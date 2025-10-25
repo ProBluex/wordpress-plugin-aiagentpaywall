@@ -50,6 +50,7 @@
         const $table = $('#violations-table');
         const $empty = $('#violations-empty');
         const $saveBtn = $('#violations-save-policies');
+        const $overlay = $('.upgrade-overlay');
 
         // Show loading state
         $loading.show();
@@ -57,31 +58,17 @@
         $table.hide();
         $empty.hide();
         $saveBtn.hide();
+        $overlay.hide(); // Hide overlay initially
 
         // Reset state
         changedPolicies.clear();
 
-        // FIRST: Check/refresh subscription status
-        $.ajax({
-            url: ajaxurl,
-            method: 'POST',
-            data: {
-                action: 'agent_hub_refresh_subscription',
-                nonce: agentHubData.nonce
-            },
-            success: function(subResponse) {
-                // Now that subscription is refreshed, load violations
-                loadViolationsData();
-            },
-            error: function() {
-                // Try to load anyway
-                loadViolationsData();
-            }
-        });
+        // Load violations data directly (backend checks subscription)
+        loadViolationsData();
     }
     
     /**
-     * Load violations data after subscription refresh
+     * Load violations data
      */
     function loadViolationsData() {
         // Make AJAX request for violations
@@ -93,11 +80,26 @@
                 nonce: agentHubData.nonce
             },
             success: function(response) {
+                $('#violations-loading').hide();
+                
+                // Check if this is a premium feature error
+                if (!response.success && response.data && response.data.message && 
+                    response.data.message.includes('Premium feature')) {
+                    console.log('[Violations] Premium feature detected, showing upgrade overlay');
+                    
+                    // Hide error state
+                    $('#violations-error').hide();
+                    
+                    // Show premium overlay (already in template)
+                    $('.upgrade-overlay').show();
+                    
+                    return; // Exit - don't show error
+                }
+                
                 if (response.success && response.data) {
                     violationsData = response.data;
                     loadPolicies();
                 } else {
-                    $('#violations-loading').hide();
                     showError(response.data?.message || 'Failed to load violations data');
                 }
             },
@@ -426,11 +428,20 @@
      */
     function showError(message) {
         console.error('[Violations] Error:', message);
-        console.log('[Violations] Debug - AJAX URL:', ajaxurl);
-        console.log('[Violations] Debug - Nonce:', agentHubData?.nonce);
-        console.log('[Violations] Debug - Site URL:', agentHubData?.siteUrl);
         
-        $('#violations-error-message').text(message);
+        // Don't show premium errors (already handled by overlay)
+        if (message.includes('Premium feature')) {
+            return;
+        }
+        
+        // User-friendly error messages
+        const userFriendlyMessage = message.includes('Network')
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : message.includes('Unknown error')
+            ? 'Unable to load violations data. Please refresh the page and try again.'
+            : message;
+        
+        $('#violations-error-message').text(userFriendlyMessage);
         $('#violations-error').show();
     }
 
