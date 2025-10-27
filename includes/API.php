@@ -239,10 +239,32 @@ class API {
      */
     public function get_ecosystem_stats($timeframe = '30d') {
         error_log('[API.php] 🌍 get_ecosystem_stats() called with timeframe: ' . $timeframe);
-        $result = $this->request('POST', '/wordpress-ecosystem-stats', [
-            'timeframe' => $timeframe
-        ]);
-        error_log('[API.php] 🌍 get_ecosystem_stats() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data']), 'error' => $result['error'] ?? 'none']));
+        
+        $url = '/wordpress-ecosystem-stats';
+        $payload = ['timeframe' => $timeframe];
+        
+        error_log('[API.php] 🌍 Request URL: ' . $this->api_endpoint . $url);
+        error_log('[API.php] 🌍 Request payload: ' . json_encode($payload));
+        error_log('[API.php] 🌍 API Key (first 8 chars): ' . substr($this->api_key, 0, 8) . '...');
+        
+        $result = $this->request('POST', $url, $payload);
+        
+        // Add detailed response logging
+        error_log('[API.php] 🌍 get_ecosystem_stats() raw response: ' . json_encode($result));
+        
+        if (!isset($result['success'])) {
+            error_log('[API.php] ❌ get_ecosystem_stats() - Invalid response structure (no success field)');
+            return ['success' => false, 'error' => 'Invalid response from server'];
+        }
+        
+        if (!$result['success']) {
+            $error_msg = $result['error'] ?? $result['message'] ?? 'Unknown error';
+            $status_code = $result['status_code'] ?? $result['status'] ?? 'unknown';
+            error_log('[API.php] ❌ get_ecosystem_stats() failed: ' . $error_msg . ' (HTTP ' . $status_code . ')');
+        } else {
+            error_log('[API.php] ✅ get_ecosystem_stats() successful - has data: ' . (isset($result['data']) ? 'yes' : 'no'));
+        }
+        
         return $result;
     }
     
