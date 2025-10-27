@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.2
+Stable tag: 3.4.3
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,14 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.4.3 =
+* 🚀 FEATURE: Added ecosystem-wide metrics to Analytics tab (Active Buyers, Active Sellers, Total Transactions)
+* 📊 FEATURE: Replaced "Revenue Over Time" with "Market Overview" chart showing ecosystem activity
+* 📈 FEATURE: Interactive metric toggles for chart (Transactions, Volume, Buyers, Sellers)
+* 🎯 IMPROVEMENT: Analytics tab now shows both ecosystem performance and site-specific revenue
+* 🔧 ARCHITECTURE: New wordpress-ecosystem-stats edge function for real-time ecosystem data
+* ✨ UI: Enhanced stat cards with professional flat design matching WordPress standards
 
 = 3.4.1 =
 * 🎨 REBRANDING: Plugin renamed to "Tolliver - Ai Agent Pay Collector"

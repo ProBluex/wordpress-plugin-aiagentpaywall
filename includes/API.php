@@ -232,6 +232,15 @@ class API {
     }
     
     /**
+     * Get ecosystem-wide statistics
+     */
+    public function get_ecosystem_stats($timeframe = '30d') {
+        return $this->request('POST', '/wordpress-ecosystem-stats', [
+            'timeframe' => $timeframe
+        ]);
+    }
+    
+    /**
      * Check if agent is blacklisted
      */
     public function check_blacklist($user_agent, $site_id = null) {

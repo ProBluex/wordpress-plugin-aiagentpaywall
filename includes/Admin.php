@@ -293,25 +293,29 @@ class Admin {
         error_log('402links: Site URL: ' . get_site_url());
         
         $api = new API();
-        $result = $api->get_analytics($timeframe);
         
-        error_log('402links: get_analytics result success: ' . ($result['success'] ? 'true' : 'false'));
-        if (!$result['success']) {
-            error_log('402links: get_analytics error: ' . ($result['error'] ?? 'unknown'));
-        } else {
-            error_log('402links: get_analytics data keys: ' . implode(', ', array_keys($result['data'] ?? [])));
-        }
+        // Get site-specific analytics
+        $site_result = $api->get_analytics($timeframe);
         
-        if ($result['success']) {
+        // Get ecosystem-wide statistics
+        $ecosystem_result = $api->get_ecosystem_stats($timeframe);
+        
+        error_log('402links: site result success: ' . ($site_result['success'] ? 'true' : 'false'));
+        error_log('402links: ecosystem result success: ' . ($ecosystem_result['success'] ? 'true' : 'false'));
+        
+        if ($site_result['success'] && $ecosystem_result['success']) {
             // Add cache-busting headers
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
             header('Expires: 0');
             
-            // Unwrap the 'data' key to avoid double-nesting when wp_send_json_success wraps it again
-            wp_send_json_success($result['data'] ?? $result);
+            wp_send_json_success([
+                'site' => $site_result['data'] ?? $site_result,
+                'ecosystem' => $ecosystem_result['data'] ?? $ecosystem_result,
+            ]);
         } else {
-            wp_send_json_error($result);
+            $error = $site_result['error'] ?? $ecosystem_result['error'] ?? 'Unknown error';
+            wp_send_json_error(['message' => $error]);
         }
     }
     

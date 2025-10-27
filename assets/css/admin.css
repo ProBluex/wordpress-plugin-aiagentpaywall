@@ -384,7 +384,8 @@
 }
 
 /* Overview Section - Flat Monochrome Design */
-.stat-card-overview {
+.stat-card-overview,
+.stat-card-analytics {
     display: flex;
     align-items: center;
     gap: 20px;
@@ -400,17 +401,20 @@
 }
 
 /* Remove decorative gradients - focus on data */
-.stat-card-overview::before {
+.stat-card-overview::before,
+.stat-card-analytics::before {
     display: none;
 }
 
-.stat-card-overview:hover {
+.stat-card-overview:hover,
+.stat-card-analytics:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08);
     border-color: var(--gray-300);
 }
 
-.stat-card-overview .stat-icon-flat {
+.stat-card-overview .stat-icon-flat,
+.stat-card-analytics .stat-icon-flat {
     width: 64px;
     height: 64px;
     display: flex;
@@ -422,19 +426,22 @@
     flex-shrink: 0;
 }
 
-.stat-card-overview .stat-icon-flat .dashicons {
+.stat-card-overview .stat-icon-flat .dashicons,
+.stat-card-analytics .stat-icon-flat .dashicons {
     color: var(--gray-600);
     width: 32px;
     height: 32px;
     font-size: 32px;
 }
 
-.stat-card-overview .stat-content {
+.stat-card-overview .stat-content,
+.stat-card-analytics .stat-content {
     flex: 1;
     min-width: 0;
 }
 
-.stat-card-overview .stat-label {
+.stat-card-overview .stat-label,
+.stat-card-analytics .stat-label {
     font-size: 12px;
     font-weight: 600;
     color: var(--gray-600);
@@ -443,12 +450,41 @@
     letter-spacing: 0.5px;
 }
 
-.stat-card-overview .stat-value {
+.stat-card-overview .stat-value,
+.stat-card-analytics .stat-value {
     font-size: 36px;
     font-weight: 700;
     line-height: 1;
     color: var(--gray-900);
     font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+}
+
+/* Chart Controls */
+.chart-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.metric-toggle {
+    padding: 8px 16px;
+    border: 2px solid var(--gray-300);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.metric-toggle:hover {
+    border-color: #00D091;
+}
+
+.metric-toggle.active {
+    background: #00D091;
+    border-color: #00D091;
+    color: white;
 }
 
 /* Override any color-specific icon classes */

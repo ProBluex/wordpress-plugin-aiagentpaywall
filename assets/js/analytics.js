@@ -6,8 +6,14 @@
 (function($) {
     'use strict';
     
-    let revenueChart = null;
+    let marketChart = null;
     let analyticsRefreshInterval = null;
+    let activeMetrics = {
+        transactions: true,
+        volume: true,
+        buyers: true,
+        sellers: true
+    };
     
     /**
      * Initialize analytics when DOM is ready
@@ -30,6 +36,21 @@
         $(document).on('click', '[data-tab="analytics"]', function() {
             setTimeout(loadAnalyticsData, 100);
             startAnalyticsAutoRefresh();
+        });
+        
+        // Timeframe change handler
+        $(document).on('change', '#analytics-timeframe', function() {
+            loadAnalyticsData();
+        });
+        
+        // Metric toggle handlers
+        $(document).on('click', '.metric-toggle', function() {
+            const metric = $(this).data('metric');
+            $(this).toggleClass('active');
+            activeMetrics[metric] = $(this).hasClass('active');
+            
+            // Re-render chart with new metric selection
+            loadAnalyticsData();
         });
         
         // Stop auto-refresh when page is hidden
@@ -75,7 +96,7 @@
             },
             beforeSend: function() {
                 $('.analytics-loading').show();
-                $('#revenue-chart-container').hide();
+                $('#market-chart-container').hide();
             },
             success: function(response) {
                 console.log('[Analytics] Analytics data received:', response);
@@ -84,7 +105,7 @@
                     renderAnalytics(response.data);
                 } else {
                     console.error('[Analytics] Failed to load analytics:', response);
-                    const errorMsg = response.data?.error || response.error || 'Unknown error';
+                    const errorMsg = response.data?.message || response.message || 'Unknown error';
                     showError('Failed to load analytics: ' + errorMsg);
                 }
             },
@@ -104,140 +125,153 @@
     function renderAnalytics(data) {
         console.log('[Analytics] Rendering analytics dashboard');
         
-        // Update summary stats
-        updateStatCards(data);
-        
-        // Render revenue chart
-        if (data.daily_revenue && data.daily_revenue.length > 0) {
-            renderRevenueChart(data.daily_revenue);
-        } else {
-            showEmptyChartState();
+        // Update ecosystem stat cards
+        if (data.ecosystem) {
+            $('#stat-ecosystem-buyers').text(formatNumber(data.ecosystem.unique_buyers || 0));
+            $('#stat-ecosystem-sellers').text(formatNumber(data.ecosystem.unique_sellers || 0));
+            $('#stat-ecosystem-transactions').text(formatNumber(data.ecosystem.total_transactions || 0));
         }
         
-        // Update agent breakdown table
-        if (data.agent_breakdown) {
-            renderAgentBreakdown(data.agent_breakdown);
-        }
-        
-        // Update top content table
-        if (data.top_content) {
-            renderTopContent(data.top_content);
-        }
-    }
-    
-    /**
-     * Update stat cards - now showing combined AI + Human stats
-     */
-    function updateStatCards(data) {
-        const totalCrawls = data.total_crawls || 0;
-        const totalPaid = data.paid_crawls || 0;
-        const totalRevenue = data.total_revenue || 0;
-        const agentRevenue = data.agent_revenue || 0;
-        const humanRevenue = data.human_revenue || 0;
-        
-        $('#stat-total-crawls').text(formatNumber(totalCrawls));
-        $('#stat-paid-crawls').text(formatNumber(totalPaid));
-        $('#stat-total-revenue').text('$' + formatMoney(totalRevenue));
-        $('#stat-conversion-rate').text(formatPercent(data.conversion_rate || 0));
-        
-        // Add revenue breakdown tooltip if we have both sources
-        if (agentRevenue > 0 && humanRevenue > 0) {
-            $('#stat-total-revenue').attr('title', 
-                `AI Agents: $${formatMoney(agentRevenue)} | Humans: $${formatMoney(humanRevenue)}`
-            );
+        // Update site revenue
+        if (data.site) {
+            $('#stat-your-revenue').text('$' + formatMoney(data.site.total_revenue || 0));
+            
+            // Render market overview chart
+            if (data.ecosystem && data.ecosystem.bucketed_data && data.ecosystem.bucketed_data.length > 0) {
+                renderMarketOverviewChart(data.ecosystem.bucketed_data);
+            } else {
+                showEmptyChartState();
+            }
+            
+            // Update top content table
+            if (data.site.top_content) {
+                renderTopContent(data.site.top_content);
+            }
         }
     }
     
     /**
-     * Render revenue chart
+     * Render market overview chart
      */
-    function renderRevenueChart(dailyRevenue) {
-        const ctx = document.getElementById('revenue-chart');
+    function renderMarketOverviewChart(bucketedData) {
+        const ctx = document.getElementById('market-chart');
         if (!ctx) {
-            console.warn('[Analytics] Revenue chart canvas not found');
+            console.warn('[Analytics] Market chart canvas not found');
             return;
         }
         
         // Wait for Chart.js to be loaded
         if (typeof Chart === 'undefined') {
             console.log('[Analytics] Waiting for Chart.js to load...');
-            setTimeout(() => renderRevenueChart(dailyRevenue), 500);
+            setTimeout(() => renderMarketOverviewChart(bucketedData), 500);
             return;
         }
         
-        console.log('[Analytics] Rendering revenue chart with', dailyRevenue.length, 'data points');
+        console.log('[Analytics] Rendering market overview chart with', bucketedData.length, 'data points');
         
         // Destroy existing chart
-        if (revenueChart) {
-            revenueChart.destroy();
+        if (marketChart) {
+            marketChart.destroy();
         }
         
-        const labels = dailyRevenue.map(d => formatDate(d.date));
-        // Edge function returns revenue in dollars (0.01 = 1 cent)
-        // Use raw values directly, no multiplication needed
-        const data = dailyRevenue.map(d => parseFloat(d.revenue || 0));
+        const labels = bucketedData.map(d => formatDate(d.date));
         
-        $('#revenue-chart-container').show();
+        const datasets = [];
         
-        revenueChart = new Chart(ctx, {
+        if (activeMetrics.transactions) {
+            datasets.push({
+                label: 'Transactions',
+                data: bucketedData.map(d => d.transactions),
+                borderColor: '#00D091',
+                backgroundColor: 'rgba(0, 208, 145, 0.1)',
+                yAxisID: 'y',
+                tension: 0.4,
+            });
+        }
+        
+        if (activeMetrics.volume) {
+            datasets.push({
+                label: 'Volume (USDC)',
+                data: bucketedData.map(d => d.volume),
+                borderColor: '#8B5CF6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                yAxisID: 'y1',
+                tension: 0.4,
+            });
+        }
+        
+        if (activeMetrics.buyers) {
+            datasets.push({
+                label: 'Buyers',
+                data: bucketedData.map(d => d.buyers),
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                yAxisID: 'y',
+                tension: 0.4,
+            });
+        }
+        
+        if (activeMetrics.sellers) {
+            datasets.push({
+                label: 'Sellers',
+                data: bucketedData.map(d => d.sellers),
+                borderColor: '#F59E0B',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                yAxisID: 'y',
+                tension: 0.4,
+            });
+        }
+        
+        $('#market-chart-container').show();
+        
+        marketChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Revenue (USDC)',
-                    data: data,
-                    borderColor: '#00D091',
-                    backgroundColor: 'rgba(0, 208, 145, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#00D091',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }]
+                datasets: datasets
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top',
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         padding: 12,
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return 'Revenue: $' + parseFloat(context.parsed.y).toFixed(2);
-                            }
-                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: {
-                            display: false
-                        },
+                        grid: { display: false },
                         ticks: {
                             maxRotation: 45,
                             minRotation: 45
                         }
                     },
                     y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Count' },
+                        beginAtZero: true,
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Volume (USDC)' },
                         beginAtZero: true,
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            drawOnChartArea: false,
                         },
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toFixed(2);
-                            }
-                        }
-                    }
+                    },
                 }
             }
         });
@@ -247,35 +281,11 @@
      * Show empty chart state
      */
     function showEmptyChartState() {
-        $('#revenue-chart-container').hide();
+        $('#market-chart-container').hide();
         $('.chart-empty-state').show().html(
             '<p style="text-align:center; color:#666; padding:60px 20px;">' +
-            'No revenue data available yet. Generate some 402links to start tracking!</p>'
+            'No ecosystem data available yet. Check back soon!</p>'
         );
-    }
-    
-    /**
-     * Render agent breakdown table
-     */
-    function renderAgentBreakdown(agents) {
-        const tbody = $('#agent-breakdown-body');
-        tbody.empty();
-        
-        if (!agents || agents.length === 0) {
-            tbody.html('<tr><td colspan="3" style="text-align:center; color:#666;">No agent data available</td></tr>');
-            return;
-        }
-        
-        agents.forEach(agent => {
-            const row = `
-                <tr>
-                    <td><strong>${escapeHtml(agent.name)}</strong></td>
-                    <td>${formatNumber(agent.crawls)}</td>
-                    <td>$${formatMoney(agent.revenue)}</td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
     }
     
     /**
@@ -318,13 +328,6 @@
      */
     function formatMoney(amount) {
         return parseFloat(amount || 0).toFixed(2);
-    }
-    
-    /**
-     * Utility: Format percentage
-     */
-    function formatPercent(percent) {
-        return parseFloat(percent || 0).toFixed(1) + '%';
     }
     
     /**
@@ -379,7 +382,7 @@
     // Expose functions globally
     window.agentHubAnalytics = {
         loadAnalyticsData: loadAnalyticsData,
-        renderRevenueChart: renderRevenueChart,
+        renderMarketOverviewChart: renderMarketOverviewChart,
         startAutoRefresh: startAnalyticsAutoRefresh
     };
     

@@ -218,17 +218,72 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </select>
         </div>
         
+        <!-- Ecosystem Stats Cards -->
         <div class="analytics-section">
-            <h3>Revenue Over Time</h3>
-            <div class="analytics-loading" style="display:none; text-align:center; padding:40px;">
-                <span class="spinner is-active"></span> Loading chart...
+            <h3>x402 Ecosystem Overview</h3>
+            <div class="agent-hub-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                <div class="stat-card stat-card-analytics">
+                    <div class="stat-icon stat-icon-flat">
+                        <span class="dashicons dashicons-groups"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Buyers</div>
+                        <div class="stat-value" id="stat-ecosystem-buyers">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-analytics">
+                    <div class="stat-icon stat-icon-flat">
+                        <span class="dashicons dashicons-store"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Sellers</div>
+                        <div class="stat-value" id="stat-ecosystem-sellers">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-analytics">
+                    <div class="stat-icon stat-icon-flat">
+                        <span class="dashicons dashicons-chart-bar"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Transactions</div>
+                        <div class="stat-value" id="stat-ecosystem-transactions">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-card-analytics">
+                    <div class="stat-icon stat-icon-flat">
+                        <span class="dashicons dashicons-money-alt"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Your Revenue</div>
+                        <div class="stat-value" id="stat-your-revenue">$0.00</div>
+                    </div>
+                </div>
             </div>
-            <div id="revenue-chart-container" style="position: relative; height: 300px; width: 100%;">
-                <canvas id="revenue-chart"></canvas>
+        </div>
+        
+        <div class="analytics-loading" style="display:none; text-align:center; padding:40px;">
+            <span class="spinner is-active"></span> Loading analytics...
+        </div>
+        
+        <!-- Market Overview Chart -->
+        <div class="analytics-section">
+            <h3>Market Overview</h3>
+            <div class="chart-controls" style="margin-bottom: 15px;">
+                <button class="metric-toggle active" data-metric="transactions">Transactions</button>
+                <button class="metric-toggle active" data-metric="volume">Volume</button>
+                <button class="metric-toggle active" data-metric="buyers">Buyers</button>
+                <button class="metric-toggle active" data-metric="sellers">Sellers</button>
+            </div>
+            <div id="market-chart-container" style="position: relative; height: 400px; width: 100%;">
+                <canvas id="market-chart"></canvas>
             </div>
             <div class="chart-empty-state" style="display:none;"></div>
         </div>
         
+        <!-- Top Performing Content -->
         <div class="analytics-section">
             <h3>Top Performing Content</h3>
             <table class="wp-list-table widefat fixed striped">
