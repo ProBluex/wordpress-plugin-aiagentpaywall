@@ -32,7 +32,7 @@ Tolliver - Ai Agent Pay Collector enables seamless monetization of WordPress con
 
 == Installation ==
 
-1. Upload the plugin files to `/wp-content/plugins/402links-agent-hub/`
+1. Upload the plugin files to `/wp-content/plugins/tolliver-agent/`
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Configure your payment wallet address in Settings → Tolliver
 4. Start marking content as premium with custom pricing
