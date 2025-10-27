@@ -126,6 +126,66 @@
                 }
             });
         });
+        
+        // ========== ANALYTICS LOADING FOR OVERVIEW TAB ==========
+        let overviewDataInterval;
+
+        function loadOverviewAnalytics() {
+            console.log('[Overview] Loading analytics data for overview cards');
+            
+            $.ajax({
+                url: agentHubData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'agent_hub_get_analytics',
+                    nonce: agentHubData.nonce,
+                    timeframe: '30d'
+                },
+                success: function(response) {
+                    console.log('[Overview] Analytics response:', response);
+                    
+                    if (response.success && response.data) {
+                        const siteData = response.data.site;
+                        
+                        // Update metric cards
+                        $('#total-crawls').text(siteData.total_crawls || 0);
+                        $('#paid-crawls').text(siteData.total_paid || 0);
+                        $('#total-revenue').text('$' + (siteData.total_revenue || 0).toFixed(2));
+                        $('#protected-pages').text(siteData.protected_pages || 0);
+                        
+                        console.log('[Overview] ✅ Metrics updated successfully');
+                    } else {
+                        console.error('[Overview] ❌ Failed to load analytics:', response);
+                        // Show zeros with error state
+                        $('#total-crawls').text('0');
+                        $('#paid-crawls').text('0');
+                        $('#total-revenue').text('$0.00');
+                        $('#protected-pages').text('0');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[Overview] ❌ AJAX error:', error);
+                    // Show zeros on error
+                    $('#total-crawls').text('0');
+                    $('#paid-crawls').text('0');
+                    $('#total-revenue').text('$0.00');
+                    $('#protected-pages').text('0');
+                }
+            });
+        }
+
+        // Load on page load
+        loadOverviewAnalytics();
+        
+        // Auto-refresh every 30 seconds
+        overviewDataInterval = setInterval(loadOverviewAnalytics, 30000);
+
+        // Clear interval when leaving page
+        $(window).on('beforeunload', function() {
+            if (overviewDataInterval) {
+                clearInterval(overviewDataInterval);
+            }
+        });
     });
     
 })(jQuery);

@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.6
+Stable tag: 3.4.7
 License: Proprietary
 License URI: https://402links.com
 
@@ -64,6 +64,26 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.4.7 =
+* 🔧 CRITICAL FIX: WordPress API key authentication for ecosystem stats endpoint
+* 🔧 CRITICAL FIX: Overview tab analytics data loading (replaced "Loading..." with actual metrics)
+* ✅ FIX: Added authenticateWordPressApiKey() function for UUID-based API keys
+* ✅ FIX: wordpress-ecosystem-stats edge function now uses WordPress-specific authentication
+* 📊 IMPROVEMENT: Overview tab now auto-refreshes metrics every 30 seconds
+* 🔍 IMPROVEMENT: Pre-authentication diagnostic logging for debugging
+* 🎯 IMPROVEMENT: Enhanced error messages with HTTP status codes and specific failure details
+* 📈 FEATURE: Overview tab independently loads analytics data (Total Crawls, Paid Crawls, Revenue, Protected Pages)
+* 🚀 PERFORMANCE: Overview metrics display immediately on page load
+* ✨ UI: Better error handling and user feedback for API failures
+
+= 3.4.6 =
+* 🔍 DEBUGGING: Added comprehensive diagnostic logging to analytics data flow
+* 📊 LOGGING: Request payload logging in analytics.js
+* 📊 LOGGING: Response structure validation checks
+* 🔧 LOGGING: Detailed API.php request/response logging with masked API keys
+* 🔧 LOGGING: Admin.php analytics aggregation logging
+* 🐛 INVESTIGATION: Added extensive logs to trace analytics loading failures
 
 = 3.4.5 =
 * 🎨 REBRANDING: Updated all "402links" and "AI Agent Paywall" references to "Tolliver" branding

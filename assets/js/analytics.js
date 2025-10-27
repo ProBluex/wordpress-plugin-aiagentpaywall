@@ -120,7 +120,8 @@
                 } else {
                     console.error('[Analytics] ❌ FAILED TO LOAD:', response);
                     const errorMsg = response.data?.message || response.message || 'Unknown error';
-                    showError('Failed to load analytics: ' + errorMsg);
+                    const statusCode = response.data?.status_code ? ` (HTTP ${response.data.status_code})` : '';
+                    showError('Failed to load analytics: ' + errorMsg + statusCode);
                 }
             },
             error: function(xhr, status, error) {

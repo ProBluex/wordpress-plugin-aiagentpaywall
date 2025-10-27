@@ -341,7 +341,20 @@ class Admin {
             wp_send_json_success($final_response);
         } else {
             error_log('[Admin.php] ❌ One or both requests failed');
-            $error = $site_result['error'] ?? $ecosystem_result['error'] ?? 'Unknown error';
+            
+            // Build detailed error message
+            $error_details = [];
+            if (!$site_result['success']) {
+                $site_error = $site_result['error'] ?? 'Unknown error';
+                $error_details[] = 'Site analytics: ' . $site_error;
+            }
+            if (!$ecosystem_result['success']) {
+                $ecosystem_error = $ecosystem_result['error'] ?? 'Unknown error';
+                $status_code = isset($ecosystem_result['status_code']) ? ' (HTTP ' . $ecosystem_result['status_code'] . ')' : '';
+                $error_details[] = 'Ecosystem stats: ' . $ecosystem_error . $status_code;
+            }
+            $error = implode(' | ', $error_details);
+            
             error_log('[Admin.php] ❌ Error message: ' . $error);
             error_log('[Admin.php] ❌ ==================== SENDING ERROR RESPONSE ====================');
             wp_send_json_error(['message' => $error]);
