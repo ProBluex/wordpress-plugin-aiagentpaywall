@@ -6,9 +6,11 @@ $is_connected = !empty($api_key) && !empty($site_id);
 ?>
 
 <div class="wrap agent-hub-dashboard">
-    <h1>
-        <span class="dashicons dashicons-shield-alt"></span>
-        AI Agent Paywall
+    <h1 style="display: flex; align-items: center; gap: 12px;">
+        <img src="<?php echo AGENT_HUB_PLUGIN_URL; ?>assets/images/tolliver-logo.png" 
+             alt="Tolliver Logo" 
+             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
+        Tolliver - Ai Agent Pay Collector
     </h1>
     
     <div class="agent-hub-connection-status">

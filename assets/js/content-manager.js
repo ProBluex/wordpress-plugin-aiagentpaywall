@@ -1,5 +1,5 @@
 /**
- * Content Manager for 402links Agent Hub
+ * Content Manager for Tolliver - Ai Agent Pay Collector
  * Handles content table interactions, filtering, sorting, and bulk operations
  */
 

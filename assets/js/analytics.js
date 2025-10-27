@@ -1,5 +1,5 @@
 /**
- * Analytics & Charts for 402links Agent Hub
+ * Analytics & Charts for Tolliver - Ai Agent Pay Collector
  * Handles revenue charts and data visualization
  */
 

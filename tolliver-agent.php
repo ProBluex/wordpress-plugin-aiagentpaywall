@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: 402links Agent Hub (AI Agent Paywall)
+ * Plugin Name: Tolliver - Ai Agent Pay Collector
  * Plugin URI: https://402links.com
  * Description: Convert any WordPress page into a paid API endpoint using HTTP 402 - requiring payment before AI agents access your content.
- * Version: 3.4.0
+ * Version: 3.4.1
  * Author: 402links Team
  * Author URI: https://402links.com
  * License: MIT
@@ -20,7 +20,7 @@ if (!function_exists('get_plugin_data')) {
     require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 }
 $plugin_data = get_plugin_data(__FILE__);
-define('AGENT_HUB_VERSION', '3.4.0');
+define('AGENT_HUB_VERSION', '3.4.1');
 define('AGENT_HUB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AGENT_HUB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AGENT_HUB_PLUGIN_FILE', __FILE__);
@@ -50,7 +50,7 @@ if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-upda
     $updateChecker = YahnisElsts\PluginUpdateChecker\v5p6\PucFactory::buildUpdateChecker(
         'https://github.com/ProBluex/wordpress-plugin-aiagentpaywall',
         __FILE__,
-        '402links-agent-hub'
+        'tolliver-agent'
     );
     
     // Use GitHub Releases for updates (more reliable than branch commits)
@@ -61,8 +61,8 @@ if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-upda
     
     // Add update check logging for debugging (only in WP_DEBUG mode)
     if (defined('WP_DEBUG') && WP_DEBUG) {
-        add_action('puc_check_now-402links-agent-hub', function() {
-            error_log('402links Agent Hub: Checking for updates from GitHub...');
+        add_action('puc_check_now-tolliver-agent', function() {
+            error_log('Tolliver - Ai Agent Pay Collector: Checking for updates from GitHub...');
         });
     }
     

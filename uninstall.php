@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall script for 402links Agent Hub
+ * Uninstall script for Tolliver - Ai Agent Pay Collector
  * Fired when the plugin is uninstalled
  */
 

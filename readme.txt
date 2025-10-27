@@ -1,9 +1,9 @@
-=== 402links Agent Hub ===
+=== Tolliver - Ai Agent Pay Collector ===
 Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 License: Proprietary
 License URI: https://402links.com
 
@@ -11,7 +11,7 @@ Automatically monetize WordPress content with AI agent payments via x402 protoco
 
 == Description ==
 
-402links Agent Hub enables seamless monetization of WordPress content through the x402 payment protocol. AI agents can automatically discover and pay for access to your premium content using cryptocurrency micropayments.
+Tolliver - Ai Agent Pay Collector enables seamless monetization of WordPress content through the x402 payment protocol. AI agents can automatically discover and pay for access to your premium content using cryptocurrency micropayments.
 
 **Key Features:**
 
@@ -34,7 +34,7 @@ Automatically monetize WordPress content with AI agent payments via x402 protoco
 
 1. Upload the plugin files to `/wp-content/plugins/402links-agent-hub/`
 2. Activate the plugin through the 'Plugins' screen in WordPress
-3. Configure your payment wallet address in Settings → 402links
+3. Configure your payment wallet address in Settings → Tolliver
 4. Start marking content as premium with custom pricing
 
 == Frequently Asked Questions ==
@@ -63,6 +63,12 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.4.1 =
+* 🎨 REBRANDING: Plugin renamed to "Tolliver - Ai Agent Pay Collector"
+* 🖼️ FEATURE: Added circular Tolliver logo emblem to WordPress dashboard header
+* 🔧 MAINTENANCE: Version bump to 3.4.1 across all plugin files
+* ✨ UI: Enhanced dashboard header with professional logo branding
 
 = 3.4.0 =
 * 🎯 DATA CONSISTENCY FIX: My Content, Analytics, and Overview pages now show identical crawl and revenue numbers

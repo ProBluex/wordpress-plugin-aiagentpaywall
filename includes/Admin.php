@@ -54,8 +54,8 @@ class Admin {
      */
     public static function register_menu() {
         add_menu_page(
-            '402links Agent Hub',
-            'AI Agent Paywall',
+            'Tolliver - Ai Agent Pay Collector',
+            'Tolliver',
             'manage_options',
             'agent-hub',
             [self::class, 'render_dashboard'],
