@@ -253,13 +253,6 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 <span class="dashicons dashicons-shield-alt"></span>
                 Agent Violations Dashboard
             </h2>
-            <div class="notice notice-info inline" style="margin: 15px 0; padding: 12px 15px;">
-                <p style="margin: 0;">
-                    ⚠️ <strong>Note:</strong> This tab tracks <em>violations</em> only (robots.txt ignoring, unpaid access attempts).<br>
-                    ✅ <strong>Successful paid crawls</strong> appear in the <strong>Analytics</strong> tab.<br>
-                    📊 Showing <strong>0 violations</strong> means all agents are respecting your 402 payment requirements!
-                </p>
-            </div>
             <p class="violations-description">Track and monitor AI agents that violate robots.txt rules, ignore 402 payment requirements, or attempt unauthorized access to your content.</p>
         </div>
         
@@ -351,16 +344,6 @@ $is_connected = !empty($api_key) && !empty($site_id);
             </div>
         </div>
         
-        <div class="agent-hub-info-box">
-            <h3><span class="dashicons dashicons-info-outline"></span> What Counts as a Violation?</h3>
-            <p>The plugin tracks three types of violations:</p>
-            <ul style="list-style: disc; margin-left: 25px; margin-top: 10px;">
-                <li><strong>Robots.txt Violations:</strong> AI agents accessing pages explicitly disallowed in your robots.txt file</li>
-                <li><strong>Unpaid Access:</strong> Agents attempting to access 402-protected content without making the required payment</li>
-                <li><strong>Unauthorized Access:</strong> Other attempts to bypass payment or access controls</li>
-            </ul>
-            <p style="margin-top: 15px;">This data helps you identify which AI agents are respecting web standards and which may need to be blocked or monitored more closely.</p>
-        </div>
     </div>
     
     <!-- Contact Us Tab -->
