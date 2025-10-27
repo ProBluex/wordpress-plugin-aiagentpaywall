@@ -139,33 +139,38 @@ jQuery(document).ready(function($) {
         });
     }
     
-    // Load content
-    function loadContent() {
-        $('#content-table-body').html('<tr><td colspan="7" style="text-align: center;"><span class="spinner is-active" style="float: none; margin: 20px auto;"></span></td></tr>');
+    // Load content with pagination
+    function loadContent(page = 1) {
+        $('#content-table-body').html('<tr><td colspan="5" style="text-align: center;"><span class="spinner is-active" style="float: none; margin: 20px auto;"></span></td></tr>');
         
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'agent_hub_get_content',
-                nonce: agentHubData.nonce
+                nonce: agentHubData.nonce,
+                page: page,
+                per_page: 10
             },
             success: function(response) {
                 if (response.success && response.data.content) {
                     renderContentTable(response.data.content);
+                    if (response.data.pagination) {
+                        renderPagination(response.data.pagination);
+                    }
                 } else {
-                    $('#content-table-body').html('<tr><td colspan="7" style="text-align: center;">No content found.</td></tr>');
+                    $('#content-table-body').html('<tr><td colspan="5" style="text-align: center;">No content found.</td></tr>');
                 }
             },
             error: function() {
-                $('#content-table-body').html('<tr><td colspan="7" style="text-align: center;">Error loading content.</td></tr>');
+                $('#content-table-body').html('<tr><td colspan="5" style="text-align: center;">Error loading content.</td></tr>');
             }
         });
     }
     
     function renderContentTable(content) {
         if (content.length === 0) {
-            $('#content-table-body').html('<tr><td colspan="7" style="text-align: center;">No content found.</td></tr>');
+            $('#content-table-body').html('<tr><td colspan="5" style="text-align: center;">No content found.</td></tr>');
             return;
         }
         
@@ -174,8 +179,6 @@ jQuery(document).ready(function($) {
                 <td><strong>${item.title}</strong></td>
                 <td>${item.type}</td>
                 <td>$${parseFloat(item.price).toFixed(2)}</td>
-                <td>${item.crawls || 0}</td>
-                <td>$${parseFloat(item.revenue || 0).toFixed(2)}</td>
                 <td>
                     ${item.has_link 
                         ? `<span class="link-status active"><span class="dashicons dashicons-yes-alt"></span> Active</span> 
@@ -201,6 +204,48 @@ jQuery(document).ready(function($) {
         `).join('');
         
         $('#content-table-body').html(rows);
+    }
+    
+    // Render pagination controls
+    function renderPagination(pagination) {
+        const container = $('#content-pagination');
+        if (!pagination || pagination.total_pages <= 1) {
+            container.html('');
+            return;
+        }
+        
+        let html = '<div class="tablenav"><div class="tablenav-pages">';
+        html += `<span class="displaying-num">${pagination.total_posts} items</span>`;
+        html += '<span class="pagination-links">';
+        
+        // First page
+        if (pagination.current_page > 1) {
+            html += `<a class="first-page button" data-page="1" style="cursor:pointer;">«</a> `;
+            html += `<a class="prev-page button" data-page="${pagination.current_page - 1}" style="cursor:pointer;">‹</a> `;
+        } else {
+            html += '<span class="tablenav-pages-navspan button disabled">«</span> ';
+            html += '<span class="tablenav-pages-navspan button disabled">‹</span> ';
+        }
+        
+        html += `<span class="paging-input">Page ${pagination.current_page} of ${pagination.total_pages}</span> `;
+        
+        // Next page
+        if (pagination.current_page < pagination.total_pages) {
+            html += `<a class="next-page button" data-page="${pagination.current_page + 1}" style="cursor:pointer;">›</a> `;
+            html += `<a class="last-page button" data-page="${pagination.total_pages}" style="cursor:pointer;">»</a>`;
+        } else {
+            html += '<span class="tablenav-pages-navspan button disabled">›</span> ';
+            html += '<span class="tablenav-pages-navspan button disabled">»</span>';
+        }
+        
+        html += '</span></div></div>';
+        container.html(html);
+        
+        // Bind click events
+        container.find('a[data-page]').on('click', function() {
+            const page = parseInt($(this).data('page'));
+            loadContent(page);
+        });
     }
     
     // Toggle human access

@@ -316,7 +316,7 @@ class Admin {
     }
     
     /**
-     * AJAX: Get content list
+     * AJAX: Get content list with pagination
      */
     public static function ajax_get_content() {
         check_ajax_referer('agent_hub_nonce', 'nonce');
@@ -325,6 +325,14 @@ class Admin {
             wp_send_json_error(['message' => 'Unauthorized']);
         }
         
+        // Get pagination params
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 10;
+        $offset = ($page - 1) * $per_page;
+        
+        error_log("[402links] === CONTENT TABLE DATA FLOW ===");
+        error_log("[402links] Page: $page, Per Page: $per_page, Offset: $offset");
+        
         // Get site_id
         $site_id = get_option('402links_site_id');
         
@@ -332,28 +340,38 @@ class Admin {
         $api = new API();
         $analytics_result = $api->get_pages_analytics($site_id);
         
+        error_log('[402links] Analytics API response: ' . json_encode($analytics_result));
+        
         $page_stats = [];
         if ($analytics_result['success'] && isset($analytics_result['data']['pages'])) {
-            foreach ($analytics_result['data']['pages'] as $page) {
-                $wp_post_id = $page['wordpress_post_id'];
+            foreach ($analytics_result['data']['pages'] as $page_data) {
+                $wp_post_id = $page_data['wordpress_post_id'];
                 $page_stats[$wp_post_id] = [
-                    'crawls' => intval($page['crawls'] ?? 0),
-                    'revenue' => floatval($page['revenue'] ?? 0)
+                    'crawls' => intval($page_data['crawls'] ?? 0),
+                    'revenue' => floatval($page_data['revenue'] ?? 0)
                 ];
                 
                 error_log("402links: Page stats for WP Post ID {$wp_post_id}: {$page_stats[$wp_post_id]['crawls']} crawls, \${$page_stats[$wp_post_id]['revenue']} revenue");
             }
         }
         
-        error_log('402links: Analytics returned stats for post IDs: ' . implode(', ', array_keys($page_stats)));
+        error_log('[402links] Page stats extracted: ' . json_encode($page_stats));
         
+        // Get total count first
+        $total_posts = wp_count_posts('post')->publish;
+        $total_pages = ceil($total_posts / $per_page);
+        
+        // Get paginated posts
         $posts = get_posts([
             'post_type' => 'post',  // ✅ ONLY posts, not pages
             'post_status' => 'publish',
-            'posts_per_page' => 100,
+            'posts_per_page' => $per_page,
+            'offset' => $offset,
             'orderby' => 'date',
             'order' => 'DESC'
         ]);
+        
+        error_log("[402links] WordPress posts count: " . count($posts) . " (total: $total_posts)");
         
         $wp_post_ids = array_map(function($p) { return $p->ID; }, $posts);
         error_log('402links: WordPress query returned post IDs: ' . implode(', ', $wp_post_ids));
@@ -396,7 +414,15 @@ class Admin {
             ];
         }
         
-        wp_send_json_success(['content' => $content_list]);
+        wp_send_json_success([
+            'content' => $content_list,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $total_pages,
+                'total_posts' => $total_posts,
+                'per_page' => $per_page
+            ]
+        ]);
     }
     
     /**

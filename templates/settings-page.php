@@ -187,20 +187,21 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     <th>Title</th>
                     <th>Type</th>
                     <th>Price</th>
-                    <th>Crawls</th>
-                    <th>Revenue</th>
                     <th>Force Agents to Pay</th>
                     <th>Force Humans to Pay</th>
                 </tr>
             </thead>
             <tbody id="content-table-body">
                 <tr>
-                    <td colspan="7" style="text-align: center;">
+                    <td colspan="5" style="text-align: center;">
                         <span class="spinner is-active" style="float: none; margin: 20px auto;"></span>
                     </td>
                 </tr>
             </tbody>
         </table>
+        
+        <!-- Pagination Controls -->
+        <div id="content-pagination" style="margin-top: 20px;"></div>
     </div>
     
     <!-- Analytics Tab -->
