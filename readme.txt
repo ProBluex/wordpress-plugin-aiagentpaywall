@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.9
+Stable tag: 3.5.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -64,6 +64,15 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.5.0 =
+* 🔧 CRITICAL FIX: WordPress authentication now properly validates full API keys via hash lookup
+* 🔧 CRITICAL FIX: Fixed "invalid input syntax for type uuid" error in authentication flow
+* ✅ IMPROVEMENT: Implemented two-step authentication process (key hash → UUID → site lookup)
+* ✅ IMPROVEMENT: Added rate limiting to WordPress API endpoints (prevents abuse)
+* ✅ IMPROVEMENT: Added automatic last_used_at timestamp updates for API keys
+* 🔍 DEBUGGING: Enhanced authentication logging with step-by-step validation tracking
+* 📊 IMPROVEMENT: Better error messages for troubleshooting authentication issues
 
 = 3.4.9 =
 * 🔧 CRITICAL FIX: Added wordpress-ecosystem-stats edge function to config.toml for proper deployment
