@@ -9,7 +9,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
     <h1 style="display: flex; align-items: center; gap: 12px;">
         <img src="<?php echo AGENT_HUB_PLUGIN_URL; ?>assets/images/tolliver-logo.png" 
              alt="Tolliver Logo" 
-             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
+             style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
         Tolliver - Ai Agent Pay Collector
     </h1>
     
