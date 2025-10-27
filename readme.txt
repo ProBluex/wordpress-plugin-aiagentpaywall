@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.4.4
+Stable tag: 3.4.5
 License: Proprietary
 License URI: https://402links.com
 
@@ -64,6 +64,18 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.4.5 =
+* 🎨 REBRANDING: Updated all "402links" and "AI Agent Paywall" references to "Tolliver" branding
+* 🎨 REBRANDING: Changed success notices to "Tolliver - Ai Agent Pay Collector"
+* 🎨 REBRANDING: Updated Overview page "About" section to "About Tolliver - Ai Agent Pay Collector"
+* 🎨 REBRANDING: Changed batch generation modal title to "Generating monetization links..."
+* 🎨 REBRANDING: Updated meta box text from "402link" to "Monetization Link"
+* 🎨 REBRANDING: Changed "protected by AI agent paywall" to "protected by Tolliver"
+* 🎨 REBRANDING: Updated violations page references to "Tolliver dashboard"
+* 🔧 CRITICAL FIX: Corrected API URL in bulk sync from https://402links.com/p/ to https://api.402links.com/p/
+* 🐛 KNOWN ISSUE: Analytics data loading failure (401 Unauthorized) - under investigation
+* 🔧 MAINTENANCE: Version bump to 3.4.5 across all plugin files
 
 = 3.4.3 =
 * 🚀 FEATURE: Added ecosystem-wide metrics to Analytics tab (Active Buyers, Active Sellers, Total Transactions)

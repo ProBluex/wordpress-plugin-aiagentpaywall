@@ -504,7 +504,7 @@ class API {
             }
             
             $paid_link = $paid_link_result['data'];
-            $link_url = 'https://402links.com/p/' . $paid_link['short_id'];
+            $link_url = 'https://api.402links.com/p/' . $paid_link['short_id'];
             
             // Update post meta
             update_post_meta($post_id, '_402links_id', $page['paid_link_id']);

@@ -17,9 +17,9 @@ class Admin {
             $site_id = get_option('402links_site_id');
             ?>
             <div class="notice notice-success is-dismissible">
-                <p><strong>🎉 402links:</strong> Your site has been automatically registered! 
+                <p><strong>🎉 Tolliver - Ai Agent Pay Collector:</strong> Your site has been automatically registered! 
                 Site ID: <code><?php echo esc_html($site_id); ?></code></p>
-                <p>Configure your payment wallet in the <a href="<?php echo admin_url('admin.php?page=agent-hub'); ?>">AI Agent Paywall dashboard</a> to start protecting and monetizing your content.</p>
+                <p>Configure your payment wallet in the <a href="<?php echo admin_url('admin.php?page=agent-hub'); ?>">Tolliver dashboard</a> to start protecting and monetizing your content.</p>
             </div>
             <?php
             delete_option('402links_provisioning_success');
@@ -30,7 +30,7 @@ class Admin {
         if ($info) {
             ?>
             <div class="notice notice-info is-dismissible">
-                <p><strong>ℹ️ 402links:</strong> <?php echo esc_html($info); ?></p>
+                <p><strong>ℹ️ Tolliver:</strong> <?php echo esc_html($info); ?></p>
             </div>
             <?php
             delete_option('402links_provisioning_info');
@@ -41,7 +41,7 @@ class Admin {
         if ($error) {
             ?>
             <div class="notice notice-error is-dismissible">
-                <p><strong>⚠️ 402links:</strong> Auto-provisioning failed: <?php echo esc_html($error); ?></p>
+                <p><strong>⚠️ Tolliver:</strong> Auto-provisioning failed: <?php echo esc_html($error); ?></p>
                 <p>You can manually register at <a href="https://402links.com" target="_blank">402links.com</a> or contact support for assistance.</p>
             </div>
             <?php

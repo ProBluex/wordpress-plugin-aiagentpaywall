@@ -83,13 +83,13 @@ $stats = $wpdb->get_row($wpdb->prepare(
         <div class="meta-box-section">
             <div class="status-indicator warning">
                 <span class="dashicons dashicons-warning"></span>
-                <strong>No 402link</strong>
+                <strong>No Monetization Link</strong>
             </div>
-            <p>This page is not yet protected by AI agent paywall.</p>
+            <p>This page is not yet protected by Tolliver.</p>
             <button type="button" 
                     class="button button-primary" 
                     onclick="generateLinkFromMetaBox(<?php echo $post->ID; ?>)">
-                Generate 402link
+                Generate Monetization Link
             </button>
         </div>
     <?php endif; ?>

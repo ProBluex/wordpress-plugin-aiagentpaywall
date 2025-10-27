@@ -155,7 +155,10 @@ $is_connected = !empty($api_key) && !empty($site_id);
         </div>
         
         <div class="agent-hub-info-box">
-            <h3><span class="dashicons dashicons-info-outline"></span> About AI Agent Paywall</h3>
+            <h3>
+                <span class="dashicons dashicons-info-outline"></span> 
+                About Tolliver - Ai Agent Pay Collector
+            </h3>
             <p>This plugin automatically detects AI agents (like GPTBot, ClaudeBot, etc.) accessing your WordPress content and requires payment via the x402 protocol before granting access.</p>
             
             <h4>How It Works:</h4>

@@ -104,7 +104,7 @@
                     <div class="batch-modal-content">
                         <h2>
                             <span class="dashicons dashicons-update"></span>
-                            Generating 402links for Posts
+                            Generating monetization links...
                         </h2>
                         <div id="batch-stats" class="batch-stats"></div>
                         <div class="progress-bar-container">
