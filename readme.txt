@@ -3,7 +3,7 @@ Contributors: 402links, ProBluex
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 3.3.2
+Stable tag: 3.4.0
 License: Proprietary
 License URI: https://402links.com
 
@@ -63,6 +63,22 @@ The plugin automatically exposes payment metadata through the x402 protocol that
 4. Agent access logs
 
 == Changelog ==
+
+= 3.4.0 =
+* 🎯 DATA CONSISTENCY FIX: My Content, Analytics, and Overview pages now show identical crawl and revenue numbers
+* ✅ FIX: Combined agent crawls + human payments = Total Access count (no more mismatches)
+* ✅ FIX: Revenue now correctly aggregates agent payments + human purchases across all views
+* 🚀 FEATURE: Real-time Monitoring Dashboard at /monitoring for tracking events and compliance
+* 📊 MONITORING: Post creation event logging with auto-registration tracking
+* 📊 MONITORING: Payment event logging (agent + human) with revenue verification
+* 📊 MONITORING: CDP Bazaar registration status tracking
+* 📊 MONITORING: x402scan compliance monitoring
+* 📊 MONITORING: AP2 mandate validation checks
+* 🔧 IMPROVEMENT: Enhanced wordpress-sync-page edge function with detailed logging
+* 🔧 IMPROVEMENT: Fixed get-site-pages-analytics to properly combine agent + human data
+* 📚 TERMINOLOGY: Standardized "Total Access" (agent + human) across all dashboards
+* 🔍 DEBUGGING: Auto-refreshing monitoring dashboard (5-second intervals)
+* ✅ VERIFIED: Database triggers confirmed working for revenue aggregation
 
 = 3.2.0 =
 * 🚀 CRITICAL FIX: Bot payment flow - agents now receive 402 response instead of redirect
