@@ -7,6 +7,7 @@ Stable tag: 3.4.4
 License: Proprietary
 License URI: https://402links.com
 
+
 Automatically monetize WordPress content with AI agent payments via x402 protocol.
 
 == Description ==
