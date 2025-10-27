@@ -1,5 +1,5 @@
 === Tolliver - Ai Agent Pay Collector ===
-Contributors: 402links, ProBluex
+Contributors: 402links.com
 Tags: payment, ai, agent, monetization, x402, paywall
 Requires at least: 5.0
 Tested up to: 6.7
