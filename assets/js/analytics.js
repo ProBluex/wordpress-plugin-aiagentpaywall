@@ -85,6 +85,12 @@
         const timeframe = $('#analytics-timeframe').val() || '30d';
         
         console.log('[Analytics] Loading analytics data for timeframe:', timeframe);
+        console.log('[Analytics] 🔍 REQUEST PAYLOAD:', {
+            action: 'agent_hub_get_analytics',
+            nonce: agentHubData.nonce,
+            timeframe: timeframe,
+            ajaxUrl: agentHubData.ajaxUrl
+        });
         
         $.ajax({
             url: agentHubData.ajaxUrl,
@@ -99,12 +105,20 @@
                 $('#market-chart-container').hide();
             },
             success: function(response) {
-                console.log('[Analytics] Analytics data received:', response);
+                console.log('[Analytics] ✅ FULL RESPONSE RECEIVED:', JSON.stringify(response, null, 2));
+                console.log('[Analytics] Response structure check:', {
+                    has_success: 'success' in response,
+                    success_value: response.success,
+                    has_data: 'data' in response,
+                    data_keys: response.data ? Object.keys(response.data) : 'NO DATA',
+                    has_site: response.data?.site ? 'YES' : 'NO',
+                    has_ecosystem: response.data?.ecosystem ? 'YES' : 'NO'
+                });
                 
                 if (response.success && response.data) {
                     renderAnalytics(response.data);
                 } else {
-                    console.error('[Analytics] Failed to load analytics:', response);
+                    console.error('[Analytics] ❌ FAILED TO LOAD:', response);
                     const errorMsg = response.data?.message || response.message || 'Unknown error';
                     showError('Failed to load analytics: ' + errorMsg);
                 }

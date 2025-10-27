@@ -295,26 +295,55 @@ class Admin {
         $api = new API();
         
         // Get site-specific analytics
+        error_log('[Admin.php] 📊 ==================== ANALYTICS REQUEST ====================');
+        error_log('[Admin.php] 📊 Calling get_analytics() with timeframe: ' . $timeframe);
         $site_result = $api->get_analytics($timeframe);
+        error_log('[Admin.php] 📊 site_result: ' . json_encode([
+            'success' => $site_result['success'] ?? false,
+            'has_data' => isset($site_result['data']),
+            'data_keys' => isset($site_result['data']) ? array_keys($site_result['data']) : [],
+            'error' => $site_result['error'] ?? 'none'
+        ]));
         
         // Get ecosystem-wide statistics
+        error_log('[Admin.php] 🌍 Calling get_ecosystem_stats() with timeframe: ' . $timeframe);
         $ecosystem_result = $api->get_ecosystem_stats($timeframe);
+        error_log('[Admin.php] 🌍 ecosystem_result: ' . json_encode([
+            'success' => $ecosystem_result['success'] ?? false,
+            'has_data' => isset($ecosystem_result['data']),
+            'data_keys' => isset($ecosystem_result['data']) ? array_keys($ecosystem_result['data']) : [],
+            'error' => $ecosystem_result['error'] ?? 'none',
+            'status_code' => $ecosystem_result['status_code'] ?? 'none'
+        ]));
         
         error_log('402links: site result success: ' . ($site_result['success'] ? 'true' : 'false'));
         error_log('402links: ecosystem result success: ' . ($ecosystem_result['success'] ? 'true' : 'false'));
         
         if ($site_result['success'] && $ecosystem_result['success']) {
+            error_log('[Admin.php] ✅ Both requests successful, preparing response');
             // Add cache-busting headers
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
             header('Expires: 0');
             
-            wp_send_json_success([
+            $final_response = [
                 'site' => $site_result['data'] ?? $site_result,
                 'ecosystem' => $ecosystem_result['data'] ?? $ecosystem_result,
-            ]);
+            ];
+            error_log('[Admin.php] ✅ Final response structure: ' . json_encode([
+                'has_site' => isset($final_response['site']),
+                'has_ecosystem' => isset($final_response['ecosystem']),
+                'site_keys' => is_array($final_response['site']) ? array_keys($final_response['site']) : 'NOT ARRAY',
+                'ecosystem_keys' => is_array($final_response['ecosystem']) ? array_keys($final_response['ecosystem']) : 'NOT ARRAY'
+            ]));
+            error_log('[Admin.php] ✅ ==================== SENDING SUCCESS RESPONSE ====================');
+            
+            wp_send_json_success($final_response);
         } else {
+            error_log('[Admin.php] ❌ One or both requests failed');
             $error = $site_result['error'] ?? $ecosystem_result['error'] ?? 'Unknown error';
+            error_log('[Admin.php] ❌ Error message: ' . $error);
+            error_log('[Admin.php] ❌ ==================== SENDING ERROR RESPONSE ====================');
             wp_send_json_error(['message' => $error]);
         }
     }

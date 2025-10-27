@@ -225,19 +225,25 @@ class API {
      * Get analytics for the site
      */
     public function get_analytics($timeframe = '30d') {
-        return $this->request('POST', '/wordpress-analytics', [
+        error_log('[API.php] 📊 get_analytics() called with timeframe: ' . $timeframe);
+        $result = $this->request('POST', '/wordpress-analytics', [
             'site_url' => get_site_url(),
             'timeframe' => $timeframe
         ]);
+        error_log('[API.php] 📊 get_analytics() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data'])]));
+        return $result;
     }
     
     /**
      * Get ecosystem-wide statistics
      */
     public function get_ecosystem_stats($timeframe = '30d') {
-        return $this->request('POST', '/wordpress-ecosystem-stats', [
+        error_log('[API.php] 🌍 get_ecosystem_stats() called with timeframe: ' . $timeframe);
+        $result = $this->request('POST', '/wordpress-ecosystem-stats', [
             'timeframe' => $timeframe
         ]);
+        error_log('[API.php] 🌍 get_ecosystem_stats() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data']), 'error' => $result['error'] ?? 'none']));
+        return $result;
     }
     
     /**
@@ -597,9 +603,15 @@ class API {
     private function request($method, $endpoint, $data = []) {
         $url = $this->api_endpoint . $endpoint;
         
+        error_log('[API.php] 🚀 ==================== API REQUEST ====================');
+        error_log('[API.php] 🚀 Method: ' . $method);
+        error_log('[API.php] 🚀 URL: ' . $url);
+        error_log('[API.php] 🚀 Endpoint: ' . $endpoint);
+        
         // For GET requests, append data as query parameters
         if ($method === 'GET' && !empty($data)) {
             $url = add_query_arg($data, $url);
+            error_log('[API.php] 🚀 GET query params: ' . json_encode($data));
         }
         
         $args = [
@@ -611,15 +623,23 @@ class API {
             ]
         ];
         
+        error_log('[API.php] 🚀 Headers: ' . json_encode([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . substr($this->api_key, 0, 8) . '...' // Show first 8 chars only
+        ]));
+        
         if ($method === 'POST' || $method === 'PUT') {
             $args['body'] = json_encode($data);
+            error_log('[API.php] 🚀 Request body: ' . json_encode($data));
         }
         
+        error_log('[API.php] 🚀 Making request...');
         $response = wp_remote_request($url, $args);
         
         if (is_wp_error($response)) {
             $error_msg = $response->get_error_message();
-            error_log('402links: API request failed: ' . $error_msg);
+            error_log('[API.php] ❌ WP_Error: ' . $error_msg);
+            error_log('[API.php] ❌ ==================== REQUEST FAILED ====================');
             return [
                 'success' => false,
                 'error' => $error_msg
@@ -628,19 +648,27 @@ class API {
         
         $body = wp_remote_retrieve_body($response);
         $status_code = wp_remote_retrieve_response_code($response);
+        $response_headers = wp_remote_retrieve_headers($response);
         
-        error_log('402links: API response (status ' . $status_code . '): ' . $body);
+        error_log('[API.php] 📥 Response status: ' . $status_code);
+        error_log('[API.php] 📥 Response headers: ' . json_encode($response_headers));
+        error_log('[API.php] 📥 Response body (first 500 chars): ' . substr($body, 0, 500));
         
         $result = json_decode($body, true);
         
         if ($status_code >= 400) {
-            error_log('402links: API error (status ' . $status_code . '): ' . ($result['error'] ?? 'Unknown error'));
+            error_log('[API.php] ❌ HTTP ERROR ' . $status_code . ': ' . ($result['error'] ?? 'Unknown error'));
+            error_log('[API.php] ❌ Full error response: ' . json_encode($result));
+            error_log('[API.php] ❌ ==================== REQUEST FAILED ====================');
             return [
                 'success' => false,
                 'error' => $result['error'] ?? 'API request failed',
                 'status_code' => $status_code
             ];
         }
+        
+        error_log('[API.php] ✅ Request successful');
+        error_log('[API.php] ✅ ==================== REQUEST COMPLETE ====================');
         
         return array_merge(['success' => true], $result ?? []);
     }
