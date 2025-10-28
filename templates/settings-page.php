@@ -260,8 +260,8 @@ $is_connected = !empty($api_key) && !empty($site_id);
                         <span class="dashicons dashicons-money-alt"></span>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-label">Your Revenue</div>
-                        <div class="stat-value" id="stat-your-revenue">$0.00</div>
+                        <div class="stat-label">Market Revenue</div>
+                        <div class="stat-value" id="stat-market-revenue">$0.00</div>
                     </div>
                 </div>
             </div>

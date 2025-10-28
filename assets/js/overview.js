@@ -177,15 +177,9 @@
         // Load on page load
         loadOverviewAnalytics();
         
-        // Auto-refresh every 30 seconds
-        overviewDataInterval = setInterval(loadOverviewAnalytics, 30000);
-
-        // Clear interval when leaving page
-        $(window).on('beforeunload', function() {
-            if (overviewDataInterval) {
-                clearInterval(overviewDataInterval);
-            }
-        });
+        // DISABLED: No auto-refresh - only refresh on page load
+        // Data will be cached and only updated when user refreshes page
+        console.log('[Overview] Auto-refresh disabled - data will only refresh on page load');
     });
     
 })(jQuery);

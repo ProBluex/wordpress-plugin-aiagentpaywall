@@ -142,25 +142,24 @@
         
         // Update ecosystem stat cards
         if (data.ecosystem) {
-            $('#stat-ecosystem-buyers').text(formatNumber(data.ecosystem.unique_buyers || 0));
-            $('#stat-ecosystem-sellers').text(formatNumber(data.ecosystem.unique_sellers || 0));
-            $('#stat-ecosystem-transactions').text(formatNumber(data.ecosystem.total_transactions || 0));
-        }
-        
-        // Update site revenue
-        if (data.site) {
-            $('#stat-your-revenue').text('$' + formatMoney(data.site.total_revenue || 0));
+            // Format large numbers (70K+, $1.2M)
+            const buyers = data.ecosystem.unique_buyers || 0;
+            const sellers = data.ecosystem.unique_sellers || 0;
+            const transactions = data.ecosystem.total_transactions || 0;
+            const revenue = data.ecosystem.total_amount || 0;
+            
+            $('#stat-ecosystem-buyers').text(formatLargeNumber(buyers));
+            $('#stat-ecosystem-sellers').text(formatLargeNumber(sellers));
+            $('#stat-ecosystem-transactions').text(formatLargeNumber(transactions));
+            
+            // Show Market Revenue in $ terms instead of transaction count
+            $('#stat-market-revenue').text(formatCurrency(revenue));
             
             // Render market overview chart
-            if (data.ecosystem && data.ecosystem.bucketed_data && data.ecosystem.bucketed_data.length > 0) {
+            if (data.ecosystem.bucketed_data && data.ecosystem.bucketed_data.length > 0) {
                 renderMarketOverviewChart(data.ecosystem.bucketed_data);
             } else {
                 showEmptyChartState();
-            }
-            
-            // Update top content table
-            if (data.site.top_content) {
-                renderTopContent(data.site.top_content);
             }
         }
     }
@@ -339,6 +338,31 @@
     }
     
     /**
+     * Utility: Format large numbers (70K+, $1.2M)
+     */
+    function formatLargeNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return formatNumber(num);
+    }
+    
+    /**
+     * Utility: Format currency
+     */
+    function formatCurrency(amount) {
+        const num = parseFloat(amount || 0);
+        if (num >= 1000000) {
+            return '$' + (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return '$' + (num / 1000).toFixed(1) + 'K';
+        }
+        return '$' + num.toFixed(2);
+    }
+    
+    /**
      * Utility: Format money to 2 decimals
      */
     function formatMoney(amount) {
@@ -365,23 +389,21 @@
     }
     
     /**
-     * Start auto-refresh for analytics (every 30 seconds)
+     * Start auto-refresh for analytics (DISABLED - only refresh on page load)
      */
     function startAnalyticsAutoRefresh() {
         // Clear any existing interval
         if (analyticsRefreshInterval) {
             clearInterval(analyticsRefreshInterval);
+            analyticsRefreshInterval = null;
         }
         
-        console.log('[Analytics] Starting auto-refresh (30s interval)');
+        console.log('[Analytics] Auto-refresh disabled - data will only refresh on page load or timeframe change');
         
-        // Refresh every 30 seconds when tab is visible
-        analyticsRefreshInterval = setInterval(function() {
-            if ($('[data-tab="analytics"]').hasClass('active') && document.visibilityState === 'visible') {
-                console.log('[Analytics] Auto-refreshing data...');
-                loadAnalyticsData();
-            }
-        }, 30000); // 30 seconds
+        // NO AUTO-REFRESH - only manual refresh on:
+        // 1. Page load
+        // 2. Tab switch
+        // 3. Timeframe change
     }
     
     /**

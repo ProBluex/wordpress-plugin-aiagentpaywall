@@ -222,12 +222,12 @@ class API {
     }
     
     /**
-     * Get analytics for the site
+     * Get analytics for the site (using x402 ecosystem data)
      */
     public function get_analytics($timeframe = '30d') {
         error_log('[API.php] 📊 get_analytics() called with timeframe: ' . $timeframe);
-        $result = $this->request('POST', '/wordpress-analytics', [
-            'site_url' => get_site_url(),
+        // Use wordpress-ecosystem-stats to get data from x402_facilitator_transfers table
+        $result = $this->request('POST', '/wordpress-ecosystem-stats', [
             'timeframe' => $timeframe
         ]);
         error_log('[API.php] 📊 get_analytics() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data'])]));
