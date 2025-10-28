@@ -326,9 +326,26 @@ class Admin {
             header('Pragma: no-cache');
             header('Expires: 0');
             
+            // Extract data from response (handle flat structure)
+            $site_data = $site_result['data'] ?? $site_result;
+            $ecosystem_data = $ecosystem_result['data'] ?? $ecosystem_result;
+
+            // Build proper structure for frontend
             $final_response = [
-                'site' => $site_result['data'] ?? $site_result,
-                'ecosystem' => $ecosystem_result['data'] ?? $ecosystem_result,
+                'site' => [
+                    'total_transactions' => $site_data['total_transactions'] ?? 0,
+                    'unique_buyers' => $site_data['unique_buyers'] ?? 0,
+                    'unique_sellers' => $site_data['unique_sellers'] ?? 0,
+                    'total_amount' => $site_data['total_amount'] ?? 0,
+                    'bucketed_data' => $site_data['bucketed_data'] ?? []
+                ],
+                'ecosystem' => [
+                    'total_transactions' => $ecosystem_data['total_transactions'] ?? 0,
+                    'unique_buyers' => $ecosystem_data['unique_buyers'] ?? 0,
+                    'unique_sellers' => $ecosystem_data['unique_sellers'] ?? 0,
+                    'total_amount' => $ecosystem_data['total_amount'] ?? 0,
+                    'bucketed_data' => $ecosystem_data['bucketed_data'] ?? []
+                ]
             ];
             error_log('[Admin.php] ✅ Final response structure: ' . json_encode([
                 'has_site' => isset($final_response['site']),

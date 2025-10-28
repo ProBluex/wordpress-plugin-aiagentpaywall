@@ -28,7 +28,7 @@ window.showToast = function(title, message, type = 'success') {
 jQuery(document).ready(function($) {
     'use strict';
     
-    // Tab switching
+    // Tab switching with URL hash preservation
     $('.tab-button').on('click', function() {
         const tab = $(this).data('tab');
         
@@ -37,6 +37,9 @@ jQuery(document).ready(function($) {
         
         $(this).addClass('active');
         $(`#tab-${tab}`).addClass('active');
+        
+        // Update URL hash
+        window.location.hash = tab;
         
         // Force refresh on every tab switch
         if (tab === 'overview') {
@@ -47,6 +50,16 @@ jQuery(document).ready(function($) {
             loadContent();
         }
     });
+    
+    // Restore active tab from URL hash on page load
+    const hash = window.location.hash.substring(1); // Remove '#'
+    if (hash && hash.length > 0) {
+        const $tab = $(`.tab-button[data-tab="${hash}"]`);
+        if ($tab.length > 0) {
+            // Trigger click on the tab from hash
+            $tab.trigger('click');
+        }
+    }
     
     // Save settings
     $('#agent-hub-settings-form').on('submit', function(e) {
