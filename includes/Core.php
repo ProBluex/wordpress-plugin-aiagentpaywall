@@ -46,6 +46,7 @@ class Core {
         add_action('wp_ajax_agent_hub_get_top_pages', [Admin::class, 'ajax_get_top_pages']);
         add_action('wp_ajax_agent_hub_save_wallet', [Admin::class, 'ajax_save_wallet']);
         add_action('wp_ajax_agent_hub_check_wallet_sync_status', [Admin::class, 'ajax_check_wallet_sync_status']);
+        add_action('wp_ajax_agent_hub_check_existing_links', [Admin::class, 'ajax_check_existing_links']);
         add_action('wp_ajax_agent_hub_toggle_human_access', [Admin::class, 'ajax_toggle_human_access']);
         add_action('wp_ajax_agent_hub_get_content', [Admin::class, 'ajax_get_content']);
         add_action('wp_ajax_agent_hub_bulk_generate', [Admin::class, 'ajax_bulk_generate']);

@@ -41,6 +41,14 @@
             }
         });
         
+        // Track original price for change detection
+        let originalPrice = null;
+        
+        // Capture original price on page load
+        $(document).ready(function() {
+            originalPrice = parseFloat($('#overview-default-price').val());
+        });
+        
         // Save configuration button
         $(document).on('click', '#save-overview-config', function(e) {
             e.preventDefault();
@@ -89,6 +97,16 @@
                             indicator.find('.status-text').text('Synced');
                             userIsEditing = false; // Reset editing flag
                             window.showToast('Success', response.data.message, 'success');
+                            
+                            // Check for price change
+                            const newPrice = parseFloat(defaultPrice);
+                            const priceChanged = originalPrice !== null && originalPrice !== newPrice;
+                            
+                            if (priceChanged) {
+                                console.log('[Overview] Price changed from', originalPrice, 'to', newPrice);
+                                checkExistingLinksAndAlert();
+                                originalPrice = newPrice; // Update for next change
+                            }
                         } else {
                             indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
                             indicator.find('.status-dot').removeClass().addClass('status-dot red');
@@ -180,6 +198,75 @@
         // DISABLED: No auto-refresh - only refresh on page load
         // Data will be cached and only updated when user refreshes page
         console.log('[Overview] Auto-refresh disabled - data will only refresh on page load');
+        
+        // ========== PRICE CHANGE ALERT SYSTEM ==========
+        
+        function checkExistingLinksAndAlert() {
+            console.log('[Overview] Checking for existing links...');
+            $.ajax({
+                url: agentHubData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'agent_hub_check_existing_links',
+                    nonce: agentHubData.nonce
+                },
+                success: function(response) {
+                    console.log('[Overview] Check links response:', response);
+                    if (response.success && response.data.has_links) {
+                        showPriceChangeAlert(response.data.link_count);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[Overview] Failed to check links:', error);
+                }
+            });
+        }
+        
+        function showPriceChangeAlert(linkCount) {
+            console.log('[Overview] Showing price change alert for', linkCount, 'links');
+            
+            // Remove any existing alerts
+            $('#price-change-alert').remove();
+            
+            const alertHtml = `
+                <div class="notice notice-warning is-dismissible" id="price-change-alert" style="margin: 20px 0; padding: 15px; border-left: 4px solid #f0ad4e;">
+                    <h4 style="margin-top: 0;">
+                        <span class="dashicons dashicons-warning" style="color: #f0ad4e;"></span> 
+                        Price Changed - Action Required
+                    </h4>
+                    <p>
+                        You have <strong>${linkCount} existing paid link${linkCount !== 1 ? 's' : ''}</strong> that ${linkCount !== 1 ? 'are' : 'is'} still using the old price.
+                        To apply the new price to all your content, please regenerate your paid links.
+                    </p>
+                    <p>
+                        <button type="button" class="button button-primary" id="go-to-content-tab" style="margin-right: 10px;">
+                            <span class="dashicons dashicons-update"></span>
+                            Go to My Content & Regenerate Links
+                        </button>
+                        <button type="button" class="button" id="dismiss-price-alert">Dismiss</button>
+                    </p>
+                </div>
+            `;
+            
+            // Insert after the configuration card
+            $('.agent-hub-config-card').after(alertHtml);
+            
+            // Handle button clicks
+            $('#go-to-content-tab').on('click', function() {
+                console.log('[Overview] Switching to content tab');
+                $('.tab-button[data-tab="content"]').trigger('click');
+                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
+            });
+            
+            $('#dismiss-price-alert').on('click', function() {
+                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
+            });
+            
+            // Allow dismissing via close button
+            $('#price-change-alert').on('click', '.notice-dismiss', function() {
+                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
+            });
+        }
     });
     
 })(jQuery);

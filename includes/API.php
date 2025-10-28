@@ -123,6 +123,40 @@ class API {
     }
     
     /**
+     * Check if site has existing paid links
+     */
+    public function check_existing_links_count() {
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            return ['count' => 0];
+        }
+        
+        $url = $this->supabase_url . '/rest/v1/paid_links?site_id=eq.' . $site_id . '&select=id';
+        
+        $response = wp_remote_get(
+            $url,
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->service_role_key,
+                    'apikey' => $this->service_role_key
+                ]
+            ]
+        );
+        
+        if (is_wp_error($response)) {
+            error_log('🔴 [API] Failed to count links: ' . $response->get_error_message());
+            return ['count' => 0];
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        return [
+            'count' => is_array($body) ? count($body) : 0
+        ];
+    }
+    
+    /**
      * Get the API key ID from the api_keys table
      * This queries the backend using the API key to find its ID
      */

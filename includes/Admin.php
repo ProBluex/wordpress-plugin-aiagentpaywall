@@ -229,6 +229,35 @@ class Admin {
     }
     
     /**
+     * AJAX: Check if existing links exist
+     */
+    public static function ajax_check_existing_links() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            wp_send_json_success([
+                'has_links' => false,
+                'link_count' => 0
+            ]);
+            return;
+        }
+        
+        $api = new API();
+        $result = $api->check_existing_links_count();
+        
+        wp_send_json_success([
+            'has_links' => $result['count'] > 0,
+            'link_count' => $result['count']
+        ]);
+    }
+    
+    /**
      * AJAX: Register site
      */
     public static function ajax_register_site() {
