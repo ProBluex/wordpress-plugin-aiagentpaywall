@@ -35,12 +35,14 @@
         // Hook into analytics tab switch
         $(document).on('click', '[data-tab="analytics"]', function() {
             setTimeout(loadAnalyticsData, 100);
+            setTimeout(loadTopPages, 100);
             startAnalyticsAutoRefresh();
         });
         
         // Timeframe change handler
         $(document).on('change', '#analytics-timeframe', function() {
             loadAnalyticsData();
+            loadTopPages();
         });
         
         // Metric toggle handlers
@@ -130,6 +132,43 @@
             },
             complete: function() {
                 $('.analytics-loading').hide();
+            }
+        });
+    }
+    
+    /**
+     * Load top performing pages from backend
+     */
+    function loadTopPages() {
+        const timeframe = $('#analytics-timeframe').val() || '30d';
+        
+        console.log('[Analytics] Loading top pages for timeframe:', timeframe);
+        
+        $.ajax({
+            url: agentHubData.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'agent_hub_get_top_pages',
+                nonce: agentHubData.nonce,
+                timeframe: timeframe,
+                limit: 10
+            },
+            success: function(response) {
+                console.log('[Analytics] Top pages response:', response);
+                
+                if (response.success && response.data && response.data.pages) {
+                    renderTopContent(response.data.pages);
+                } else {
+                    $('#top-content-body').html(
+                        '<tr><td colspan="3" style="text-align:center; color:#666;">No content data available</td></tr>'
+                    );
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('[Analytics] Error loading top pages:', error);
+                $('#top-content-body').html(
+                    '<tr><td colspan="3" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>'
+                );
             }
         });
     }
@@ -318,12 +357,12 @@
             const row = `
                 <tr>
                     <td>
-                        <a href="${escapeHtml(page.page_url)}" target="_blank">
-                            ${escapeHtml(page.page_title || 'Untitled')}
+                        <a href="${escapeHtml(page.url || page.page_url)}" target="_blank">
+                            ${escapeHtml(page.title || page.page_title || 'Untitled')}
                         </a>
                     </td>
-                    <td>${formatNumber(page.agent_crawls_count || 0)}</td>
-                    <td>$${formatMoney(page.total_revenue || 0)}</td>
+                    <td>${formatNumber(page.crawls || page.agent_crawls_count || 0)}</td>
+                    <td>$${formatMoney(page.revenue || page.total_revenue || 0)}</td>
                 </tr>
             `;
             tbody.append(row);

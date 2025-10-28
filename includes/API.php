@@ -392,6 +392,47 @@ class API {
     }
     
     /**
+     * Get top performing pages from Supabase
+     */
+    public function get_top_pages($timeframe = '30d', $limit = 10) {
+        $site_id = get_option('402links_site_id');
+        if (!$site_id) {
+            return [
+                'success' => false,
+                'error' => 'Site not registered'
+            ];
+        }
+        
+        $response = wp_remote_get(
+            $this->supabase_url . '/functions/v1/agent-hub-top-pages?' . http_build_query([
+                'site_id' => $site_id,
+                'limit' => $limit
+            ]),
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->service_role_key,
+                    'Content-Type' => 'application/json'
+                ],
+                'timeout' => 10
+            ]
+        );
+        
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'error' => $response->get_error_message()
+            ];
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        return [
+            'success' => true,
+            'pages' => $body['pages'] ?? []
+        ];
+    }
+    
+    /**
      * Get agent violations from backend
      * 
      * @param string $site_id Site UUID

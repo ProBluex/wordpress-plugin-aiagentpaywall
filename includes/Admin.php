@@ -622,6 +622,29 @@ class Admin {
     }
     
     /**
+     * AJAX: Get top performing pages
+     */
+    public static function ajax_get_top_pages() {
+        check_ajax_referer('agent_hub_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
+        $limit = intval($_POST['limit'] ?? 10);
+        
+        $api = new API();
+        $result = $api->get_top_pages($timeframe, $limit);
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+    
+    /**
      * AJAX: Bulk generate links
      */
     public static function ajax_bulk_generate() {

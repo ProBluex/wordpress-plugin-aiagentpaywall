@@ -43,6 +43,7 @@ class Core {
         add_action('wp_ajax_agent_hub_register_site', [Admin::class, 'ajax_register_site']);
         add_action('wp_ajax_agent_hub_generate_link', [Admin::class, 'ajax_generate_link']);
         add_action('wp_ajax_agent_hub_get_analytics', [Admin::class, 'ajax_get_analytics']);
+        add_action('wp_ajax_agent_hub_get_top_pages', [Admin::class, 'ajax_get_top_pages']);
         add_action('wp_ajax_agent_hub_save_wallet', [Admin::class, 'ajax_save_wallet']);
         add_action('wp_ajax_agent_hub_check_wallet_sync_status', [Admin::class, 'ajax_check_wallet_sync_status']);
         add_action('wp_ajax_agent_hub_toggle_human_access', [Admin::class, 'ajax_toggle_human_access']);
