@@ -400,6 +400,34 @@ class API {
         $site_id = get_option('402links_site_id');
         error_log('🟦 [API] Site ID: ' . ($site_id ?: 'NOT SET'));
         
+        // If site_id is missing, try to fetch it from Supabase
+        if (!$site_id) {
+            error_log('🔵 [API] Site ID missing - attempting to fetch from Supabase');
+            $site_url = get_site_url();
+            
+            // Query Supabase to find this site
+            $fetch_url = $this->supabase_url . '/rest/v1/registered_sites?site_url=eq.' . urlencode($site_url);
+            $fetch_response = wp_remote_get(
+                $fetch_url,
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $this->service_role_key,
+                        'apikey' => $this->service_role_key,
+                        'Content-Type' => 'application/json'
+                    ]
+                ]
+            );
+            
+            if (!is_wp_error($fetch_response)) {
+                $body = json_decode(wp_remote_retrieve_body($fetch_response), true);
+                if (!empty($body) && isset($body[0]['id'])) {
+                    $site_id = $body[0]['id'];
+                    update_option('402links_site_id', $site_id);
+                    error_log('🟢 [API] Site ID fetched and stored: ' . $site_id);
+                }
+            }
+        }
+        
         if (!$site_id) {
             error_log('🔴 [API] ERROR: Site not registered (no site_id)');
             return [
