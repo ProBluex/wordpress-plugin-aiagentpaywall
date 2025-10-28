@@ -633,9 +633,10 @@ class Admin {
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
         $limit = intval($_POST['limit'] ?? 10);
+        $offset = intval($_POST['offset'] ?? 0);
         
         $api = new API();
-        $result = $api->get_top_pages($timeframe, $limit);
+        $result = $api->get_top_pages($timeframe, $limit, $offset);
         
         if ($result['success']) {
             wp_send_json_success($result);

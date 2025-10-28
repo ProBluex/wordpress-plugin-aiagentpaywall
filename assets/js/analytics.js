@@ -8,6 +8,8 @@
     
     let marketChart = null;
     let analyticsRefreshInterval = null;
+    let currentPage = 1;
+    const perPage = 10;
     let activeMetrics = {
         transactions: true,
         volume: true,
@@ -139,10 +141,12 @@
     /**
      * Load top performing pages from backend
      */
-    function loadTopPages() {
+    function loadTopPages(page = 1) {
+        currentPage = page;
+        const offset = (page - 1) * perPage;
         const timeframe = $('#analytics-timeframe').val() || '30d';
         
-        console.log('[Analytics] Loading top pages for timeframe:', timeframe);
+        console.log('[Analytics] Loading top pages - page:', page, 'offset:', offset);
         
         $.ajax({
             url: agentHubData.ajaxUrl,
@@ -151,24 +155,28 @@
                 action: 'agent_hub_get_top_pages',
                 nonce: agentHubData.nonce,
                 timeframe: timeframe,
-                limit: 10
+                limit: perPage,
+                offset: offset
             },
             success: function(response) {
                 console.log('[Analytics] Top pages response:', response);
                 
-                if (response.success && response.data && response.data.pages) {
-                    renderTopContent(response.data.pages);
+                if (response.success && response.data) {
+                    renderTopContent(response.data.pages || []);
+                    renderPagination(response.data.total || 0, currentPage, perPage);
                 } else {
                     $('#top-content-body').html(
-                        '<tr><td colspan="3" style="text-align:center; color:#666;">No content data available</td></tr>'
+                        '<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>'
                     );
+                    $('#top-content-pagination').hide();
                 }
             },
             error: function(xhr, status, error) {
                 console.error('[Analytics] Error loading top pages:', error);
                 $('#top-content-body').html(
-                    '<tr><td colspan="3" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>'
+                    '<tr><td colspan="2" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>'
                 );
+                $('#top-content-pagination').hide();
             }
         });
     }
@@ -349,7 +357,7 @@
         tbody.empty();
         
         if (!pages || pages.length === 0) {
-            tbody.html('<tr><td colspan="3" style="text-align:center; color:#666;">No content data available</td></tr>');
+            tbody.html('<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>');
             return;
         }
         
@@ -361,13 +369,60 @@
                             ${escapeHtml(page.title || page.page_title || 'Untitled')}
                         </a>
                     </td>
-                    <td>${formatNumber(page.crawls || page.agent_crawls_count || 0)}</td>
-                    <td>$${formatMoney(page.revenue || page.total_revenue || 0)}</td>
+                    <td>$${formatMoney(page.revenue || page.agent_revenue || 0)}</td>
                 </tr>
             `;
             tbody.append(row);
         });
     }
+    
+    /**
+     * Render pagination controls
+     */
+    function renderPagination(total, currentPage, perPage) {
+        const totalPages = Math.ceil(total / perPage);
+        const container = $('#top-content-pagination');
+        
+        if (totalPages <= 1) {
+            container.hide();
+            return;
+        }
+        
+        container.show();
+        container.empty();
+        
+        let html = '<div class="pagination">';
+        
+        // Previous button
+        if (currentPage > 1) {
+            html += `<button class="page-btn" data-page="${currentPage - 1}">← Previous</button>`;
+        }
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<span class="page-current">${i}</span>`;
+            } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2) {
+                html += `<button class="page-btn" data-page="${i}">${i}</button>`;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += `<span>...</span>`;
+            }
+        }
+        
+        // Next button
+        if (currentPage < totalPages) {
+            html += `<button class="page-btn" data-page="${currentPage + 1}">Next →</button>`;
+        }
+        
+        html += '</div>';
+        container.html(html);
+    }
+    
+    // Add click handler for pagination
+    $(document).on('click', '.page-btn', function() {
+        const page = parseInt($(this).data('page'));
+        loadTopPages(page);
+    });
     
     /**
      * Utility: Format number with commas

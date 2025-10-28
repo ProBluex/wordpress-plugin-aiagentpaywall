@@ -293,14 +293,14 @@ $is_connected = !empty($api_key) && !empty($site_id);
                 <thead>
                     <tr>
                         <th>Page Title</th>
-                        <th>Crawls</th>
                         <th>Revenue</th>
                     </tr>
                 </thead>
                 <tbody id="top-content-body">
-                    <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+                    <tr><td colspan="2" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
+            <div id="top-content-pagination" style="margin-top: 15px; text-align: center;"></div>
         </div>
     </div>
     

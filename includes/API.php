@@ -394,7 +394,7 @@ class API {
     /**
      * Get top performing pages from Supabase
      */
-    public function get_top_pages($timeframe = '30d', $limit = 10) {
+    public function get_top_pages($timeframe = '30d', $limit = 10, $offset = 0) {
         $site_id = get_option('402links_site_id');
         if (!$site_id) {
             return [
@@ -406,7 +406,8 @@ class API {
         $response = wp_remote_get(
             $this->supabase_url . '/functions/v1/agent-hub-top-pages?' . http_build_query([
                 'site_id' => $site_id,
-                'limit' => $limit
+                'limit' => $limit,
+                'offset' => $offset
             ]),
             [
                 'headers' => [
@@ -428,7 +429,10 @@ class API {
         
         return [
             'success' => true,
-            'pages' => $body['pages'] ?? []
+            'pages' => $body['pages'] ?? [],
+            'total' => $body['total'] ?? 0,
+            'limit' => $limit,
+            'offset' => $offset
         ];
     }
     

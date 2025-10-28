@@ -499,6 +499,46 @@
     color: var(--gray-600) !important;
 }
 
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.pagination .page-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--gray-300);
+    background: white;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--foreground);
+    transition: all 0.2s;
+}
+
+.pagination .page-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.pagination .page-current {
+    padding: 6px 12px;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.pagination span:not(.page-current) {
+    color: var(--gray-600);
+    padding: 0 4px;
+}
+
 /* Info Box */
 .agent-hub-info-box {
     background: white;
