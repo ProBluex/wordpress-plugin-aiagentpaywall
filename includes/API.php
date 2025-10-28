@@ -56,6 +56,73 @@ class API {
     }
     
     /**
+     * Sync site settings to Supabase registered_sites table
+     */
+    public function sync_site_settings($settings) {
+        $site_id = get_option('402links_site_id');
+        
+        if (!$site_id) {
+            return [
+                'success' => false,
+                'error' => 'Site not registered'
+            ];
+        }
+        
+        error_log('🟦 [API] === SYNC SITE SETTINGS ===');
+        error_log('🟦 [API] Site ID: ' . $site_id);
+        error_log('🟦 [API] Settings: ' . json_encode($settings));
+        
+        $url = $this->supabase_url . '/rest/v1/registered_sites?id=eq.' . $site_id;
+        
+        $payload = [];
+        if (isset($settings['default_price'])) {
+            $payload['default_price'] = floatval($settings['default_price']);
+        }
+        if (isset($settings['payment_wallet'])) {
+            $payload['payment_wallet'] = $settings['payment_wallet'];
+        }
+        
+        $response = wp_remote_request(
+            $url,
+            [
+                'method' => 'PATCH',
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->service_role_key,
+                    'apikey' => $this->service_role_key,
+                    'Content-Type' => 'application/json',
+                    'Prefer' => 'return=representation'
+                ],
+                'body' => json_encode($payload)
+            ]
+        );
+        
+        if (is_wp_error($response)) {
+            error_log('🔴 [API] Sync failed: ' . $response->get_error_message());
+            return [
+                'success' => false,
+                'error' => $response->get_error_message()
+            ];
+        }
+        
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        error_log('🟢 [API] Sync response: ' . wp_remote_retrieve_body($response));
+        
+        if ($status_code >= 200 && $status_code < 300) {
+            return [
+                'success' => true,
+                'data' => $body
+            ];
+        }
+        
+        return [
+            'success' => false,
+            'error' => 'Failed to sync: ' . $status_code
+        ];
+    }
+    
+    /**
      * Get the API key ID from the api_keys table
      * This queries the backend using the API key to find its ID
      */

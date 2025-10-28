@@ -213,6 +213,18 @@ class Admin {
             update_option('402links_api_key', sanitize_text_field($_POST['api_key']));
         }
         
+        // Sync default_price and payment_wallet to Supabase registered_sites table
+        $site_id = get_option('402links_site_id');
+        if ($site_id) {
+            $api = new API();
+            $sync_result = $api->sync_site_settings([
+                'default_price' => $settings['default_price'],
+                'payment_wallet' => $settings['payment_wallet']
+            ]);
+            
+            error_log('🟦 [Admin] Synced settings to Supabase: ' . json_encode($sync_result));
+        }
+        
         wp_send_json_success(['message' => 'Settings saved successfully']);
     }
     
