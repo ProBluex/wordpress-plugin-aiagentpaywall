@@ -625,9 +625,13 @@ class Admin {
      * AJAX: Get top performing pages
      */
     public static function ajax_get_top_pages() {
+        error_log('🟦 [Admin] === AJAX GET TOP PAGES START ===');
+        error_log('🟦 [Admin] POST data: ' . print_r($_POST, true));
+        
         check_ajax_referer('agent_hub_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
+            error_log('🔴 [Admin] ERROR: Unauthorized user');
             wp_send_json_error(['message' => 'Unauthorized']);
         }
         
@@ -635,12 +639,21 @@ class Admin {
         $limit = intval($_POST['limit'] ?? 10);
         $offset = intval($_POST['offset'] ?? 0);
         
+        error_log('🟦 [Admin] Calling API with: timeframe=' . $timeframe . ', limit=' . $limit . ', offset=' . $offset);
+        
+        $site_id = get_option('402links_site_id');
+        error_log('🟦 [Admin] Site ID from options: ' . ($site_id ?: 'NOT SET'));
+        
         $api = new API();
         $result = $api->get_top_pages($timeframe, $limit, $offset);
         
+        error_log('🟢 [Admin] API result: ' . print_r($result, true));
+        
         if ($result['success']) {
+            error_log('🟢 [Admin] Sending success response with ' . count($result['pages'] ?? []) . ' pages');
             wp_send_json_success($result);
         } else {
+            error_log('🔴 [Admin] Sending error response: ' . ($result['error'] ?? 'Unknown error'));
             wp_send_json_error($result);
         }
     }

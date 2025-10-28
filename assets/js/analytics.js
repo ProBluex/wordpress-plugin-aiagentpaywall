@@ -142,29 +142,43 @@
      * Load top performing pages from backend
      */
     function loadTopPages(page = 1) {
+        console.log('🟦 [TopPages] === LOAD TOP PAGES START ===');
+        console.log('🟦 [TopPages] Page:', page);
+        console.log('🟦 [TopPages] agentHubData:', agentHubData);
+        
         currentPage = page;
         const offset = (page - 1) * perPage;
         const timeframe = $('#analytics-timeframe').val() || '30d';
         
-        console.log('[Analytics] Loading top pages - page:', page, 'offset:', offset);
+        const requestData = {
+            action: 'agent_hub_get_top_pages',
+            nonce: agentHubData.nonce,
+            timeframe: timeframe,
+            limit: perPage,
+            offset: offset
+        };
+        
+        console.log('🟦 [TopPages] Sending AJAX request:', requestData);
+        console.log('🟦 [TopPages] AJAX URL:', agentHubData.ajaxUrl);
         
         $.ajax({
             url: agentHubData.ajaxUrl,
             type: 'POST',
-            data: {
-                action: 'agent_hub_get_top_pages',
-                nonce: agentHubData.nonce,
-                timeframe: timeframe,
-                limit: perPage,
-                offset: offset
-            },
+            data: requestData,
             success: function(response) {
-                console.log('[Analytics] Top pages response:', response);
+                console.log('🟢 [TopPages] === AJAX SUCCESS ===');
+                console.log('🟢 [TopPages] Full response:', response);
+                console.log('🟢 [TopPages] response.success:', response.success);
+                console.log('🟢 [TopPages] response.data:', response.data);
                 
                 if (response.success && response.data) {
+                    console.log('🟢 [TopPages] Pages array:', response.data.pages);
+                    console.log('🟢 [TopPages] Total count:', response.data.total);
                     renderTopContent(response.data.pages || []);
                     renderPagination(response.data.total || 0, currentPage, perPage);
                 } else {
+                    console.error('🔴 [TopPages] Response not successful');
+                    console.error('🔴 [TopPages] Error:', response.error || response);
                     $('#top-content-body').html(
                         '<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>'
                     );
@@ -172,7 +186,11 @@
                 }
             },
             error: function(xhr, status, error) {
-                console.error('[Analytics] Error loading top pages:', error);
+                console.error('🔴 [TopPages] === AJAX ERROR ===');
+                console.error('🔴 [TopPages] Status:', status);
+                console.error('🔴 [TopPages] Error:', error);
+                console.error('🔴 [TopPages] XHR:', xhr);
+                console.error('🔴 [TopPages] Response Text:', xhr.responseText);
                 $('#top-content-body').html(
                     '<tr><td colspan="2" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>'
                 );

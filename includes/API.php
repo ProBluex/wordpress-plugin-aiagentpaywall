@@ -395,20 +395,31 @@ class API {
      * Get top performing pages from Supabase
      */
     public function get_top_pages($timeframe = '30d', $limit = 10, $offset = 0) {
+        error_log('🟦 [API] === GET TOP PAGES START ===');
+        
         $site_id = get_option('402links_site_id');
+        error_log('🟦 [API] Site ID: ' . ($site_id ?: 'NOT SET'));
+        
         if (!$site_id) {
+            error_log('🔴 [API] ERROR: Site not registered (no site_id)');
             return [
                 'success' => false,
                 'error' => 'Site not registered'
             ];
         }
         
+        $url = $this->supabase_url . '/functions/v1/agent-hub-top-pages?' . http_build_query([
+            'site_id' => $site_id,
+            'limit' => $limit,
+            'offset' => $offset
+        ]);
+        
+        error_log('🟦 [API] Edge function URL: ' . $url);
+        error_log('🟦 [API] Supabase URL base: ' . $this->supabase_url);
+        error_log('🟦 [API] Has service key: ' . (empty($this->service_role_key) ? 'NO' : 'YES (length: ' . strlen($this->service_role_key) . ')'));
+        
         $response = wp_remote_get(
-            $this->supabase_url . '/functions/v1/agent-hub-top-pages?' . http_build_query([
-                'site_id' => $site_id,
-                'limit' => $limit,
-                'offset' => $offset
-            ]),
+            $url,
             [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->service_role_key,
@@ -419,13 +430,23 @@ class API {
         );
         
         if (is_wp_error($response)) {
+            error_log('🔴 [API] WP Error: ' . $response->get_error_message());
             return [
                 'success' => false,
                 'error' => $response->get_error_message()
             ];
         }
         
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body_raw = wp_remote_retrieve_body($response);
+        error_log('🟢 [API] Response status: ' . $status_code);
+        error_log('🟢 [API] Response body (raw): ' . $body_raw);
+        
+        $body = json_decode($body_raw, true);
+        error_log('🟢 [API] Response body (parsed): ' . print_r($body, true));
+        
+        $pages_count = count($body['pages'] ?? []);
+        error_log('🟢 [API] Success! Returning ' . $pages_count . ' pages, total: ' . ($body['total'] ?? 0));
         
         return [
             'success' => true,
