@@ -4,11 +4,20 @@ namespace AgentHub;
 class API {
     private $api_key;
     private $api_endpoint;
+    private $supabase_url;
+    private $service_role_key;
     
     public function __construct() {
         $this->api_key = get_option('402links_api_key');
         $settings = get_option('402links_settings');
         $this->api_endpoint = $settings['api_endpoint'] ?? 'https://api.402links.com/v1';
+        
+        // Initialize Supabase credentials
+        $this->supabase_url = 'https://cnionwnknwnzpwfuacse.supabase.co';
+        $this->service_role_key = get_option('402links_supabase_service_key');
+        
+        error_log('🟦 [API Constructor] Supabase URL: ' . ($this->supabase_url ?: 'NOT SET'));
+        error_log('🟦 [API Constructor] Service key: ' . ($this->service_role_key ? 'SET (length: ' . strlen($this->service_role_key) . ')' : 'NOT SET'));
     }
     
     /**
