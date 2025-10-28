@@ -31,6 +31,7 @@
         // Load immediately if analytics tab is already active
         if ($('[data-tab="analytics"]').hasClass('active')) {
             loadAnalyticsData();
+            loadTopPages();
             startAnalyticsAutoRefresh();
         }
         
