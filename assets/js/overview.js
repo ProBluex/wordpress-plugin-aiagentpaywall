@@ -167,7 +167,7 @@
                         
                         // Update metric cards
                         $('#total-crawls').text(siteData.total_crawls || 0);
-                        $('#paid-crawls').text(siteData.total_paid || 0);
+                        $('#paid-crawls').text(siteData.paid_crawls || 0);
                         $('#total-revenue').text('$' + (siteData.total_revenue || 0).toFixed(2));
                         $('#protected-pages').text(siteData.protected_pages || 0);
                         

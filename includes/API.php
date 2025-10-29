@@ -332,16 +332,58 @@ class API {
     }
     
     /**
-     * Get analytics for the site (using x402 ecosystem data)
+     * Get site-specific analytics (agent_crawls + agent_payments)
+     * Used for: Overview tab cards
+     */
+    public function get_site_analytics($period = '30d') {
+        $site_id = get_option('402links_site_id');
+        if (!$site_id) {
+            error_log('[API.php] ⚠️ get_site_analytics() - No site_id found');
+            return ['success' => false, 'error' => 'Site not registered'];
+        }
+        
+        error_log('[API.php] 📊 get_site_analytics() - site_id: ' . $site_id . ', period: ' . $period);
+        
+        $result = $this->request('GET', '/get-site-analytics', [
+            'site_id' => $site_id,
+            'period'  => $period ?: '30d'
+        ]);
+        
+        error_log('[API.php] 📊 get_site_analytics() result: ' . json_encode([
+            'success' => $result['success'] ?? false,
+            'has_data' => isset($result['data'])
+        ]));
+        
+        return $result;
+    }
+    
+    /**
+     * Get WordPress site analytics (agent + human payments combined)
+     * Used for: Analytics tab lower fold (Top Performing Content)
+     */
+    public function get_wordpress_analytics($timeframe = '30d') {
+        error_log('[API.php] 📊 get_wordpress_analytics() called with timeframe: ' . $timeframe);
+        
+        $result = $this->request('POST', '/wordpress-analytics', [
+            'site_url'  => get_site_url(),
+            'timeframe' => $timeframe ?: '30d'
+        ]);
+        
+        error_log('[API.php] 📊 get_wordpress_analytics() result: ' . json_encode([
+            'success' => $result['success'] ?? false,
+            'has_data' => isset($result['data'])
+        ]));
+        
+        return $result;
+    }
+    
+    /**
+     * @deprecated Use get_site_analytics() or get_wordpress_analytics() instead
+     * Kept for backward compatibility - redirects to ecosystem stats
      */
     public function get_analytics($timeframe = '30d') {
-        error_log('[API.php] 📊 get_analytics() called with timeframe: ' . $timeframe);
-        // Use wordpress-ecosystem-stats to get data from x402_facilitator_transfers table
-        $result = $this->request('POST', '/wordpress-ecosystem-stats', [
-            'timeframe' => $timeframe
-        ]);
-        error_log('[API.php] 📊 get_analytics() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data'])]));
-        return $result;
+        error_log('[API.php] ⚠️ DEPRECATED: get_analytics() called. Use get_site_analytics() or get_wordpress_analytics().');
+        return $this->get_ecosystem_stats($timeframe);
     }
     
     /**
