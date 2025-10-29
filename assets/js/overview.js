@@ -149,31 +149,73 @@
         let overviewDataInterval;
 
         function loadOverviewAnalytics() {
-            console.log('[Overview] Loading analytics data for overview cards');
+            console.log('🔵 [Overview] ==================== ANALYTICS REQUEST START ====================');
+            console.log('🔵 [Overview] Timestamp:', new Date().toISOString());
+            console.log('🔵 [Overview] AJAX URL:', agentHubData.ajaxUrl);
+            
+            const requestPayload = {
+                action: 'agent_hub_get_analytics',
+                nonce: agentHubData.nonce,
+                timeframe: '30d'
+            };
+            console.log('🔵 [Overview] Request payload:', requestPayload);
             
             $.ajax({
                 url: agentHubData.ajaxUrl,
                 type: 'POST',
-                data: {
-                    action: 'agent_hub_get_analytics',
-                    nonce: agentHubData.nonce,
-                    timeframe: '30d'
-                },
+                data: requestPayload,
                 success: function(response) {
-                    console.log('[Overview] Analytics response:', response);
+                    console.log('🟢 [Overview] ==================== RESPONSE RECEIVED ====================');
+                    console.log('🟢 [Overview] Raw response:', response);
+                    console.log('🟢 [Overview] response.success:', response.success);
+                    console.log('🟢 [Overview] response.data exists:', !!response.data);
                     
-                    if (response.success && response.data) {
+                    if (response.data) {
+                        console.log('🟢 [Overview] response.data.site exists:', !!response.data.site);
+                        console.log('🟢 [Overview] response.data.ecosystem exists:', !!response.data.ecosystem);
+                        console.log('🟢 [Overview] response.data structure:', {
+                            site: response.data.site ? Object.keys(response.data.site) : 'N/A',
+                            ecosystem: response.data.ecosystem ? Object.keys(response.data.ecosystem) : 'N/A'
+                        });
+                    }
+                    
+                    if (response.success && response.data && response.data.site) {
                         const siteData = response.data.site;
+                        console.log('🟢 [Overview] Extracted siteData:', siteData);
                         
-                        // Update metric cards
-                        $('#total-crawls').text(siteData.total_crawls || 0);
-                        $('#paid-crawls').text(siteData.paid_crawls || 0);
-                        $('#total-revenue').text('$' + (siteData.total_revenue || 0).toFixed(2));
-                        $('#protected-pages').text(siteData.protected_pages || 0);
+                        // Log each metric extraction
+                        const metrics = {
+                            total_crawls: siteData?.total_crawls,
+                            paid_crawls: siteData?.paid_crawls,
+                            total_revenue: siteData?.total_revenue,
+                            protected_pages: siteData?.protected_pages
+                        };
+                        console.log('🟢 [Overview] Extracted metrics (before fallback):', metrics);
                         
-                        console.log('[Overview] ✅ Metrics updated successfully');
+                        // Update metric cards with logging
+                        const finalValues = {
+                            total_crawls: siteData.total_crawls || 0,
+                            paid_crawls: siteData.paid_crawls || 0,
+                            total_revenue: '$' + (siteData.total_revenue || 0).toFixed(2),
+                            protected_pages: siteData.protected_pages || 0
+                        };
+                        console.log('🟢 [Overview] Final values (after fallback):', finalValues);
+                        
+                        $('#total-crawls').text(finalValues.total_crawls);
+                        $('#paid-crawls').text(finalValues.paid_crawls);
+                        $('#total-revenue').text(finalValues.total_revenue);
+                        $('#protected-pages').text(finalValues.protected_pages);
+                        
+                        console.log('✅ [Overview] Metrics updated in DOM successfully');
                     } else {
-                        console.error('[Overview] ❌ Failed to load analytics:', response);
+                        console.error('❌ [Overview] ==================== FAILURE ====================');
+                        console.error('❌ [Overview] Response indicates failure');
+                        console.error('❌ [Overview] response.success:', response.success);
+                        console.error('❌ [Overview] response.data:', response.data);
+                        console.error('❌ [Overview] response.data.site exists:', !!(response.data && response.data.site));
+                        console.error('❌ [Overview] response.message:', response.message);
+                        console.error('❌ [Overview] Full response:', JSON.stringify(response, null, 2));
+                        
                         // Show zeros with error state
                         $('#total-crawls').text('0');
                         $('#paid-crawls').text('0');
@@ -182,7 +224,12 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('[Overview] ❌ AJAX error:', error);
+                    console.error('🔴 [Overview] ==================== AJAX ERROR ====================');
+                    console.error('🔴 [Overview] Status:', status);
+                    console.error('🔴 [Overview] Error:', error);
+                    console.error('🔴 [Overview] XHR status:', xhr.status);
+                    console.error('🔴 [Overview] XHR responseText:', xhr.responseText);
+                    
                     // Show zeros on error
                     $('#total-crawls').text('0');
                     $('#paid-crawls').text('0');

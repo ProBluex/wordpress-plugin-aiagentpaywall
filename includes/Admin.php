@@ -352,6 +352,12 @@ class Admin {
             'has_data' => isset($site_result['data']),
             'error' => $site_result['error'] ?? 'none'
         ]));
+        error_log('[Admin.php] 📊 site_result raw data keys: ' . json_encode(array_keys($site_result['data'] ?? [])));
+        if (isset($site_result['data']['metrics'])) {
+            error_log('[Admin.php] 📊 site_result has nested metrics structure');
+        } else {
+            error_log('[Admin.php] 📊 site_result has flat structure');
+        }
         
         // ✅ Ecosystem stats for analytics upper widgets (kept separate)
         $ecosystem_result = $api->get_ecosystem_stats($timeframe);
@@ -360,6 +366,7 @@ class Admin {
             'has_data' => isset($ecosystem_result['data']),
             'error' => $ecosystem_result['error'] ?? 'none'
         ]));
+        error_log('[Admin.php] 🌍 ecosystem_result raw data keys: ' . json_encode(array_keys($ecosystem_result['data'] ?? [])));
         
         if (($site_result['success'] ?? false) || ($ecosystem_result['success'] ?? false)) {
             // Add cache-busting headers
@@ -373,6 +380,9 @@ class Admin {
             
             // Extract metrics safely - tolerate both nested and flat structures
             $site_metrics = $site_data['metrics'] ?? $site_data;
+            error_log('[Admin.php] 📊 Extracted $site_data structure: ' . json_encode(array_keys($site_data)));
+            error_log('[Admin.php] 📊 Extracted $site_metrics: ' . json_encode($site_metrics));
+            error_log('[Admin.php] 📊 $site_metrics keys: ' . json_encode(array_keys($site_metrics)));
             
             // Count protected pages using correct meta key
             $protected_query = new \WP_Query([
@@ -384,6 +394,11 @@ class Admin {
                 'no_found_rows'  => false,
             ]);
             $protected_pages_count = $protected_query->found_posts;
+            error_log('[Admin.php] 📄 Protected pages WP_Query parameters: ' . json_encode([
+                'post_type' => ['post', 'page'],
+                'meta_key' => '_402links_id'
+            ]));
+            error_log('[Admin.php] 📄 Protected pages found_posts: ' . $protected_pages_count);
             
             $final_response = [
                 'site' => [
@@ -406,6 +421,12 @@ class Admin {
                     'bucketed_data'      => $ecosystem_data['bucketed_data']      ?? []
                 ]
             ];
+            
+            error_log('[Admin.php] 📊 Final site metrics being sent:');
+            error_log('[Admin.php]    - total_crawls: ' . $final_response['site']['total_crawls']);
+            error_log('[Admin.php]    - paid_crawls: ' . $final_response['site']['paid_crawls']);
+            error_log('[Admin.php]    - total_revenue: ' . $final_response['site']['total_revenue']);
+            error_log('[Admin.php]    - protected_pages: ' . $final_response['site']['protected_pages']);
             
             error_log('[Admin.php] ✅ Final response structure: ' . json_encode([
                 'has_site' => isset($final_response['site']),
