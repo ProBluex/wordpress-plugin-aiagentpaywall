@@ -333,7 +333,6 @@ class API {
     
     /**
      * Get analytics for the site (using x402 ecosystem data)
-     * @deprecated Use get_site_analytics() for site-specific data
      */
     public function get_analytics($timeframe = '30d') {
         error_log('[API.php] 📊 get_analytics() called with timeframe: ' . $timeframe);
@@ -342,34 +341,6 @@ class API {
             'timeframe' => $timeframe
         ]);
         error_log('[API.php] 📊 get_analytics() result: ' . json_encode(['success' => $result['success'], 'has_data' => isset($result['data'])]));
-        return $result;
-    }
-    
-    /**
-     * Get site-specific analytics (from site_pages, agent_crawls, agent_payments tables)
-     */
-    public function get_site_analytics($site_id, $period = '30d') {
-        error_log('[API.php] 📊 get_site_analytics() called with site_id: ' . $site_id . ', period: ' . $period);
-        
-        if (!$site_id) {
-            error_log('[API.php] ❌ get_site_analytics() - No site_id provided');
-            return [
-                'success' => false,
-                'error' => 'Site ID is required'
-            ];
-        }
-        
-        $result = $this->request('GET', '/get-site-analytics', [
-            'site_id' => $site_id,
-            'period' => $period
-        ]);
-        
-        error_log('[API.php] 📊 get_site_analytics() result: ' . json_encode([
-            'success' => $result['success'] ?? false,
-            'has_metrics' => isset($result['metrics']),
-            'metrics' => $result['metrics'] ?? null
-        ]));
-        
         return $result;
     }
     
