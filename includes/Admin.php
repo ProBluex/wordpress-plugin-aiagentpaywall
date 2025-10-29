@@ -328,6 +328,17 @@ class Admin {
         }
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
+        
+        // Check cache first (90 second TTL)
+        $cache_key = 'agent_hub_analytics_' . $timeframe;
+        $cached = get_transient($cache_key);
+        
+        if ($cached !== false) {
+            error_log('[Admin.php] 📦 Returning cached analytics for timeframe: ' . $timeframe);
+            wp_send_json_success($cached);
+            return;
+        }
+        
         $api = new API();
         
         error_log('[Admin.php] 📊 ==================== ANALYTICS REQUEST ====================');
@@ -360,8 +371,19 @@ class Admin {
             $site_data = $site_result['data'] ?? $site_result ?? [];
             $ecosystem_data = $ecosystem_result['data'] ?? $ecosystem_result ?? [];
             
-            // Extract metrics safely - site data comes from agent_crawls + agent_payments
-            $site_metrics = $site_data['metrics'] ?? [];
+            // Extract metrics safely - tolerate both nested and flat structures
+            $site_metrics = $site_data['metrics'] ?? $site_data;
+            
+            // Count protected pages using correct meta key
+            $protected_query = new \WP_Query([
+                'post_type'      => ['post', 'page'],
+                'post_status'    => 'publish',
+                'meta_query'     => [['key' => '_402links_id', 'compare' => 'EXISTS']],
+                'fields'         => 'ids',
+                'posts_per_page' => 1,
+                'no_found_rows'  => false,
+            ]);
+            $protected_pages_count = $protected_query->found_posts;
             
             $final_response = [
                 'site' => [
@@ -371,11 +393,7 @@ class Admin {
                     'unpaid_crawls'  => $site_metrics['unpaid_crawls']  ?? 0,
                     'total_revenue'  => $site_metrics['total_revenue']  ?? 0.0,
                     'conversion_rate'=> $site_metrics['conversion_rate']?? 0.0,
-                    'protected_pages'=> count(get_posts([
-                        'post_type' => 'any',
-                        'meta_key' => '_402links_paid_link',
-                        'numberposts' => -1
-                    ])),
+                    'protected_pages'=> $protected_pages_count,
                     // Keep bucket for charts if endpoint returns it
                     'bucketed_data'  => $site_data['bucketed_data']  ?? []
                 ],
@@ -395,6 +413,9 @@ class Admin {
                 'site_total_crawls' => $final_response['site']['total_crawls'],
                 'ecosystem_total_transactions' => $final_response['ecosystem']['total_transactions']
             ]));
+            
+            // Cache the response for 90 seconds
+            set_transient($cache_key, $final_response, 90);
             
             wp_send_json_success($final_response);
         }

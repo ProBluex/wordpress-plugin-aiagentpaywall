@@ -332,6 +332,22 @@ class API {
     }
     
     /**
+     * Normalize timeframe/period values to canonical format
+     * Protects against frontend variations (7d vs 1w vs week)
+     */
+    private function normalize_period($value) {
+        $value = strtolower(trim($value ?: '30d'));
+        
+        // Map variations → canonical values for edge functions
+        if (in_array($value, ['7d', '1w', 'week'])) return 'week';
+        if (in_array($value, ['30d', '1m', 'month'])) return '30d';
+        if (in_array($value, ['90d', '3m', 'quarter'])) return '90d';
+        if (in_array($value, ['365d', '1y', 'year', 'all'])) return 'all';
+        
+        return '30d'; // safe default
+    }
+    
+    /**
      * Get site-specific analytics (agent_crawls + agent_payments)
      * Used for: Overview tab cards
      */
@@ -342,11 +358,12 @@ class API {
             return ['success' => false, 'error' => 'Site not registered'];
         }
         
+        $period = $this->normalize_period($period);
         error_log('[API.php] 📊 get_site_analytics() - site_id: ' . $site_id . ', period: ' . $period);
         
         $result = $this->request('GET', '/get-site-analytics', [
             'site_id' => $site_id,
-            'period'  => $period ?: '30d'
+            'period'  => $period
         ]);
         
         error_log('[API.php] 📊 get_site_analytics() result: ' . json_encode([
@@ -382,7 +399,13 @@ class API {
      * Kept for backward compatibility - redirects to ecosystem stats
      */
     public function get_analytics($timeframe = '30d') {
-        error_log('[API.php] ⚠️ DEPRECATED: get_analytics() called. Use get_site_analytics() or get_wordpress_analytics().');
+        // Log caller context for debugging
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = $backtrace[1]['function'] ?? 'unknown';
+        $class = $backtrace[1]['class'] ?? '';
+        $caller_info = $class ? "$class::$caller" : $caller;
+        
+        error_log('[API.php] ⚠️ DEPRECATED: get_analytics() called by ' . $caller_info . '. Use get_site_analytics() or get_wordpress_analytics().');
         return $this->get_ecosystem_stats($timeframe);
     }
     
