@@ -43,7 +43,7 @@ jQuery(document).ready(function($) {
         
         // Force refresh on every tab switch
         if (tab === 'overview') {
-            loadOverviewStats(); // Always refresh Overview
+            // Overview data is loaded by overview.js automatically
         } else if (tab === 'analytics') {
             loadAnalytics();
         } else if (tab === 'content') {
@@ -129,28 +129,8 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Load overview stats
-    function loadOverviewStats() {
-        $.ajax({
-            url: agentHubData.ajaxUrl,
-            type: 'POST',
-            cache: false,
-            data: {
-                action: 'agent_hub_get_analytics',
-                nonce: agentHubData.nonce,
-                timeframe: '30d',
-                _nocache: Date.now()
-            },
-            success: function(response) {
-                if (response.success && response.data) {
-                    $('#total-crawls').text(response.data.total_crawls || 0);
-                    $('#paid-crawls').text(response.data.paid_crawls || 0);
-                    $('#total-revenue').text('$' + (parseFloat(response.data.total_revenue || 0).toFixed(2)));
-                    $('#protected-pages').text(response.data.protected_pages || 0);
-                }
-            }
-        });
-    }
+    // Overview stats are now loaded by overview.js
+    // This function has been removed to prevent data collision
     
     // Load content with pagination
     function loadContent(page = 1) {
@@ -309,9 +289,6 @@ jQuery(document).ready(function($) {
                     if (typeof window.agentHubAnalytics !== 'undefined') {
                         window.agentHubAnalytics.loadAnalyticsData();
                     }
-                    
-                    // Refresh overview stats
-                    loadOverviewStats();
                 } else {
                     showToast('Error', response.data?.error || 'Failed to generate link.', 'error');
                 }
@@ -340,8 +317,6 @@ jQuery(document).ready(function($) {
                     showToast('Success', response.data.message, 'success');
                     // Reload content to show new links
                     loadContent();
-                    // Refresh overview stats
-                    loadOverviewStats();
                 } else {
                     showToast('Error', response.data.message || 'Failed to generate links', 'error');
                 }
@@ -409,8 +384,7 @@ jQuery(document).ready(function($) {
         loadAnalytics();
     });
     
-    // Initial load
-    loadOverviewStats();
+    // Initial load handled by individual tab scripts
     
     // AUTO-REFRESH MECHANISM (Phase 4)
     (function() {
@@ -423,7 +397,7 @@ jQuery(document).ready(function($) {
                 
                 switch(activeTab) {
                     case 'overview':
-                        loadOverviewStats();
+                        // Overview refresh handled by overview.js
                         break;
                     case 'content':
                         loadContent();
