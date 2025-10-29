@@ -329,104 +329,92 @@ class Admin {
         
         $timeframe = sanitize_text_field($_POST['timeframe'] ?? '30d');
         
-        error_log('[Admin.php] 📊 ==================== ANALYTICS REQUEST ====================');
-        error_log('[Admin.php] 📊 Timeframe: ' . $timeframe);
-        
-        // Get site_id from WordPress options
-        $site_id = get_option('402links_site_id');
-        
-        if (!$site_id) {
-            error_log('[Admin.php] ❌ Site not registered (no site_id)');
-            wp_send_json_error(['message' => 'Site not registered. Please complete setup.']);
-            return;
-        }
-        
-        error_log('[Admin.php] 📊 Site ID: ' . $site_id);
-        
-        // Map timeframe to period
-        $period_map = [
-            '7d' => 'week',
-            '30d' => 'month',
-            '365d' => 'year'
-        ];
-        $period = $period_map[$timeframe] ?? 'month';
-        
-        error_log('[Admin.php] 📊 Period: ' . $period);
+        error_log('402links: ajax_get_analytics called');
+        error_log('402links: Timeframe: ' . $timeframe);
+        error_log('402links: Site URL: ' . get_site_url());
         
         $api = new API();
         
         // Get site-specific analytics
-        $site_result = $api->get_site_analytics($site_id, $period);
-        
-        // Get ecosystem-wide statistics (for Analytics tab charts)
-        $ecosystem_result = $api->get_ecosystem_stats($timeframe);
-        
-        error_log('[Admin.php] 📊 Site result: ' . json_encode([
+        error_log('[Admin.php] 📊 ==================== ANALYTICS REQUEST ====================');
+        error_log('[Admin.php] 📊 Calling get_analytics() with timeframe: ' . $timeframe);
+        $site_result = $api->get_analytics($timeframe);
+        error_log('[Admin.php] 📊 site_result: ' . json_encode([
             'success' => $site_result['success'] ?? false,
-            'has_metrics' => isset($site_result['data']['metrics'])
+            'has_data' => isset($site_result['data']),
+            'data_keys' => isset($site_result['data']) ? array_keys($site_result['data']) : [],
+            'error' => $site_result['error'] ?? 'none'
         ]));
         
-        error_log('[Admin.php] 📊 Ecosystem result: ' . json_encode([
-            'success' => $ecosystem_result['success'] ?? false
+        // Get ecosystem-wide statistics
+        error_log('[Admin.php] 🌍 Calling get_ecosystem_stats() with timeframe: ' . $timeframe);
+        $ecosystem_result = $api->get_ecosystem_stats($timeframe);
+        error_log('[Admin.php] 🌍 ecosystem_result: ' . json_encode([
+            'success' => $ecosystem_result['success'] ?? false,
+            'has_data' => isset($ecosystem_result['data']),
+            'data_keys' => isset($ecosystem_result['data']) ? array_keys($ecosystem_result['data']) : [],
+            'error' => $ecosystem_result['error'] ?? 'none',
+            'status_code' => $ecosystem_result['status_code'] ?? 'none'
         ]));
         
-        if ($site_result['success']) {
+        error_log('402links: site result success: ' . ($site_result['success'] ? 'true' : 'false'));
+        error_log('402links: ecosystem result success: ' . ($ecosystem_result['success'] ? 'true' : 'false'));
+        
+        if ($site_result['success'] && $ecosystem_result['success']) {
+            error_log('[Admin.php] ✅ Both requests successful, preparing response');
             // Add cache-busting headers
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
             header('Expires: 0');
             
-            // Extract metrics from get-site-analytics response
-            $metrics = $site_result['data']['metrics'] ?? [];
-            
-            // Query for protected pages count (pages with paid_link_id)
-            global $wpdb;
-            
-            // Get all post IDs that have _402links_id meta
-            $protected_count = $wpdb->get_var(
-                "SELECT COUNT(DISTINCT post_id) 
-                 FROM {$wpdb->postmeta} 
-                 WHERE meta_key = '_402links_id' 
-                 AND meta_value != ''"
-            );
-            
-            error_log('[Admin.php] 📊 Protected pages count: ' . ($protected_count ?? 0));
-            
-            // Build response structure that frontend expects
+            // Extract data from response (handle flat structure)
+            $site_data = $site_result['data'] ?? $site_result;
+            $ecosystem_data = $ecosystem_result['data'] ?? $ecosystem_result;
+
+            // Build proper structure for frontend
             $final_response = [
                 'site' => [
-                    'total_crawls' => $metrics['total_crawls'] ?? 0,
-                    'total_paid' => $metrics['paid_crawls'] ?? 0,
-                    'total_revenue' => $metrics['total_revenue'] ?? 0,
-                    'protected_pages' => $protected_count ?? 0
+                    'total_transactions' => $site_data['total_transactions'] ?? 0,
+                    'unique_buyers' => $site_data['unique_buyers'] ?? 0,
+                    'unique_sellers' => $site_data['unique_sellers'] ?? 0,
+                    'total_amount' => $site_data['total_amount'] ?? 0,
+                    'bucketed_data' => $site_data['bucketed_data'] ?? []
                 ],
-                'ecosystem' => $ecosystem_result['success'] ? (
-                    $ecosystem_result['data'] ?? $ecosystem_result
-                ) : [
-                    'total_transactions' => 0,
-                    'unique_buyers' => 0,
-                    'unique_sellers' => 0,
-                    'total_amount' => 0,
-                    'bucketed_data' => []
+                'ecosystem' => [
+                    'total_transactions' => $ecosystem_data['total_transactions'] ?? 0,
+                    'unique_buyers' => $ecosystem_data['unique_buyers'] ?? 0,
+                    'unique_sellers' => $ecosystem_data['unique_sellers'] ?? 0,
+                    'total_amount' => $ecosystem_data['total_amount'] ?? 0,
+                    'bucketed_data' => $ecosystem_data['bucketed_data'] ?? []
                 ]
             ];
-            
-            error_log('[Admin.php] ✅ Final response: ' . json_encode([
-                'site_crawls' => $final_response['site']['total_crawls'],
-                'site_paid' => $final_response['site']['total_paid'],
-                'site_revenue' => $final_response['site']['total_revenue'],
-                'site_protected' => $final_response['site']['protected_pages']
+            error_log('[Admin.php] ✅ Final response structure: ' . json_encode([
+                'has_site' => isset($final_response['site']),
+                'has_ecosystem' => isset($final_response['ecosystem']),
+                'site_keys' => is_array($final_response['site']) ? array_keys($final_response['site']) : 'NOT ARRAY',
+                'ecosystem_keys' => is_array($final_response['ecosystem']) ? array_keys($final_response['ecosystem']) : 'NOT ARRAY'
             ]));
-            
             error_log('[Admin.php] ✅ ==================== SENDING SUCCESS RESPONSE ====================');
             
             wp_send_json_success($final_response);
         } else {
-            error_log('[Admin.php] ❌ Failed to fetch site analytics');
+            error_log('[Admin.php] ❌ One or both requests failed');
             
-            $error = $site_result['error'] ?? 'Failed to fetch analytics';
-            error_log('[Admin.php] ❌ Error: ' . $error);
+            // Build detailed error message
+            $error_details = [];
+            if (!$site_result['success']) {
+                $site_error = $site_result['error'] ?? 'Unknown error';
+                $error_details[] = 'Site analytics: ' . $site_error;
+            }
+            if (!$ecosystem_result['success']) {
+                $ecosystem_error = $ecosystem_result['error'] ?? 'Unknown error';
+                $status_code = isset($ecosystem_result['status_code']) ? ' (HTTP ' . $ecosystem_result['status_code'] . ')' : '';
+                $error_details[] = 'Ecosystem stats: ' . $ecosystem_error . $status_code;
+            }
+            $error = implode(' | ', $error_details);
             
+            error_log('[Admin.php] ❌ Error message: ' . $error);
+            error_log('[Admin.php] ❌ ==================== SENDING ERROR RESPONSE ====================');
             wp_send_json_error(['message' => $error]);
         }
     }

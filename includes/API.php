@@ -379,33 +379,6 @@ class API {
     }
     
     /**
-     * Get site-specific analytics from get-site-analytics edge function
-     * This returns WordPress site data (crawls, payments, revenue)
-     * NOT blockchain ecosystem data
-     */
-    public function get_site_analytics($site_id, $period = 'week') {
-        error_log('[API.php] 📊 get_site_analytics() called');
-        error_log('[API.php] 📊 site_id: ' . $site_id);
-        error_log('[API.php] 📊 period: ' . $period);
-        
-        // Build query string
-        $query = http_build_query([
-            'site_id' => $site_id,
-            'period' => $period
-        ]);
-        
-        $result = $this->request('GET', '/get-site-analytics?' . $query);
-        
-        error_log('[API.php] 📊 get_site_analytics() result: ' . json_encode([
-            'success' => $result['success'] ?? false,
-            'has_data' => isset($result['data']),
-            'data_keys' => isset($result['data']) ? array_keys($result['data']) : []
-        ]));
-        
-        return $result;
-    }
-    
-    /**
      * Check if agent is blacklisted
      */
     public function check_blacklist($user_agent, $site_id = null) {
