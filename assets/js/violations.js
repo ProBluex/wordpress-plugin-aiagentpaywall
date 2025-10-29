@@ -8,6 +8,10 @@
     let botPolicies = {};
     let changedPolicies = new Set();
     let violationsData = null;
+    
+    // Sorting state
+    let currentSortColumn = 'total_violations';
+    let currentSortDirection = 'desc';
 
     // Initialize when document is ready
     $(document).ready(function() {
@@ -38,6 +42,24 @@
         // Event handler for save button
         $(document).on('click', '#violations-save-policies', function() {
             savePolicies();
+        });
+        
+        // Event handler for sortable table headers
+        $(document).on('click', '#violations-table th.sortable', function() {
+            const column = $(this).data('sort');
+            
+            // Toggle direction if clicking same column, otherwise default to desc
+            if (column === currentSortColumn) {
+                currentSortDirection = currentSortDirection === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'desc';
+            }
+            
+            // Re-render with sorted data
+            if (violationsData) {
+                displayViolations(violationsData);
+            }
         });
     });
 
@@ -154,9 +176,15 @@
             return;
         }
 
+        // Sort agents based on current sort column and direction
+        const sortedAgents = sortAgents(data.agents, currentSortColumn, currentSortDirection);
+        
+        // Update table header sort indicators
+        updateSortIndicators();
+
         // Build table rows - show ALL agents from bot_registry
         $tbody.empty();
-        data.agents.forEach(function(agent) {
+        sortedAgents.forEach(function(agent) {
             const $row = $('<tr>');
             
             // Agent name
@@ -294,11 +322,56 @@
             $tbody.append($row);
         });
 
-        console.log('[Violations] Rendering', data.agents.length, 'agents');
+        console.log('[Violations] Rendering', sortedAgents.length, 'agents');
         $table.show();
         
         // Show policy actions container when table has data
         $('#violations-policy-actions').show();
+    }
+    
+    /**
+     * Sort agents array by column and direction
+     */
+    function sortAgents(agents, column, direction) {
+        const sorted = [...agents].sort(function(a, b) {
+            let aVal = a[column];
+            let bVal = b[column];
+            
+            // Handle special cases
+            if (column === 'last_seen') {
+                // Convert to timestamps for sorting
+                aVal = aVal ? new Date(aVal).getTime() : 0;
+                bVal = bVal ? new Date(bVal).getTime() : 0;
+            } else if (column === 'agent_name') {
+                // String comparison
+                aVal = (aVal || '').toLowerCase();
+                bVal = (bVal || '').toLowerCase();
+                return direction === 'asc' 
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            }
+            
+            // Numeric comparison
+            if (direction === 'asc') {
+                return aVal - bVal;
+            } else {
+                return bVal - aVal;
+            }
+        });
+        
+        return sorted;
+    }
+    
+    /**
+     * Update sort indicator arrows in table headers
+     */
+    function updateSortIndicators() {
+        // Remove all sort indicators
+        $('#violations-table th.sortable').removeClass('sorted-asc sorted-desc');
+        
+        // Add indicator to current sort column
+        $('#violations-table th.sortable[data-sort="' + currentSortColumn + '"]')
+            .addClass('sorted-' + currentSortDirection);
     }
 
     // Close dropdowns when clicking outside

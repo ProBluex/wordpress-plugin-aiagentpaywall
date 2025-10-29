@@ -367,11 +367,21 @@ $is_connected = !empty($api_key) && !empty($site_id);
             <table class="wp-list-table widefat fixed striped" id="violations-table" style="display:none;">
                 <thead>
                     <tr>
-                        <th>Agent Name</th>
-                        <th>Total Violations</th>
-                        <th>Robots.txt Violations</th>
-                        <th>Unpaid Access</th>
-                        <th>Last Seen</th>
+                        <th class="sortable" data-sort="agent_name">
+                            Agent Name <span class="sort-arrow"></span>
+                        </th>
+                        <th class="sortable" data-sort="total_violations">
+                            Total Violations <span class="sort-arrow"></span>
+                        </th>
+                        <th class="sortable" data-sort="robots_txt_violations">
+                            Robots.txt Violations <span class="sort-arrow"></span>
+                        </th>
+                        <th class="sortable" data-sort="unpaid_access_violations">
+                            Unpaid Access <span class="sort-arrow"></span>
+                        </th>
+                        <th class="sortable" data-sort="last_seen">
+                            Last Seen <span class="sort-arrow"></span>
+                        </th>
                         <th>Policy</th>
                     </tr>
                 </thead>

@@ -1479,3 +1479,64 @@
     background-color: var(--muted);
 }
 
+/* Sortable table headers */
+#violations-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 24px;
+    transition: background-color 0.2s ease;
+}
+
+#violations-table th.sortable:hover {
+    background-color: var(--gray-100) !important;
+}
+
+#violations-table th.sortable .sort-arrow {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    opacity: 0.3;
+}
+
+#violations-table th.sortable .sort-arrow::before,
+#violations-table th.sortable .sort-arrow::after {
+    content: '';
+    position: absolute;
+    left: -4px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+}
+
+#violations-table th.sortable .sort-arrow::before {
+    bottom: 2px;
+    border-bottom: 5px solid var(--gray-400);
+}
+
+#violations-table th.sortable .sort-arrow::after {
+    top: 2px;
+    border-top: 5px solid var(--gray-400);
+}
+
+#violations-table th.sortable.sorted-desc .sort-arrow::before {
+    border-bottom-color: var(--primary);
+    opacity: 1;
+}
+
+#violations-table th.sortable.sorted-asc .sort-arrow::after {
+    border-top-color: var(--primary);
+    opacity: 1;
+}
+
+#violations-table th.sortable.sorted-desc .sort-arrow::after,
+#violations-table th.sortable.sorted-asc .sort-arrow::before {
+    opacity: 0.2;
+}
+
