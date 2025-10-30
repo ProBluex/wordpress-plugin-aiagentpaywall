@@ -78,9 +78,10 @@
     $(".tab-content").removeClass("active");
     $(`.tab-button[data-tab="${tab}"]`).addClass("active");
     $(`#tab-${tab}`).addClass("active");
-    
-    // Modules handle their own initialization via tab click listeners
-    // No need to call hub.loadAnalytics() or hub.loadContent() here
+
+    // light refresh trigger per tab
+    if (tab === "analytics") hub.loadAnalytics();
+    if (tab === "content") hub.loadContent(1);
   }
 
   $(".tab-button").on("click", function () {

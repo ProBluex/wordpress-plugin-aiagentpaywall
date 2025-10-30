@@ -73,27 +73,10 @@ class Admin {
             return;
         }
         
-        // Critical CSS - loads first, always
         wp_enqueue_style(
-            'agent-hub-critical',
-            AGENT_HUB_PLUGIN_URL . 'assets/css/admin-critical.css',
+            'agent-hub-admin',
+            AGENT_HUB_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            AGENT_HUB_VERSION
-        );
-        
-        // Tables CSS - depends on critical
-        wp_enqueue_style(
-            'agent-hub-tables',
-            AGENT_HUB_PLUGIN_URL . 'assets/css/admin-tables.css',
-            ['agent-hub-critical'],
-            AGENT_HUB_VERSION
-        );
-        
-        // Charts CSS - depends on critical
-        wp_enqueue_style(
-            'agent-hub-charts',
-            AGENT_HUB_PLUGIN_URL . 'assets/css/admin-charts.css',
-            ['agent-hub-critical'],
             AGENT_HUB_VERSION
         );
         
@@ -107,7 +90,7 @@ class Admin {
         wp_enqueue_script(
             'agent-hub-admin',
             AGENT_HUB_PLUGIN_URL . 'assets/js/admin.js',
-            ['jquery', 'agent-hub-content', 'agent-hub-analytics', 'agent-hub-overview'],
+            ['jquery'],
             AGENT_HUB_VERSION,
             true
         );

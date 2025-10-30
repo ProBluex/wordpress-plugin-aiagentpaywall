@@ -1,412 +1,536 @@
 /**
- * Violations Tab Handler (hardened, collision-safe)
+ * Violations Tab Handler
  */
-(function (w, d, $) {
-  "use strict";
+(function($) {
+    'use strict';
 
-  /* ---------- Guards ---------- */
-  if (!w.jQuery) return;
-  const AG = w.agentHubData || {};
-  const AJAX_URL = AG.ajaxUrl || w.ajaxurl; // support either localization
-  const NONCE = AG.nonce;
-  if (!AJAX_URL || !NONCE) {
-    console.error("[Violations] Missing AJAX config.");
-    return;
-  }
+    // Store bot policies: key = bot_registry_id, value = action
+    let botPolicies = {};
+    let changedPolicies = new Set();
+    let violationsData = null;
+    
+    // Sorting state
+    let currentSortColumn = 'total_violations';
+    let currentSortDirection = 'desc';
 
-  /* ---------- State ---------- */
-  let botPolicies = {}; // { bot_registry_id: action }
-  let changedPolicies = new Set(); // tracked by DOM attrs as well
-  let violationsData = null;
-  let currentSortColumn = "total_violations";
-  let currentSortDirection = "desc";
-  let rqViolations = null; // in-flight AJAX for violations load
-  let rqPolicies = null; // in-flight AJAX for policies load
-  let rqSave = null; // in-flight AJAX for save
+    // Initialize when document is ready
+    $(document).ready(function() {
+        // Load violations when tab becomes active
+        $(document).on('click', '[data-tab="violations"]', function() {
+            loadViolations();
+        });
 
-  const NF = new Intl.NumberFormat("en-US");
+        // Load on page load if violations tab is active
+        if ($('#tab-violations').hasClass('active')) {
+            loadViolations();
+        }
 
-  /* ---------- Utils ---------- */
-  const esc = (s) =>
-    String(s ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+        // Event handler for policy dropdown changes
+        $(document).on('change', '.bot-policy-select', function() {
+            const botId = $(this).data('bot-id');
+            const newAction = $(this).val();
+            
+            console.log('[Violations] Policy changed for bot:', botId, 'to:', newAction);
+            
+            botPolicies[botId] = newAction;
+            changedPolicies.add(botId);
+            
+            // Show save button
+            $('#violations-save-policies').show();
+        });
 
-  const n = (v) => (Number.isFinite(+v) ? +v : 0);
-  const fmtNum = (v) => NF.format(n(v));
-
-  const ajaxPost = (action, payload = {}) =>
-    $.ajax({
-      url: AJAX_URL,
-      method: "POST",
-      dataType: "json",
-      timeout: 20000,
-      data: { action, nonce: NONCE, ...payload },
+        // Event handler for save button
+        $(document).on('click', '#violations-save-policies', function() {
+            savePolicies();
+        });
+        
+        // Event handler for sortable table headers
+        $(document).on('click', '#violations-table th.sortable', function() {
+            const column = $(this).data('sort');
+            
+            // Toggle direction if clicking same column, otherwise default to desc
+            if (column === currentSortColumn) {
+                currentSortDirection = currentSortDirection === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'desc';
+            }
+            
+            // Re-render with sorted data
+            if (violationsData) {
+                displayViolations(violationsData);
+            }
+        });
     });
 
-  const setVisible = ($el, show) => (show ? $el.show() : $el.hide());
+    /**
+     * Load violations data from API
+     */
+    function loadViolations() {
+        const $loading = $('#violations-loading');
+        const $error = $('#violations-error');
+        const $table = $('#violations-table');
+        const $empty = $('#violations-empty');
+        const $saveBtn = $('#violations-save-policies');
 
-  const fmtDateTimeRelative = (dateStr) => {
-    if (!dateStr) return "Never";
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return "Never";
-    const now = new Date();
-    const diffMs = now - date;
-    const mins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(diffMs / 3600000);
-    const days = Math.floor(diffMs / 86400000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins} min ago`;
-    if (hrs < 24) return `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
-    if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
+        // Show loading state
+        $loading.show();
+        $error.hide();
+        $table.hide();
+        $empty.hide();
+        $saveBtn.hide();
 
-  const showError = (message) => {
-    console.error("[Violations] Error:", message);
-    $("#violations-error-message").text(String(message || "Unknown error"));
-    $("#violations-error").show();
-  };
+        // Reset state
+        changedPolicies.clear();
 
-  /* ---------- Boot ---------- */
-  $(d).ready(function () {
-    // Load on tab activation (namespaced, idempotent)
-    $(d).off("click.vio", '[data-tab="violations"]').on("click.vio", '[data-tab="violations"]', loadViolations);
-
-    // Load immediately if already active
-    if ($("#tab-violations").hasClass("active")) loadViolations();
-
-    // Policy dropdown change (legacy <select> support if present)
-    $(d)
-      .off("change.vio", ".bot-policy-select")
-      .on("change.vio", ".bot-policy-select", function () {
-        const botId = $(this).data("bot-id");
-        const newAction = $(this).val();
-        botPolicies[botId] = newAction;
-        changedPolicies.add(botId);
-        $("#violations-save-policies").show();
-      });
-
-    // Save button
-    $(d).off("click.vio", "#violations-save-policies").on("click.vio", "#violations-save-policies", savePolicies);
-
-    // Sortable headers
-    $(d)
-      .off("click.vio", "#violations-table th.sortable")
-      .on("click.vio", "#violations-table th.sortable", function () {
-        const column = $(this).data("sort");
-        if (column === currentSortColumn) {
-          currentSortDirection = currentSortDirection === "desc" ? "asc" : "desc";
-        } else {
-          currentSortColumn = column;
-          currentSortDirection = "desc";
-        }
-        if (violationsData) displayViolations(violationsData);
-      });
-
-    // Close custom dropdowns on outside click
-    $(d)
-      .off("click.vio", d)
-      .on("click.vio", function (e) {
-        if (!$(e.target).closest(".policy-dropdown-container").length) {
-          $(".policy-dropdown-container.open").removeClass("open").find(".policy-dropdown-menu").hide();
-        }
-      });
-  });
-
-  /* ---------- Loads ---------- */
-  function loadViolations() {
-    const $loading = $("#violations-loading");
-    const $error = $("#violations-error");
-    const $table = $("#violations-table");
-    const $empty = $("#violations-empty");
-    const $saveBtn = $("#violations-save-policies");
-
-    setVisible($loading, true);
-    setVisible($error, false);
-    setVisible($table, false);
-    setVisible($empty, false);
-    setVisible($saveBtn, false);
-    changedPolicies.clear();
-
-    if (rqViolations?.abort) rqViolations.abort();
-
-    rqViolations = ajaxPost("agent_hub_get_violations_summary")
-      .done((res) => {
-        if (res?.success && res?.data) {
-          violationsData = res.data;
-          loadPolicies(); // chain
-        } else {
-          setVisible($loading, false);
-          showError(res?.data?.message || "Failed to load violations data");
-        }
-      })
-      .fail((_, __, err) => {
-        setVisible($loading, false);
-        showError("Network error: " + (err || "Unknown"));
-      })
-      .always(() => {
-        rqViolations = null;
-      });
-  }
-
-  function loadPolicies() {
-    const $loading = $("#violations-loading");
-    if (rqPolicies?.abort) rqPolicies.abort();
-
-    rqPolicies = ajaxPost("agent_hub_get_site_bot_policies")
-      .done((res) => {
-        setVisible($loading, false);
-        botPolicies = {};
-        if (res?.success && Array.isArray(res?.data?.policies)) {
-          res.data.policies.forEach((p) => {
-            botPolicies[p.bot_registry_id] = p.action;
-          });
-        }
-        displayViolations(violationsData);
-      })
-      .fail((_, __, err) => {
-        setVisible($loading, false);
-        console.warn("[Violations] Policies load failed:", err);
-        botPolicies = {};
-        displayViolations(violationsData);
-      })
-      .always(() => {
-        rqPolicies = null;
-      });
-  }
-
-  /* ---------- Render ---------- */
-  function displayViolations(data) {
-    const $table = $("#violations-table");
-    const $tbody = $("#violations-table-body").empty();
-    const $empty = $("#violations-empty");
-    const $policyActions = $("#violations-policy-actions");
-
-    // Stats
-    $("#violations-total").text(fmtNum(data?.totals?.total_violations));
-    $("#violations-robots").text(fmtNum(data?.totals?.robots_txt_violations));
-    $("#violations-unpaid").text(fmtNum(data?.totals?.unpaid_access_violations));
-    $("#violations-unique-agents").text(fmtNum(data?.totals?.unique_agents));
-
-    const agents = Array.isArray(data?.agents) ? data.agents : [];
-    if (agents.length === 0) {
-      setVisible($policyActions, false);
-      setVisible($empty, true);
-      return;
+        // Make AJAX request for violations
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_get_violations_summary',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    violationsData = response.data;
+                    
+                    // Now fetch policies
+                    loadPolicies();
+                } else {
+                    $loading.hide();
+                    showError(response.data?.message || 'Failed to load violations data');
+                }
+            },
+            error: function(xhr, status, error) {
+                $loading.hide();
+                showError('Network error: ' + error);
+            }
+        });
     }
 
-    const sortedAgents = sortAgents(agents, currentSortColumn, currentSortDirection);
-    updateSortIndicators();
+    /**
+     * Load bot policies from API
+     */
+    function loadPolicies() {
+        const $loading = $('#violations-loading');
+        
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_get_site_bot_policies',
+                nonce: agentHubData.nonce
+            },
+            success: function(response) {
+                $loading.hide();
 
-    // Build rows safely
-    sortedAgents.forEach((agent) => {
-      const $row = $("<tr/>");
-
-      // Agent name
-      $row.append($("<td/>").html("<strong>" + esc(agent.agent_name) + "</strong>"));
-
-      // Totals
-      $row.append(
-        $("<td/>").append(
-          $("<span/>", { class: "violation-badge violation-total" }).text(fmtNum(agent.total_violations)),
-        ),
-      );
-
-      // robots.txt
-      $row.append(
-        $("<td/>").append(
-          $("<span/>", {
-            class: "violation-badge " + (n(agent.robots_txt_violations) > 0 ? "violation-robots" : "violation-none"),
-          }).text(fmtNum(agent.robots_txt_violations)),
-        ),
-      );
-
-      // unpaid access
-      $row.append(
-        $("<td/>").append(
-          $("<span/>", {
-            class: "violation-badge " + (n(agent.unpaid_access_violations) > 0 ? "violation-unpaid" : "violation-none"),
-          }).text(fmtNum(agent.unpaid_access_violations)),
-        ),
-      );
-
-      // last seen
-      $row.append($("<td/>").text(fmtDateTimeRelative(agent.last_seen)));
-
-      // policy cell (custom dropdown)
-      const currentPolicy = botPolicies[agent.bot_registry_id] || "monetize";
-      const labels = { monetize: "Monetized", allow: "Allowed", block: "Blocked" };
-
-      const $container = $("<div/>", {
-        class: "policy-dropdown-container",
-        "data-bot-id": agent.bot_registry_id,
-      });
-
-      const $button = $("<button/>", {
-        type: "button",
-        class: "policy-dropdown-button",
-      })
-        .html(
-          '<span class="policy-status-dot"></span>' +
-            '<span class="policy-label">' +
-            esc(labels[currentPolicy]) +
-            "</span>" +
-            '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
-            '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-        )
-        .on("click", function (e) {
-          e.stopPropagation();
-          // close others
-          $(".policy-dropdown-container.open").not($container).removeClass("open").find(".policy-dropdown-menu").hide();
-          $container.toggleClass("open");
-          $menu.toggle();
+                if (response.success && response.data && response.data.policies) {
+                    // Convert policies array to object for easy lookup
+                    botPolicies = {};
+                    response.data.policies.forEach(function(policy) {
+                        botPolicies[policy.bot_registry_id] = policy.action;
+                    });
+                    
+                    console.log('[Violations] Loaded policies:', botPolicies);
+                    
+                    // Now display violations with policies
+                    displayViolations(violationsData);
+                } else {
+                    console.log('[Violations] No policies found, using defaults');
+                    botPolicies = {};
+                    
+                    // Display violations with default policies
+                    displayViolations(violationsData);
+                }
+            },
+            error: function(xhr, status, error) {
+                $loading.hide();
+                console.error('[Violations] Failed to load policies:', error);
+                
+                // Continue with default policies
+                botPolicies = {};
+                displayViolations(violationsData);
+            }
         });
+    }
 
-      const $menu = $("<div/>", { class: "policy-dropdown-menu" }).hide();
-      [
-        { value: "monetize", label: "Monetize", active: currentPolicy === "monetize" },
-        { value: "allow", label: "Allow", active: currentPolicy === "allow" },
-        { value: "block", label: "Block", active: currentPolicy === "block" },
-      ].forEach((opt) => {
-        const $opt = $("<div/>", {
-          class: "policy-dropdown-option" + (opt.active ? " active" : ""),
-          "data-value": opt.value,
-          text: opt.label,
-        }).on("click", function () {
-          const newValue = $(this).attr("data-value");
-          $menu.find(".policy-dropdown-option").removeClass("active");
-          $(this).addClass("active");
-          $container.removeClass("open");
-          $menu.hide();
-          $button.html(
-            '<span class="policy-status-dot"></span>' +
-              '<span class="policy-label">' +
-              esc(labels[newValue]) +
-              "</span>" +
-              '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
-              '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-          );
-          if (botPolicies[agent.bot_registry_id] !== newValue) {
-            $container.addClass("policy-changed").attr("data-new-value", newValue);
-            $("#violations-save-policies").show();
-          } else {
-            $container.removeClass("policy-changed").removeAttr("data-new-value");
-          }
-        });
-        $menu.append($opt);
-      });
+    /**
+     * Display violations data
+     */
+    function displayViolations(data) {
+        const $table = $('#violations-table');
+        const $tbody = $('#violations-table-body');
+        const $empty = $('#violations-empty');
 
-      $container.append($button, $menu);
-      $row.append($("<td/>", { class: "policy-cell" }).append($container));
+        // Update stats
+        $('#violations-total').text(formatNumber(data.totals.total_violations));
+        $('#violations-robots').text(formatNumber(data.totals.robots_txt_violations));
+        $('#violations-unpaid').text(formatNumber(data.totals.unpaid_access_violations));
+        $('#violations-unique-agents').text(formatNumber(data.totals.unique_agents));
 
-      $tbody.append($row);
-    });
-
-    setVisible($table, true);
-    setVisible($policyActions, true);
-  }
-
-  function sortAgents(agents, column, direction) {
-    const dir = direction === "asc" ? 1 : -1;
-    return [...agents].sort((a, b) => {
-      if (column === "agent_name") {
-        const A = String(a.agent_name || "").toLowerCase();
-        const B = String(b.agent_name || "").toLowerCase();
-        return dir * A.localeCompare(B);
-      }
-      if (column === "last_seen") {
-        const A = a.last_seen ? new Date(a.last_seen).getTime() : 0;
-        const B = b.last_seen ? new Date(b.last_seen).getTime() : 0;
-        return dir * (A - B);
-      }
-      const A = n(a[column]);
-      const B = n(b[column]);
-      return dir * (A - B);
-    });
-  }
-
-  function updateSortIndicators() {
-    $("#violations-table th.sortable").removeClass("sorted-asc sorted-desc");
-    $('#violations-table th.sortable[data-sort="' + currentSortColumn + '"]').addClass(
-      "sorted-" + currentSortDirection,
-    );
-  }
-
-  /* ---------- Saves ---------- */
-  function savePolicies() {
-    const $saveBtn = $("#violations-save-policies");
-    const $loading = $("#violations-save-loading");
-    const $error = $("#violations-save-error");
-    const $success = $("#violations-save-success");
-
-    $saveBtn.prop("disabled", true);
-    setVisible($loading, !!$loading.length);
-    setVisible($error, false);
-    setVisible($success, false);
-
-    // collect changed from UI (source of truth)
-    $(".policy-dropdown-container.policy-changed").each(function () {
-      const botId = $(this).attr("data-bot-id");
-      const newValue = $(this).attr("data-new-value");
-      if (botId && newValue) botPolicies[botId] = newValue;
-    });
-
-    const policies = Object.keys(botPolicies).map((id) => ({
-      bot_registry_id: id,
-      action: botPolicies[id],
-    }));
-
-    if (rqSave?.abort) rqSave.abort();
-
-    rqSave = ajaxPost("agent_hub_update_site_bot_policies", { policies })
-      .done((res) => {
-        $saveBtn.prop("disabled", false);
-        setVisible($loading, false);
-        if (res?.success) {
-          changedPolicies.clear();
-          $(".policy-dropdown-container.policy-changed").removeClass("policy-changed").removeAttr("data-new-value");
-          setVisible($success, !!$success.length);
-          setTimeout(() => setVisible($success, false), 3000);
-          $("#violations-save-policies").hide();
-        } else {
-          const msg = res?.data || "Failed to save policies";
-          if ($error.length) {
-            $("#violations-save-error-message").text(String(msg));
-            setVisible($error, true);
-          } else {
-            showError(msg);
-          }
+        // Check if we have agents - always show table with all agents
+        if (!data.agents || data.agents.length === 0) {
+            $('#violations-policy-actions').hide();
+            $empty.show();
+            return;
         }
-      })
-      .fail((_, __, err) => {
-        $saveBtn.prop("disabled", false);
-        setVisible($loading, false);
+
+        // Sort agents based on current sort column and direction
+        const sortedAgents = sortAgents(data.agents, currentSortColumn, currentSortDirection);
+        
+        // Update table header sort indicators
+        updateSortIndicators();
+
+        // Build table rows - show ALL agents from bot_registry
+        $tbody.empty();
+        sortedAgents.forEach(function(agent) {
+            const $row = $('<tr>');
+            
+            // Agent name
+            $row.append($('<td>').html(
+                '<strong>' + escapeHtml(agent.agent_name) + '</strong>'
+            ));
+
+            // Total violations
+            $row.append($('<td>').html(
+                '<span class="violation-badge violation-total">' + 
+                formatNumber(agent.total_violations) + 
+                '</span>'
+            ));
+
+            // Robots.txt violations
+            $row.append($('<td>').html(
+                agent.robots_txt_violations > 0 
+                    ? '<span class="violation-badge violation-robots">' + 
+                      formatNumber(agent.robots_txt_violations) + 
+                      '</span>'
+                    : '<span class="violation-badge violation-none">0</span>'
+            ));
+
+            // Unpaid access
+            $row.append($('<td>').html(
+                agent.unpaid_access_violations > 0 
+                    ? '<span class="violation-badge violation-unpaid">' + 
+                      formatNumber(agent.unpaid_access_violations) + 
+                      '</span>'
+                    : '<span class="violation-badge violation-none">0</span>'
+            ));
+
+            // Last seen
+            $row.append($('<td>').text(formatDateTime(agent.last_seen)));
+
+            // Policy dropdown with custom button
+            const currentPolicy = botPolicies[agent.bot_registry_id] || 'monetize';
+            const $policyCell = $('<td>').addClass('policy-cell');
+            
+            // Policy labels
+            const policyLabels = {
+                'monetize': 'Monetized',
+                'allow': 'Allowed',
+                'block': 'Blocked'
+            };
+            
+            const policyOptions = [
+                { value: 'monetize', activeLabel: 'Monetized', inactiveLabel: 'Monetize' },
+                { value: 'allow', activeLabel: 'Allowed', inactiveLabel: 'Allow' },
+                { value: 'block', activeLabel: 'Blocked', inactiveLabel: 'Block' }
+            ];
+            
+            // Create custom dropdown container
+            const $dropdownContainer = $('<div>')
+                .addClass('policy-dropdown-container')
+                .attr('data-bot-id', agent.bot_registry_id);
+            
+            // Create dropdown button showing current policy
+            const $dropdownButton = $('<button>')
+                .addClass('policy-dropdown-button')
+                .attr('type', 'button')
+                .html(
+                    '<span class="policy-status-dot"></span>' +
+                    '<span class="policy-label">' + policyLabels[currentPolicy] + '</span>' +
+                    '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
+                    '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    '</svg>'
+                );
+            
+            // Create dropdown menu
+            const $dropdownMenu = $('<div>')
+                .addClass('policy-dropdown-menu')
+                .css('display', 'none');
+            
+            // Add options to menu
+            policyOptions.forEach(function(opt) {
+                const isActive = opt.value === currentPolicy;
+                const $option = $('<div>')
+                    .addClass('policy-dropdown-option')
+                    .attr('data-value', opt.value)
+                    .text(opt.inactiveLabel);
+                
+                if (isActive) {
+                    $option.addClass('active');
+                }
+                
+                // Click handler for option
+                $option.on('click', function() {
+                    const newValue = $(this).attr('data-value');
+                    
+                    // Update button display
+                    $dropdownButton.html(
+                        '<span class="policy-status-dot"></span>' +
+                        '<span class="policy-label">' + policyLabels[newValue] + '</span>' +
+                        '<svg class="policy-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">' +
+                        '<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                        '</svg>'
+                    );
+                    
+                    // Update active state in menu
+                    $dropdownMenu.find('.policy-dropdown-option').removeClass('active');
+                    $(this).addClass('active');
+                    
+                    // Close menu
+                    $dropdownMenu.hide();
+                    $dropdownContainer.removeClass('open');
+                    
+                    // Mark as changed if different from original
+                    if (botPolicies[agent.bot_registry_id] !== newValue) {
+                        $dropdownContainer.addClass('policy-changed').attr('data-new-value', newValue);
+                        $('#violations-save-policies').show();
+                    }
+                });
+                
+                $dropdownMenu.append($option);
+            });
+            
+            // Toggle dropdown on button click
+            $dropdownButton.on('click', function(e) {
+                e.stopPropagation();
+                
+                // Close other dropdowns
+                $('.policy-dropdown-container.open').not($dropdownContainer).removeClass('open')
+                    .find('.policy-dropdown-menu').hide();
+                
+                // Toggle this dropdown
+                $dropdownContainer.toggleClass('open');
+                $dropdownMenu.toggle();
+            });
+            
+            $dropdownContainer.append($dropdownButton).append($dropdownMenu);
+            $policyCell.append($dropdownContainer);
+            $row.append($policyCell);
+
+            $tbody.append($row);
+        });
+
+        console.log('[Violations] Rendering', sortedAgents.length, 'agents');
+        $table.show();
+        
+        // Show policy actions container when table has data
+        $('#violations-policy-actions').show();
+    }
+    
+    /**
+     * Sort agents array by column and direction
+     */
+    function sortAgents(agents, column, direction) {
+        const sorted = [...agents].sort(function(a, b) {
+            let aVal = a[column];
+            let bVal = b[column];
+            
+            // Handle special cases
+            if (column === 'last_seen') {
+                // Convert to timestamps for sorting
+                aVal = aVal ? new Date(aVal).getTime() : 0;
+                bVal = bVal ? new Date(bVal).getTime() : 0;
+            } else if (column === 'agent_name') {
+                // String comparison
+                aVal = (aVal || '').toLowerCase();
+                bVal = (bVal || '').toLowerCase();
+                return direction === 'asc' 
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            }
+            
+            // Numeric comparison
+            if (direction === 'asc') {
+                return aVal - bVal;
+            } else {
+                return bVal - aVal;
+            }
+        });
+        
+        return sorted;
+    }
+    
+    /**
+     * Update sort indicator arrows in table headers
+     */
+    function updateSortIndicators() {
+        // Remove all sort indicators
+        $('#violations-table th.sortable').removeClass('sorted-asc sorted-desc');
+        
+        // Add indicator to current sort column
+        $('#violations-table th.sortable[data-sort="' + currentSortColumn + '"]')
+            .addClass('sorted-' + currentSortDirection);
+    }
+
+    // Close dropdowns when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.policy-dropdown-container').length) {
+            $('.policy-dropdown-container.open').removeClass('open')
+                .find('.policy-dropdown-menu').hide();
+        }
+    });
+
+    /**
+     * Save bot policies to backend
+     */
+    function savePolicies() {
+        const $saveBtn = $('#violations-save-policies');
+        const $loading = $('#violations-save-loading');
+        const $error = $('#violations-save-error');
+
+        // Show loading state
+        $saveBtn.prop('disabled', true);
+        if ($loading.length) {
+            $loading.show();
+        }
         if ($error.length) {
-          $("#violations-save-error-message").text("Network error: " + (err || "Unknown"));
-          setVisible($error, true);
-        } else {
-          showError("Network error: " + (err || "Unknown"));
+            $error.hide();
         }
-      })
-      .always(() => {
-        rqSave = null;
-      });
-  }
 
-  /* ---------- Cleanup ---------- */
-  $(w).on("beforeunload", function () {
-    if (rqViolations?.abort) rqViolations.abort();
-    if (rqPolicies?.abort) rqPolicies.abort();
-    if (rqSave?.abort) rqSave.abort();
-  });
+        // Collect changed policies from dropdowns
+        $('.policy-dropdown-container.policy-changed').each(function() {
+            const botId = $(this).attr('data-bot-id');
+            const newValue = $(this).attr('data-new-value');
+            botPolicies[botId] = newValue;
+        });
 
-  /* ---------- Optional public API ---------- */
-  w.agentHubViolations = w.agentHubViolations || {
-    reload: loadViolations,
-    save: savePolicies,
-  };
-})(window, document, jQuery);
+        // Convert botPolicies object to array format
+        const policies = [];
+        Object.keys(botPolicies).forEach(function(bot_registry_id) {
+            policies.push({
+                bot_registry_id: bot_registry_id,
+                action: botPolicies[bot_registry_id]
+            });
+        });
+
+        console.log('[Violations] Saving policies:', policies);
+
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'agent_hub_update_site_bot_policies',
+                nonce: agentHubData.nonce,
+                policies: policies
+            },
+            success: function(response) {
+                $saveBtn.prop('disabled', false);
+                if ($loading.length) {
+                    $loading.hide();
+                }
+
+                if (response.success) {
+                    console.log('[Violations] Policies saved successfully');
+                    
+                    // Clear changed policies
+                    changedPolicies.clear();
+                    
+                    // Hide save button
+                    $saveBtn.hide();
+                    
+                    // Show success message
+                    const $success = $('#violations-save-success');
+                    if ($success.length) {
+                        $success.show();
+                        setTimeout(function() {
+                            $success.fadeOut();
+                        }, 3000);
+                    }
+                } else {
+                    console.error('[Violations] Failed to save policies:', response.data);
+                    if ($error.length) {
+                        $('#violations-save-error-message').text(
+                            response.data || 'Failed to save policies'
+                        );
+                        $error.show();
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                $saveBtn.prop('disabled', false);
+                if ($loading.length) {
+                    $loading.hide();
+                }
+                
+                console.error('[Violations] Network error saving policies:', error);
+                if ($error.length) {
+                    $('#violations-save-error-message').text('Network error: ' + error);
+                    $error.show();
+                }
+            }
+        });
+    }
+
+    /**
+     * Show error message
+     */
+    function showError(message) {
+        console.error('[Violations] Error:', message);
+        console.log('[Violations] Debug - AJAX URL:', ajaxurl);
+        console.log('[Violations] Debug - Nonce:', agentHubData?.nonce);
+        console.log('[Violations] Debug - Site URL:', agentHubData?.siteUrl);
+        
+        $('#violations-error-message').text(message);
+        $('#violations-error').show();
+    }
+
+    /**
+     * Format number with commas
+     */
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    /**
+     * Format datetime string
+     */
+    function formatDateTime(dateStr) {
+        // Return "Never" for null, undefined, or empty strings
+        if (!dateStr || dateStr === null) return 'Never';
+        
+        const date = new Date(dateStr);
+        
+        // Validate date is actually valid
+        if (isNaN(date.getTime())) return 'Never';
+        
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return diffMins + ' min ago';
+        if (diffHours < 24) return diffHours + ' hour' + (diffHours > 1 ? 's' : '') + ' ago';
+        if (diffDays < 30) return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+        
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+})(jQuery);
