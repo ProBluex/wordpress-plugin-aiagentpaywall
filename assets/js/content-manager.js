@@ -497,9 +497,9 @@
     refreshContent: loadContent,
   };
 
-  console.log("[ContentManager] Module loaded successfully");
   // ---- hub adapter (keeps admin.js happy) ----
   window.hub = window.hub || {};
   window.hub.loadContent = window.hub.loadContent || loadContent; // alias
   window.hub.refreshContent = window.hub.refreshContent || loadContent;
+  console.log("[ContentManager] Module loaded successfully");
 })(jQuery);
