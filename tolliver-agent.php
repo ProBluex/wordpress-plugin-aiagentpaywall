@@ -3,7 +3,7 @@
  * Plugin Name: Tolliver - Ai Agent Pay Collector
  * Plugin URI: https://402links.com
  * Description: Convert any WordPress page into a paid API endpoint using HTTP 402 - requiring payment before AI agents access your content.
- * Version: 3.8.1
+ * Version: 3.7.7
  * Author: Tolliver Team
  * Author URI: https://402links.com
  * License: MIT
@@ -20,7 +20,7 @@ if (!function_exists('get_plugin_data')) {
     require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 }
 $plugin_data = get_plugin_data(__FILE__);
-define('AGENT_HUB_VERSION', '3.8.1');
+define('AGENT_HUB_VERSION', '3.7.7');
 define('AGENT_HUB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AGENT_HUB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AGENT_HUB_PLUGIN_FILE', __FILE__);
@@ -43,34 +43,32 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// GitHub Auto-Update Integration - Initialize at 'init' to avoid translation loading warnings
-add_action('init', function() {
-    if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php')) {
-        require_once AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
-        
-        $updateChecker = YahnisElsts\PluginUpdateChecker\v5p6\PucFactory::buildUpdateChecker(
-            'https://github.com/ProBluex/wordpress-plugin-aiagentpaywall',
-            AGENT_HUB_PLUGIN_FILE,
-            'tolliver-agent'
-        );
-        
-        // Use GitHub Releases for updates (more reliable than branch commits)
-        $updateChecker->getVcsApi()->enableReleaseAssets();
-        
-        // Set branch as fallback if no releases exist
-        $updateChecker->setBranch('main');
-        
-        // Add update check logging for debugging (only in WP_DEBUG mode)
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            add_action('puc_check_now-tolliver-agent', function() {
-                error_log('Tolliver - Ai Agent Pay Collector: Checking for updates from GitHub...');
-            });
-        }
-        
-        // Optional: Uncomment for private repos (requires GitHub Personal Access Token)
-        // $updateChecker->setAuthentication('YOUR_GITHUB_TOKEN_HERE');
+// GitHub Auto-Update Integration
+if (file_exists(AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php')) {
+    require_once AGENT_HUB_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
+    
+    $updateChecker = YahnisElsts\PluginUpdateChecker\v5p6\PucFactory::buildUpdateChecker(
+        'https://github.com/ProBluex/wordpress-plugin-aiagentpaywall',
+        __FILE__,
+        'tolliver-agent'
+    );
+    
+    // Use GitHub Releases for updates (more reliable than branch commits)
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+    
+    // Set branch as fallback if no releases exist
+    $updateChecker->setBranch('main');
+    
+    // Add update check logging for debugging (only in WP_DEBUG mode)
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        add_action('puc_check_now-tolliver-agent', function() {
+            error_log('Tolliver - Ai Agent Pay Collector: Checking for updates from GitHub...');
+        });
     }
-});
+    
+    // Optional: Uncomment for private repos (requires GitHub Personal Access Token)
+    // $updateChecker->setAuthentication('YOUR_GITHUB_TOKEN_HERE');
+}
 
 // Activation hook - now using Installer class
 register_activation_hook(__FILE__, ['\AgentHub\Installer', 'activate']);

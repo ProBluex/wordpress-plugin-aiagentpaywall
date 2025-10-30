@@ -889,71 +889,48 @@ class API {
     }
     
     /**
-     * Get appropriate timeout for endpoint
-     * Supabase edge functions need longer timeout due to cold starts
-     */
-    private function get_timeout_for_endpoint($endpoint) {
-        // Supabase edge functions need longer timeout due to cold starts
-        $supabase_endpoints = [
-            '/wordpress-ecosystem-stats',
-            '/get-site-analytics'
-        ];
-        
-        foreach ($supabase_endpoints as $slow_endpoint) {
-            if (strpos($endpoint, $slow_endpoint) !== false) {
-                return 15; // 15 seconds for database queries
-            }
-        }
-        
-        return 5; // 5 seconds for fast APIs (bot registry, etc.)
-    }
-    
-    /**
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {
         $url = $this->api_endpoint . $endpoint;
         
-        // Generate unique request ID for log correlation
-        $request_id = substr(md5(microtime()), 0, 8);
-        
-        error_log('[API.php] 🚀 [' . $request_id . '] ==================== API REQUEST ====================');
-        error_log('[API.php] 🚀 [' . $request_id . '] Method: ' . $method);
-        error_log('[API.php] 🚀 [' . $request_id . '] URL: ' . $url);
-        error_log('[API.php] 🚀 [' . $request_id . '] Endpoint: ' . $endpoint);
+        error_log('[API.php] 🚀 ==================== API REQUEST ====================');
+        error_log('[API.php] 🚀 Method: ' . $method);
+        error_log('[API.php] 🚀 URL: ' . $url);
+        error_log('[API.php] 🚀 Endpoint: ' . $endpoint);
         
         // For GET requests, append data as query parameters
         if ($method === 'GET' && !empty($data)) {
             $url = add_query_arg($data, $url);
-            error_log('[API.php] 🚀 [' . $request_id . '] GET query params: ' . json_encode($data));
+            error_log('[API.php] 🚀 GET query params: ' . json_encode($data));
         }
         
         $args = [
             'method' => $method,
-            'timeout' => $this->get_timeout_for_endpoint($endpoint), // Dynamic timeout based on endpoint
+            'timeout' => 5, // Fast-fail if bot registry API is slow
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key
             ]
         ];
         
-        error_log('[API.php] 🚀 [' . $request_id . '] Headers: ' . json_encode([
+        error_log('[API.php] 🚀 Headers: ' . json_encode([
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . substr($this->api_key, 0, 8) . '...' // Show first 8 chars only
         ]));
         
         if ($method === 'POST' || $method === 'PUT') {
             $args['body'] = json_encode($data);
-            error_log('[API.php] 🚀 [' . $request_id . '] Request body: ' . json_encode($data));
+            error_log('[API.php] 🚀 Request body: ' . json_encode($data));
         }
         
-        error_log('[API.php] 🚀 [' . $request_id . '] Making request...');
+        error_log('[API.php] 🚀 Making request...');
         $response = wp_remote_request($url, $args);
         
         if (is_wp_error($response)) {
             $error_msg = $response->get_error_message();
-            error_log('[API.php] ❌ [' . $request_id . '] WP_Error: ' . $error_msg);
-            error_log('[API.php] ❌ [' . $request_id . '] ==================== REQUEST FAILED ====================');
+            error_log('[API.php] ❌ WP_Error: ' . $error_msg);
+            error_log('[API.php] ❌ ==================== REQUEST FAILED ====================');
             return [
                 'success' => false,
                 'error' => $error_msg
@@ -964,26 +941,16 @@ class API {
         $status_code = wp_remote_retrieve_response_code($response);
         $response_headers = wp_remote_retrieve_headers($response);
         
-        error_log('[API.php] 📥 [' . $request_id . '] Response status: ' . $status_code);
-        error_log('[API.php] 📥 [' . $request_id . '] Response headers: ' . json_encode($response_headers));
-        error_log('[API.php] 📥 [' . $request_id . '] Response body (first 500 chars): ' . substr($body, 0, 500));
+        error_log('[API.php] 📥 Response status: ' . $status_code);
+        error_log('[API.php] 📥 Response headers: ' . json_encode($response_headers));
+        error_log('[API.php] 📥 Response body (first 500 chars): ' . substr($body, 0, 500));
         
         $result = json_decode($body, true);
         
-        // Enhanced diagnostics for data structure
-        error_log('[API.php] 📦 [' . $request_id . '] Raw response body length: ' . strlen($body));
-        error_log('[API.php] 📦 [' . $request_id . '] First 1000 chars of body: ' . substr($body, 0, 1000));
-        error_log('[API.php] 📦 [' . $request_id . '] JSON decode result keys: ' . json_encode(array_keys($result ?? [])));
-        error_log('[API.php] 📦 [' . $request_id . '] Has "data" key? ' . (isset($result['data']) ? 'YES' : 'NO'));
-        if (isset($result['data']) && is_array($result['data'])) {
-            error_log('[API.php] 📦 [' . $request_id . '] Data structure keys: ' . json_encode(array_keys($result['data'])));
-            error_log('[API.php] 📦 [' . $request_id . '] Data values (truncated): ' . substr(json_encode($result['data']), 0, 500));
-        }
-        
         if ($status_code >= 400) {
-            error_log('[API.php] ❌ [' . $request_id . '] HTTP ERROR ' . $status_code . ': ' . ($result['error'] ?? 'Unknown error'));
-            error_log('[API.php] ❌ [' . $request_id . '] Full error response: ' . json_encode($result));
-            error_log('[API.php] ❌ [' . $request_id . '] ==================== REQUEST FAILED ====================');
+            error_log('[API.php] ❌ HTTP ERROR ' . $status_code . ': ' . ($result['error'] ?? 'Unknown error'));
+            error_log('[API.php] ❌ Full error response: ' . json_encode($result));
+            error_log('[API.php] ❌ ==================== REQUEST FAILED ====================');
             return [
                 'success' => false,
                 'error' => $result['error'] ?? 'API request failed',
@@ -991,8 +958,8 @@ class API {
             ];
         }
         
-        error_log('[API.php] ✅ [' . $request_id . '] Request successful');
-        error_log('[API.php] ✅ [' . $request_id . '] ==================== REQUEST COMPLETE ====================');
+        error_log('[API.php] ✅ Request successful');
+        error_log('[API.php] ✅ ==================== REQUEST COMPLETE ====================');
         
         return array_merge(['success' => true], $result ?? []);
     }
