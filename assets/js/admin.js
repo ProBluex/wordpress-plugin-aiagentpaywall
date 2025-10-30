@@ -71,85 +71,6 @@
 
   const hub = (w.agentHub = w.agentHub || {});
 
-  /* ---------- Tabs (hash-aware) ---------- */
-
-  function activateTab(tab) {
-    $(".tab-button").removeClass("active");
-    $(".tab-content").removeClass("active");
-    $(`.tab-button[data-tab="${tab}"]`).addClass("active");
-    $(`#tab-${tab}`).addClass("active");
-
-    // light refresh trigger per tab
-    if (tab === "analytics") hub.loadAnalytics();
-    if (tab === "content") hub.loadContent(1);
-  }
-
-  $(".tab-button").on("click", function () {
-    const tab = $(this).data("tab");
-    // avoid scroll jump: replaceState not hash set
-    history.replaceState(null, "", `#${tab}`);
-    activateTab(tab);
-  });
-
-  // initialize from hash or default first tab
-  const initialHash = (w.location.hash || "").slice(1);
-  if (initialHash && $(`.tab-button[data-tab="${initialHash}"]`).length) {
-    activateTab(initialHash);
-  } else {
-    const firstTab = $(".tab-button").first().data("tab");
-    if (firstTab) activateTab(firstTab);
-  }
-
-  // react to external hash changes (e.g., browser back)
-  $(w).on("hashchange", () => {
-    const h = (w.location.hash || "").slice(1);
-    if (h && $(`.tab-button[data-tab="${h}"]`).length) activateTab(h);
-  });
-
-  /* ---------- Settings Save ---------- */
-
-  $DOM.settingsForm.on("submit", function (e) {
-    e.preventDefault();
-    const $btn = $(this).find('button[type="submit"]');
-    const prev = $btn.html();
-    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Saving...');
-
-    ajaxPost("agent_hub_save_settings", {
-      api_key: $("#api_key").val(),
-      payment_wallet: $("#payment_wallet").val(),
-      default_price: $("#default_price").val(),
-      network: $("#network").val(),
-      auto_generate: $("#auto_generate").is(":checked") ? "true" : "false",
-    })
-      .done((res) => {
-        res?.success
-          ? w.showToast("Settings Saved", "Your settings have been saved successfully.", "success")
-          : w.showToast("Error", res?.data?.message || "Failed to save settings.", "error");
-      })
-      .fail(() => w.showToast("Error", "Network error. Please try again.", "error"))
-      .always(() => $btn.prop("disabled", false).html(prev));
-  });
-
-  /* ---------- Register/Sync Site ---------- */
-
-  $("#register-site-button, #sync-site-button").on("click", function () {
-    const $btn = $(this);
-    const prev = $btn.html();
-    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Registering...');
-
-    ajaxPost("agent_hub_register_site")
-      .done((res) => {
-        if (res?.success) {
-          w.showToast("Success", "Site registered successfully!", "success");
-          setTimeout(() => w.location.reload(), 1200);
-        } else {
-          w.showToast("Error", res?.data?.error || "Failed to register site.", "error");
-        }
-      })
-      .fail(() => w.showToast("Error", "Network error. Please try again.", "error"))
-      .always(() => $btn.prop("disabled", false).html(prev));
-  });
-
   /* ---------- Content (list + pagination + toggles) ---------- */
 
   hub.loadContent = function (page = 1) {
@@ -245,17 +166,6 @@
     $DOM.contentPagination.html(html);
   }
 
-  // Delegated events (prevents double-binding on redraws)
-  $DOM.contentPagination.on("click", "a[data-page]", function () {
-    hub.loadContent(parseInt($(this).data("page"), 10));
-  });
-
-  $DOM.contentTBody.on("change", ".human-toggle-checkbox", function () {
-    const postId = parseInt($(this).data("post-id"), 10);
-    const checked = $(this).is(":checked");
-    hub.toggleHumanAccess(postId, checked);
-  });
-
   /* ---------- Toggle Human Access (kept public) ---------- */
   hub.toggleHumanAccess = function (postId, blockHumans) {
     ajaxPost("agent_hub_toggle_human_access", {
@@ -288,25 +198,6 @@
       })
       .fail(() => w.showToast("Error", "Network error. Please try again.", "error"));
   };
-
-  /* ---------- Bulk Generate ---------- */
-  $DOM.bulkGenerateBtn.on("click", function () {
-    const $btn = $(this);
-    const prev = $btn.html();
-    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Generating...');
-
-    ajaxPost("agent_hub_bulk_generate")
-      .done((res) => {
-        res?.success
-          ? w.showToast("Success", res?.data?.message || "Links generated.", "success")
-          : w.showToast("Error", res?.data?.message || "Failed to generate links.", "error");
-        hub.loadContent();
-      })
-      .fail((_, __, err) => w.showToast("Error", `Network error: ${err || "Unknown"}`, "error"))
-      .always(() => $btn.prop("disabled", false).html(prev));
-  });
-
-  $DOM.refreshContentBtn.on("click", () => hub.loadContent());
 
   /* ---------- Analytics ---------- */
   hub.loadAnalytics = function () {
@@ -342,6 +233,104 @@
       .join("");
     $DOM.topContent.html(topHtml || "No content data available.");
   }
+
+  /* ---------- Tabs (hash-aware) ---------- */
+
+  function activateTab(tab) {
+    $(".tab-button").removeClass("active");
+    $(".tab-content").removeClass("active");
+    $(`.tab-button[data-tab="${tab}"]`).addClass("active");
+    $(`#tab-${tab}`).addClass("active");
+
+    // light refresh trigger per tab
+    if (tab === "analytics") hub.loadAnalytics();
+    if (tab === "content") hub.loadContent(1);
+  }
+
+  $(".tab-button").on("click", function () {
+    const tab = $(this).data("tab");
+    // avoid scroll jump: replaceState not hash set
+    history.replaceState(null, "", `#${tab}`);
+    activateTab(tab);
+  });
+
+  // initialize from hash or default first tab
+  const initialHash = (w.location.hash || "").slice(1);
+  if (initialHash && $(`.tab-button[data-tab="${initialHash}"]`).length) {
+    activateTab(initialHash);
+  } else {
+    const firstTab = $(".tab-button").first().data("tab");
+    if (firstTab) activateTab(firstTab);
+  }
+
+  // react to external hash changes (e.g., browser back)
+  $(w).on("hashchange", () => {
+    const h = (w.location.hash || "").slice(1);
+    if (h && $(`.tab-button[data-tab="${h}"]`).length) activateTab(h);
+  });
+
+  /* ---------- Settings Save ---------- */
+
+  $DOM.settingsForm.on("submit", function (e) {
+    e.preventDefault();
+    const $btn = $(this).find('button[type="submit"]');
+    const prev = $btn.html();
+    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Saving...');
+
+    ajaxPost("agent_hub_save_settings", {
+      api_key: $("#api_key").val(),
+      payment_wallet: $("#payment_wallet").val(),
+      default_price: $("#default_price").val(),
+      network: $("#network").val(),
+      auto_generate: $("#auto_generate").is(":checked") ? "true" : "false",
+    })
+      .done((res) => {
+        res?.success
+          ? w.showToast("Settings Saved", "Your settings have been saved successfully.", "success")
+          : w.showToast("Error", res?.data?.message || "Failed to save settings.", "error");
+      })
+      .fail(() => w.showToast("Error", "Network error. Please try again.", "error"))
+      .always(() => $btn.prop("disabled", false).html(prev));
+  });
+
+  /* ---------- Register/Sync Site ---------- */
+
+  $("#register-site-button, #sync-site-button").on("click", function () {
+    const $btn = $(this);
+    const prev = $btn.html();
+    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Registering...');
+
+    ajaxPost("agent_hub_register_site")
+      .done((res) => {
+        if (res?.success) {
+          w.showToast("Success", "Site registered successfully!", "success");
+          setTimeout(() => w.location.reload(), 1200);
+        } else {
+          w.showToast("Error", res?.data?.error || "Failed to register site.", "error");
+        }
+      })
+      .fail(() => w.showToast("Error", "Network error. Please try again.", "error"))
+      .always(() => $btn.prop("disabled", false).html(prev));
+  });
+
+  /* ---------- Bulk Generate ---------- */
+  $DOM.bulkGenerateBtn.on("click", function () {
+    const $btn = $(this);
+    const prev = $btn.html();
+    $btn.prop("disabled", true).html('<span class="spinner is-active" style="float:none;"></span> Generating...');
+
+    ajaxPost("agent_hub_bulk_generate")
+      .done((res) => {
+        res?.success
+          ? w.showToast("Success", res?.data?.message || "Links generated.", "success")
+          : w.showToast("Error", res?.data?.message || "Failed to generate links.", "error");
+        hub.loadContent();
+      })
+      .fail((_, __, err) => w.showToast("Error", `Network error: ${err || "Unknown"}`, "error"))
+      .always(() => $btn.prop("disabled", false).html(prev));
+  });
+
+  $DOM.refreshContentBtn.on("click", () => hub.loadContent());
 
   $DOM.timeframeSel.on("change", () => hub.loadAnalytics());
 
