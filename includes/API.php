@@ -889,6 +889,26 @@ class API {
     }
     
     /**
+     * Get appropriate timeout for endpoint
+     * Supabase edge functions need longer timeout due to cold starts
+     */
+    private function get_timeout_for_endpoint($endpoint) {
+        // Supabase edge functions need longer timeout due to cold starts
+        $supabase_endpoints = [
+            '/wordpress-ecosystem-stats',
+            '/get-site-analytics'
+        ];
+        
+        foreach ($supabase_endpoints as $slow_endpoint) {
+            if (strpos($endpoint, $slow_endpoint) !== false) {
+                return 15; // 15 seconds for database queries
+            }
+        }
+        
+        return 5; // 5 seconds for fast APIs (bot registry, etc.)
+    }
+    
+    /**
      * Make HTTP request to API
      */
     private function request($method, $endpoint, $data = []) {
@@ -907,7 +927,7 @@ class API {
         
         $args = [
             'method' => $method,
-            'timeout' => 5, // Fast-fail if bot registry API is slow
+            'timeout' => $this->get_timeout_for_endpoint($endpoint), // Dynamic timeout based on endpoint
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key
