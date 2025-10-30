@@ -207,6 +207,30 @@
                         $('#protected-pages').text(finalValues.protected_pages);
                         
                         console.log('✅ [Overview] Metrics updated in DOM successfully');
+                        
+                        // ========== EXTRACT & RENDER ECOSYSTEM DATA ==========
+                        if (response.data.ecosystem) {
+                            const ecosystemData = response.data.ecosystem;
+                            console.log('🟢 [Overview] Extracted ecosystemData:', ecosystemData);
+                            
+                            const ecosystemMetrics = {
+                                unique_buyers: ecosystemData.unique_buyers || 0,
+                                unique_sellers: ecosystemData.unique_sellers || 0,
+                                total_transactions: ecosystemData.total_transactions || 0,
+                                total_amount: ecosystemData.total_amount || 0
+                            };
+                            console.log('🟢 [Overview] Ecosystem metrics (after fallback):', ecosystemMetrics);
+                            
+                            // Update ecosystem metric cards in DOM
+                            $('#ecosystem-active-buyers').text(ecosystemMetrics.unique_buyers.toLocaleString());
+                            $('#ecosystem-active-sellers').text(ecosystemMetrics.unique_sellers.toLocaleString());
+                            $('#ecosystem-total-transactions').text(ecosystemMetrics.total_transactions.toLocaleString());
+                            $('#ecosystem-market-revenue').text('$' + ecosystemMetrics.total_amount.toFixed(2));
+                            
+                            console.log('✅ [Overview] Ecosystem metrics updated in DOM successfully');
+                        } else {
+                            console.warn('⚠️ [Overview] No ecosystem data in response');
+                        }
                     } else {
                         console.error('❌ [Overview] ==================== FAILURE ====================');
                         console.error('❌ [Overview] Response indicates failure');
