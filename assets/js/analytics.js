@@ -189,6 +189,7 @@
     $(".analytics-loading").show();
     $("#market-chart-container").hide();
 
+    // EXISTING CALL - Keep for backwards compatibility and local metrics
     rqAnalytics = ajaxPost("agent_hub_get_analytics", { timeframe })
       .done((res) => {
         log("Analytics response:", res);
@@ -203,6 +204,41 @@
       })
       .fail((_, __, err) => showError("Error loading analytics: " + (err || "Network error")))
       .always(() => $(".analytics-loading").hide());
+
+    // NEW CALL - Direct ecosystem data bypass
+    if (w.agentHubData?.pluginUrl) {
+      log("Loading ecosystem data directly from ecosystem-data.php");
+      $.ajax({
+        url: w.agentHubData.pluginUrl + 'ecosystem-data.php',
+        type: 'POST',
+        dataType: 'json',
+        timeout: 15000,
+        data: { 
+          timeframe: timeframe, 
+          nonce: w.agentHubData.nonce 
+        },
+        success: function(response) {
+          log("Ecosystem direct response:", response);
+          if (response.success && response.data) {
+            // Update ONLY the 4 ecosystem stat cards
+            $("#stat-ecosystem-buyers").text(formatLargeNumber(response.data.unique_buyers || 0));
+            $("#stat-ecosystem-sellers").text(formatLargeNumber(response.data.unique_sellers || 0));
+            $("#stat-ecosystem-transactions").text(formatLargeNumber(response.data.total_transactions || 0));
+            $("#stat-market-revenue").text(formatCurrency(response.data.total_amount || 0));
+            
+            // Update Market Overview chart with ecosystem bucketed data
+            if (response.data.bucketed_data && response.data.bucketed_data.length) {
+              renderMarketOverviewChart(response.data.bucketed_data);
+            }
+          } else {
+            log("Ecosystem data failed:", response);
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("[Analytics] Ecosystem data error:", status, error);
+        }
+      });
+    }
   }
 
   function loadTopPages(page = 1) {
