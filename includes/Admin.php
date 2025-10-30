@@ -107,7 +107,7 @@ class Admin {
         wp_enqueue_script(
             'agent-hub-admin',
             AGENT_HUB_PLUGIN_URL . 'assets/js/admin.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-content', 'agent-hub-analytics', 'agent-hub-overview'],
             AGENT_HUB_VERSION,
             true
         );
