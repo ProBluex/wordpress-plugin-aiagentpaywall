@@ -189,38 +189,19 @@
     $(".analytics-loading").show();
     $("#market-chart-container").hide();
 
-    // 🚀 NEW: Direct call to ecosystem-data.php to bypass problematic routing
-    const pluginUrl = w.agentHubData?.siteUrl || "";
-    const ecosystemUrl = pluginUrl + "/wp-content/plugins/tolliver-agent/ecosystem-data.php";
-    
-    log("🚀 Direct ecosystem call to:", ecosystemUrl);
-
-    rqAnalytics = $.ajax({
-      url: ecosystemUrl,
-      type: "POST",
-      dataType: "json",
-      timeout: 15000,
-      data: { 
-        timeframe: timeframe,
-        nonce: w.agentHubData.nonce 
-      }
-    })
+    rqAnalytics = ajaxPost("agent_hub_get_analytics", { timeframe })
       .done((res) => {
-        log("✅ Ecosystem response:", res);
+        log("Analytics response:", res);
         if (res?.success && res.data) {
           renderAnalytics(res.data);
         } else {
           const msg = res?.data?.message || res?.message || "Unknown error";
           showError(
-            "Failed to load ecosystem analytics: " + msg + (res?.data?.status_code ? ` (HTTP ${res.data.status_code})` : ""),
+            "Failed to load analytics: " + msg + (res?.data?.status_code ? ` (HTTP ${res.data.status_code})` : ""),
           );
         }
       })
-      .fail((xhr, status, err) => {
-        log("❌ Ecosystem request failed:", status, err);
-        log("❌ Response text:", xhr?.responseText);
-        showError("Error loading ecosystem analytics: " + (err || "Network error"));
-      })
+      .fail((_, __, err) => showError("Error loading analytics: " + (err || "Network error")))
       .always(() => $(".analytics-loading").hide());
   }
 
