@@ -1,0 +1,569 @@
+/* Tolliver - Ai Agent Pay Collector - Professional Wall Street Design */
+/* Critical CSS: Base + Layout + Forms */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Primary Brand Colors - Match 402links.com */
+  --primary: hsl(217 91% 60%);
+  --primary-hover: hsl(217 91% 55%);
+  --primary-glow: hsl(217 100% 70%);
+  
+  /* Backgrounds */
+  --background: hsl(210 40% 98%);
+  --card: hsl(0 0% 100%);
+  --muted: hsl(210 40% 96%);
+  
+  /* Text Colors */
+  --foreground: hsl(222 47% 11%);
+  --foreground-muted: hsl(215 16% 47%);
+  
+  /* Borders */
+  --border: hsl(214 32% 91%);
+  --border-light: hsl(214 32% 95%);
+  
+  /* Semantic Colors */
+  --destructive: hsl(0 84% 60%);
+  --success: hsl(142 76% 36%);
+  --warning: hsl(48 96% 53%);
+  
+  /* Grays */
+  --gray-50: hsl(210 40% 98%);
+  --gray-100: hsl(210 40% 96%);
+  --gray-200: hsl(214 32% 91%);
+  --gray-300: hsl(214 32% 85%);
+  --gray-600: hsl(215 16% 47%);
+  --gray-700: hsl(215 19% 35%);
+  --gray-900: hsl(222 47% 11%);
+}
+
+/* Dashboard Container */
+.agent-hub-dashboard {
+  background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
+  margin: 20px 20px 20px 0;
+  padding: 0;
+  border-radius: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.agent-hub-dashboard h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  padding: 30px 40px;
+  background: white;
+  color: var(--foreground);
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-hub-dashboard h1 .dashicons {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: var(--primary);
+}
+
+/* Connection Status */
+.agent-hub-connection-status {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 13px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.status-badge.connected {
+  background: hsl(142 76% 36% / 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.status-badge.disconnected {
+  background: hsl(48 96% 53% / 0.15);
+  color: hsl(48 96% 40%);
+  border: 1px solid var(--warning);
+}
+
+/* Tabs */
+.agent-hub-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 0 40px;
+  background: white;
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.tab-button:hover {
+  color: var(--primary);
+  background: hsl(217 91% 60% / 0.05);
+}
+
+.tab-button.active {
+  color: var(--foreground);
+  border-bottom-color: var(--primary);
+  background: hsl(217 91% 60% / 0.05);
+}
+
+.tab-button .dashicons {
+  font-size: 18px;
+}
+
+.tab-content {
+  display: none;
+  padding: 40px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Global Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Configuration Card */
+.agent-hub-config-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px hsl(222 47% 11% / 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.agent-hub-config-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gray-600) 0%, var(--gray-700) 50%, var(--gray-600) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.agent-hub-config-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 24px 0;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.agent-hub-config-card h3 .dashicons {
+  color: var(--gray-700);
+  font-size: 24px;
+}
+
+.config-fields {
+  display: grid;
+  gap: 24px;
+}
+
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.config-field label {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-field .required-indicator {
+  color: var(--destructive);
+}
+
+.config-field .config-input {
+  padding: 14px 16px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  border: 2px solid var(--gray-300);
+  border-radius: 10px;
+  max-width: 600px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+}
+
+.config-field .config-input:focus {
+  outline: none;
+  border-color: var(--gray-600);
+  box-shadow: 0 0 0 4px hsl(0 0% 50% / 0.1);
+}
+
+.config-field .config-description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.config-description a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--primary);
+  transition: all 0.2s ease;
+}
+
+.config-description a:hover {
+  color: var(--primary-hover);
+  border-bottom-color: var(--primary-hover);
+}
+
+.config-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+#save-overview-config,
+#force-wallet-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 14px 28px;
+  background: #000000 !important;
+  color: white !important;
+  border: 2px solid #000000 !important;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px hsl(0 0% 0% / 0.15) !important;
+}
+
+#save-overview-config:hover,
+#force-wallet-sync:hover {
+  background: #1a1a1a !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25) !important;
+}
+
+#force-wallet-sync {
+  background: white !important;
+  color: var(--gray-800) !important;
+  border: 2px solid var(--gray-400) !important;
+  box-shadow: none !important;
+}
+
+#force-wallet-sync:hover {
+  background: var(--gray-100) !important;
+  color: var(--gray-900) !important;
+  border-color: var(--gray-500) !important;
+}
+
+#save-overview-config:active {
+  transform: translateY(0);
+}
+
+/* Stats Grid */
+.agent-hub-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  background: white;
+  color: var(--foreground);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px hsl(222 47% 11% / 0.05);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card-overview,
+.stat-card-analytics {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  background: white;
+  color: var(--foreground);
+  border-radius: 16px;
+  border: 2px solid var(--gray-200);
+  box-shadow: 0 2px 8px hsl(0 0% 0% / 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card-overview::before,
+.stat-card-analytics::before {
+  display: none;
+}
+
+.stat-card-overview:hover,
+.stat-card-analytics:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08);
+  border-color: var(--gray-300);
+}
+
+.stat-card-overview .stat-icon-flat,
+.stat-card-analytics .stat-icon-flat {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.stat-card-overview .stat-icon-flat .dashicons,
+.stat-card-analytics .stat-icon-flat .dashicons {
+  color: var(--gray-600);
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+}
+
+.stat-card-overview .stat-content,
+.stat-card-analytics .stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-card-overview .stat-label,
+.stat-card-analytics .stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card-overview .stat-value,
+.stat-card-analytics .stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gray-900);
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+}
+
+.stat-icon.success,
+.stat-icon.revenue {
+  background: var(--gray-100) !important;
+  border: 2px solid var(--gray-200) !important;
+}
+
+.stat-icon.success .dashicons,
+.stat-icon.revenue .dashicons {
+  color: var(--gray-600) !important;
+}
+
+/* Toast Notifications */
+.agent-hub-toast {
+  position: fixed;
+  top: 40px;
+  right: 20px;
+  z-index: 100000;
+  max-width: 400px;
+}
+
+.toast-message {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  background: white;
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.toast-message.success {
+  border-left-color: var(--success);
+}
+
+.toast-message.success .toast-icon {
+  color: var(--success);
+}
+
+.toast-message.error {
+  border-left-color: var(--destructive);
+}
+
+.toast-message.error .toast-icon {
+  color: var(--destructive);
+}
+
+.toast-message .toast-icon {
+  font-size: 24px;
+}
+
+.toast-message .toast-content {
+  flex: 1;
+}
+
+.toast-message .toast-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.toast-message .toast-text {
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.4;
+}
+
+/* Loading States */
+.spinner {
+  border-color: var(--primary) transparent transparent transparent !important;
+}
+
+/* Wallet Input Wrapper */
+.wallet-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-input-wrapper .config-input {
+  flex: 1;
+}
+
+/* Wallet Sync Indicator */
+.wallet-sync-indicator {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.wallet-sync-indicator.syncing {
+  color: var(--primary);
+}
+
+.wallet-sync-indicator.synced {
+  color: var(--success);
+}
+
+.wallet-sync-indicator.error {
+  color: var(--destructive);
+}
+
+/* Info Box */
+.agent-hub-info-box {
+  background: white;
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.agent-hub-info-box h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px 0;
+  color: var(--foreground);
+  font-size: 18px;
+}
+
+.agent-hub-info-box h4 {
+  margin: 24px 0 12px 0;
+  color: var(--primary);
+  font-size: 16px;
+}

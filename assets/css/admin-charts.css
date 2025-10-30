@@ -1,0 +1,68 @@
+/* Tolliver - Ai Agent Pay Collector */
+/* Charts CSS: Analytics Only */
+
+/* Chart Controls */
+.chart-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.metric-toggle {
+  padding: 8px 16px;
+  border: 2px solid var(--gray-300);
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.metric-toggle:hover {
+  border-color: #00D091;
+}
+
+.metric-toggle.active {
+  background: #00D091;
+  border-color: #00D091;
+  color: white;
+}
+
+/* Analytics Section */
+.analytics-filters {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.analytics-section {
+  margin-bottom: 32px;
+  padding: 28px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.analytics-section h3 {
+  margin: 0 0 20px 0;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Analytics Loading State */
+.analytics-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--gray-600);
+  font-size: 16px;
+}
+
+.analytics-loading .spinner {
+  margin-right: 12px;
+}
