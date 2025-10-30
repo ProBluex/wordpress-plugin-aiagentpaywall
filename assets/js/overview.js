@@ -1,319 +1,295 @@
 /**
- * Overview Tab Configuration Handler
+ * Overview Tab Configuration Handler (hardened, lean, collision-safe)
  */
+(function (w, d, $) {
+  "use strict";
 
-(function($) {
-    'use strict';
-    
-    $(document).ready(function() {
-        // Track if user has started editing
-        let userIsEditing = false;
-        
-        // Only show validation when user actively types (keydown/keyup)
-        $('#overview-payment-wallet').on('keydown', function() {
-            userIsEditing = true;
-        });
-        
-        $('#overview-payment-wallet').on('keyup', function() {
-            if (!userIsEditing) return; // Don't run if user hasn't typed
-            
-            const wallet = $(this).val().trim();
-            const indicator = $('#wallet-sync-indicator');
-            
-            if (!wallet) {
-                indicator.removeClass().addClass('wallet-sync-indicator wallet-status-empty');
-                indicator.find('.status-dot').removeClass().addClass('status-dot gray');
-                indicator.find('.status-text').text('Not synced');
-                return;
-            }
-            
-            // Validate format: 0x + 40 hex characters (Ethereum/Base address)
-            const isValid = /^0x[a-fA-F0-9]{40}$/.test(wallet);
-            
-            if (!isValid) {
-                indicator.removeClass().addClass('wallet-sync-indicator wallet-status-invalid');
-                indicator.find('.status-dot').removeClass().addClass('status-dot red');
-                indicator.find('.status-text').text('Invalid address format');
-            } else {
-                indicator.removeClass().addClass('wallet-sync-indicator wallet-status-valid');
-                indicator.find('.status-dot').removeClass().addClass('status-dot orange');
-                indicator.find('.status-text').text('Valid format - click Save to sync');
-            }
-        });
-        
-        // Track original price for change detection
-        let originalPrice = null;
-        
-        // Capture original price on page load
-        $(document).ready(function() {
-            originalPrice = parseFloat($('#overview-default-price').val());
-        });
-        
-        // Save configuration button
-        $(document).on('click', '#save-overview-config', function(e) {
-            e.preventDefault();
-            
-            const wallet = $('#overview-payment-wallet').val().trim();
-            const defaultPrice = $('#overview-default-price').val();
-            
-            if (!wallet) {
-                window.showToast('Validation Error', 'Payment wallet address is required', 'error');
-                return;
-            }
-            
-            // Basic wallet validation
-            if (!wallet.startsWith('0x') || wallet.length !== 42) {
-                window.showToast('Validation Error', 'Invalid wallet address format', 'error');
-                return;
-            }
-            
-            const button = $(this);
-            const originalHtml = button.html();
-            const indicator = $('#wallet-sync-indicator');
-            
-            $.ajax({
-                url: agentHubData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'agent_hub_save_wallet',
-                    nonce: agentHubData.nonce,
-                    wallet: wallet,
-                    default_price: defaultPrice
-                },
-                beforeSend: function() {
-                    button.prop('disabled', true).html('<span class="dashicons dashicons-update-alt"></span> Saving...');
-                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-syncing');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot orange pulsing');
-                    indicator.find('.status-text').text('Syncing...');
-                },
-                success: function(response) {
-                    if (response.success) {
-                        button.html('<span class="dashicons dashicons-yes-alt"></span> Saved');
-                        
-                        // Check if sync was successful
-                        if (response.data.sync_success) {
-                            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-synced');
-                            indicator.find('.status-dot').removeClass().addClass('status-dot green');
-                            indicator.find('.status-text').text('Synced');
-                            userIsEditing = false; // Reset editing flag
-                            window.showToast('Success', response.data.message, 'success');
-                            
-                            // Check for price change
-                            const newPrice = parseFloat(defaultPrice);
-                            const priceChanged = originalPrice !== null && originalPrice !== newPrice;
-                            
-                            if (priceChanged) {
-                                console.log('[Overview] Price changed from', originalPrice, 'to', newPrice);
-                                checkExistingLinksAndAlert();
-                                originalPrice = newPrice; // Update for next change
-                            }
-                        } else {
-                            indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
-                            indicator.find('.status-dot').removeClass().addClass('status-dot red');
-                            indicator.find('.status-text').html('Sync failed <span class="dashicons dashicons-warning"></span>');
-                            const errorMsg = response.data.sync_error || 'Failed to sync to database';
-                            
-                            // Show more helpful error message
-                            let userMessage = response.data.message;
-                            if (errorMsg.includes('not provisioned') || errorMsg.includes('pending')) {
-                                userMessage += ' - Site registration is pending.';
-                            } else if (errorMsg.includes('API key')) {
-                                userMessage += ' - Authentication issue.';
-                            }
-                            
-                            window.showToast('Warning', userMessage + ' (Sync: ' + errorMsg + ')', 'warning');
-                        }
-                        
-                        setTimeout(function() {
-                            button.prop('disabled', false).html(originalHtml);
-                        }, 2000);
-                    } else {
-                        indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
-                        indicator.find('.status-dot').removeClass().addClass('status-dot red');
-                        indicator.find('.status-text').html('Sync failed <span class="dashicons dashicons-warning"></span>');
-                        window.showToast('Error', response.data.message || 'Failed to save configuration', 'error');
-                        button.prop('disabled', false).html(originalHtml);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    indicator.removeClass().addClass('wallet-sync-indicator wallet-status-sync-failed');
-                    indicator.find('.status-dot').removeClass().addClass('status-dot red');
-                    indicator.find('.status-text').text('Sync failed - connection error');
-                    window.showToast('Error', 'Failed to save configuration: ' + error, 'error');
-                    button.prop('disabled', false).html(originalHtml);
-                }
-            });
-        });
-        
-        // ========== ANALYTICS LOADING FOR OVERVIEW TAB ==========
-        let overviewDataInterval;
+  if (!w.agentHubData || !w.agentHubData.ajaxUrl || !w.agentHubData.nonce) {
+    console.error("[Overview] Missing agentHubData config.");
+    return;
+  }
 
-        function loadOverviewAnalytics() {
-            console.log('🔵 [Overview] ==================== ANALYTICS REQUEST START ====================');
-            console.log('🔵 [Overview] Timestamp:', new Date().toISOString());
-            console.log('🔵 [Overview] AJAX URL:', agentHubData.ajaxUrl);
-            
-            const requestPayload = {
-                action: 'agent_hub_get_analytics',
-                nonce: agentHubData.nonce,
-                timeframe: '30d'
-            };
-            console.log('🔵 [Overview] Request payload:', requestPayload);
-            
-            $.ajax({
-                url: agentHubData.ajaxUrl,
-                type: 'POST',
-                data: requestPayload,
-                success: function(response) {
-                    console.log('🟢 [Overview] ==================== RESPONSE RECEIVED ====================');
-                    console.log('🟢 [Overview] Raw response:', response);
-                    console.log('🟢 [Overview] response.success:', response.success);
-                    console.log('🟢 [Overview] response.data exists:', !!response.data);
-                    
-                    if (response.data) {
-                        console.log('🟢 [Overview] response.data.site exists:', !!response.data.site);
-                        console.log('🟢 [Overview] response.data.ecosystem exists:', !!response.data.ecosystem);
-                        console.log('🟢 [Overview] response.data structure:', {
-                            site: response.data.site ? Object.keys(response.data.site) : 'N/A',
-                            ecosystem: response.data.ecosystem ? Object.keys(response.data.ecosystem) : 'N/A'
-                        });
-                    }
-                    
-                    if (response.success && response.data && response.data.site) {
-                        const siteData = response.data.site;
-                        console.log('🟢 [Overview] Extracted siteData:', siteData);
-                        
-                        // Log each metric extraction
-                        const metrics = {
-                            total_crawls: siteData?.total_crawls,
-                            paid_crawls: siteData?.paid_crawls,
-                            total_revenue: siteData?.total_revenue,
-                            protected_pages: siteData?.protected_pages
-                        };
-                        console.log('🟢 [Overview] Extracted metrics (before fallback):', metrics);
-                        
-                        // Update metric cards with logging
-                        const finalValues = {
-                            total_crawls: siteData.total_crawls || 0,
-                            paid_crawls: siteData.paid_crawls || 0,
-                            total_revenue: '$' + (siteData.total_revenue || 0).toFixed(2),
-                            protected_pages: siteData.protected_pages || 0
-                        };
-                        console.log('🟢 [Overview] Final values (after fallback):', finalValues);
-                        
-                        $('#total-crawls').text(finalValues.total_crawls);
-                        $('#paid-crawls').text(finalValues.paid_crawls);
-                        $('#total-revenue').text(finalValues.total_revenue);
-                        $('#protected-pages').text(finalValues.protected_pages);
-                        
-                        console.log('✅ [Overview] Metrics updated in DOM successfully');
-                    } else {
-                        console.error('❌ [Overview] ==================== FAILURE ====================');
-                        console.error('❌ [Overview] Response indicates failure');
-                        console.error('❌ [Overview] response.success:', response.success);
-                        console.error('❌ [Overview] response.data:', response.data);
-                        console.error('❌ [Overview] response.data.site exists:', !!(response.data && response.data.site));
-                        console.error('❌ [Overview] response.message:', response.message);
-                        console.error('❌ [Overview] Full response:', JSON.stringify(response, null, 2));
-                        
-                        // Show zeros with error state
-                        $('#total-crawls').text('0');
-                        $('#paid-crawls').text('0');
-                        $('#total-revenue').text('$0.00');
-                        $('#protected-pages').text('0');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('🔴 [Overview] ==================== AJAX ERROR ====================');
-                    console.error('🔴 [Overview] Status:', status);
-                    console.error('🔴 [Overview] Error:', error);
-                    console.error('🔴 [Overview] XHR status:', xhr.status);
-                    console.error('🔴 [Overview] XHR responseText:', xhr.responseText);
-                    
-                    // Show zeros on error
-                    $('#total-crawls').text('0');
-                    $('#paid-crawls').text('0');
-                    $('#total-revenue').text('$0.00');
-                    $('#protected-pages').text('0');
-                }
-            });
-        }
+  /* ---------------- Utilities ---------------- */
+  const DEBUG = !!w.agentHubData.debug;
 
-        // Load on page load
-        loadOverviewAnalytics();
-        
-        // DISABLED: No auto-refresh - only refresh on page load
-        // Data will be cached and only updated when user refreshes page
-        console.log('[Overview] Auto-refresh disabled - data will only refresh on page load');
-        
-        // ========== PRICE CHANGE ALERT SYSTEM ==========
-        
-        function checkExistingLinksAndAlert() {
-            console.log('[Overview] Checking for existing links...');
-            $.ajax({
-                url: agentHubData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'agent_hub_check_existing_links',
-                    nonce: agentHubData.nonce
-                },
-                success: function(response) {
-                    console.log('[Overview] Check links response:', response);
-                    if (response.success && response.data.has_links) {
-                        showPriceChangeAlert(response.data.link_count);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('[Overview] Failed to check links:', error);
-                }
-            });
-        }
-        
-        function showPriceChangeAlert(linkCount) {
-            console.log('[Overview] Showing price change alert for', linkCount, 'links');
-            
-            // Remove any existing alerts
-            $('#price-change-alert').remove();
-            
-            const alertHtml = `
-                <div class="notice notice-warning is-dismissible" id="price-change-alert" style="margin: 20px 0; padding: 15px; border-left: 4px solid #f0ad4e;">
-                    <h4 style="margin-top: 0;">
-                        <span class="dashicons dashicons-warning" style="color: #f0ad4e;"></span> 
-                        Price Changed - Action Required
-                    </h4>
-                    <p>
-                        You have <strong>${linkCount} existing paid link${linkCount !== 1 ? 's' : ''}</strong> that ${linkCount !== 1 ? 'are' : 'is'} still using the old price.
-                        To apply the new price to all your content, please regenerate your paid links.
-                    </p>
-                    <p>
-                        <button type="button" class="button button-primary" id="go-to-content-tab" style="margin-right: 10px;">
-                            <span class="dashicons dashicons-update"></span>
-                            Go to My Content & Regenerate Links
-                        </button>
-                        <button type="button" class="button" id="dismiss-price-alert">Dismiss</button>
-                    </p>
-                </div>
-            `;
-            
-            // Insert after the configuration card
-            $('.agent-hub-config-card').after(alertHtml);
-            
-            // Handle button clicks
-            $('#go-to-content-tab').on('click', function() {
-                console.log('[Overview] Switching to content tab');
-                $('.tab-button[data-tab="content"]').trigger('click');
-                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
-            });
-            
-            $('#dismiss-price-alert').on('click', function() {
-                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
-            });
-            
-            // Allow dismissing via close button
-            $('#price-change-alert').on('click', '.notice-dismiss', function() {
-                $('#price-change-alert').fadeOut(300, function() { $(this).remove(); });
-            });
-        }
+  const log = (...args) => {
+    if (DEBUG) console.log("[Overview]", ...args);
+  };
+
+  const ajaxPost = (action, payload = {}) =>
+    $.ajax({
+      url: w.agentHubData.ajaxUrl,
+      type: "POST",
+      dataType: "json",
+      timeout: 20000,
+      data: { action, nonce: w.agentHubData.nonce, ...payload },
     });
-    
-})(jQuery);
+
+  const esc = (s) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const setIndicator = (status, text, dot) => {
+    const $ind = $("#wallet-sync-indicator");
+    $ind.removeClass().addClass(`wallet-sync-indicator ${status}`);
+    const $dot = $ind.find(".status-dot");
+    $dot.removeClass().addClass(`status-dot ${dot || "gray"}`);
+    $ind.find(".status-text").text(text);
+  };
+
+  const showToast = (title, msg, type) =>
+    typeof w.showToast === "function" ? w.showToast(title, msg, type) : alert(`${title}: ${msg}`);
+
+  const isEthAddress = (s) => /^0x[a-fA-F0-9]{40}$/.test(String(s || "").trim());
+
+  /* ---------------- State ---------------- */
+  let userIsEditing = false;
+  let originalPrice = null;
+  let typingTimer = null;
+  let rqSave = null;
+  let rqAnalytics = null;
+  let rqCheckLinks = null;
+
+  /* ---------------- DOM Ready ---------------- */
+  $(d).ready(function () {
+    log("Init");
+
+    // Capture original price once
+    const parsed = parseFloat($("#overview-default-price").val());
+    originalPrice = Number.isFinite(parsed) ? parsed : null;
+
+    // Wallet input validation (debounced; only after user types)
+    $(d)
+      .off("keydown.ovw", "#overview-payment-wallet")
+      .on("keydown.ovw", "#overview-payment-wallet", function () {
+        userIsEditing = true;
+      });
+
+    $(d)
+      .off("keyup.ovw", "#overview-payment-wallet")
+      .on("keyup.ovw", "#overview-payment-wallet", function () {
+        if (!userIsEditing) return;
+        if (typingTimer) clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+          const wallet = String($(this).val() || "").trim();
+          if (!wallet) {
+            setIndicator("wallet-status-empty", "Not synced", "gray");
+            return;
+          }
+          if (!isEthAddress(wallet)) {
+            setIndicator("wallet-status-invalid", "Invalid address format", "red");
+          } else {
+            setIndicator("wallet-status-valid", "Valid format - click Save to sync", "orange");
+          }
+        }, 120);
+      });
+
+    // Save configuration
+    $(d)
+      .off("click.ovw", "#save-overview-config")
+      .on("click.ovw", "#save-overview-config", function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const wallet = String($("#overview-payment-wallet").val() || "").trim();
+        const defaultPriceRaw = $("#overview-default-price").val();
+        const defaultPrice = Number.isFinite(parseFloat(defaultPriceRaw)) ? defaultPriceRaw : "";
+
+        if (!wallet) return showToast("Validation Error", "Payment wallet address is required", "error");
+        if (!isEthAddress(wallet)) return showToast("Validation Error", "Invalid wallet address format", "error");
+
+        // abort stale save
+        if (rqSave?.abort) rqSave.abort();
+
+        $btn.prop("disabled", true).html('<span class="dashicons dashicons-update-alt"></span> Saving...');
+        setIndicator("wallet-status-syncing", "Syncing...", "orange pulsing");
+
+        rqSave = ajaxPost("agent_hub_save_wallet", { wallet, default_price: defaultPrice })
+          .done((res) => {
+            if (res?.success) {
+              $btn.html('<span class="dashicons dashicons-yes-alt"></span> Saved');
+              if (res.data?.sync_success) {
+                setIndicator("wallet-status-synced", "Synced", "green");
+                userIsEditing = false;
+                if (res.data?.message) showToast("Success", String(res.data.message), "success");
+
+                // price change awareness
+                const newPriceNum = parseFloat(defaultPrice);
+                const priceChanged =
+                  Number.isFinite(newPriceNum) && originalPrice !== null && newPriceNum !== originalPrice;
+                if (priceChanged) {
+                  log("Price changed from", originalPrice, "to", newPriceNum);
+                  checkExistingLinksAndAlert(); // async
+                  originalPrice = newPriceNum;
+                }
+              } else {
+                setIndicator("wallet-status-sync-failed", "Sync failed", "red");
+                const err = res?.data?.sync_error || "Failed to sync to database";
+                let msg = res?.data?.message || "Save succeeded but sync failed.";
+                if (/not provisioned|pending/i.test(err)) msg += " - Site registration is pending.";
+                else if (/api key/i.test(err)) msg += " - Authentication issue.";
+                showToast("Warning", `${msg} (Sync: ${err})`, "warning");
+              }
+            } else {
+              setIndicator("wallet-status-sync-failed", "Sync failed", "red");
+              showToast("Error", res?.data?.message || "Failed to save configuration", "error");
+            }
+          })
+          .fail((_, __, err) => {
+            setIndicator("wallet-status-sync-failed", "Sync failed - connection error", "red");
+            showToast("Error", "Failed to save configuration: " + (err || "Network error"), "error");
+          })
+          .always(() => {
+            setTimeout(
+              () => $btn.prop("disabled", false).html('<span class="dashicons dashicons-admin-generic"></span> Save'),
+              600,
+            );
+          });
+      });
+
+    /* -------- Overview Analytics (load once; no auto-refresh) -------- */
+    loadOverviewAnalytics();
+
+    log("Auto-refresh disabled - data will only refresh on page load");
+  });
+
+  /* ---------------- Analytics ---------------- */
+  function loadOverviewAnalytics() {
+    log("Analytics request start", { ts: new Date().toISOString(), ajax: w.agentHubData.ajaxUrl });
+
+    if (rqAnalytics?.abort) rqAnalytics.abort();
+
+    rqAnalytics = ajaxPost("agent_hub_get_analytics", { timeframe: "30d" })
+      .done((res) => {
+        const ok = !!(res?.success && res?.data && res.data.site);
+        if (ok) {
+          const site = res.data.site || {};
+          const vals = {
+            total_crawls: Number(site.total_crawls || 0),
+            paid_crawls: Number(site.paid_crawls || 0),
+            total_revenue: Number(site.total_revenue || 0),
+            protected_pages: Number(site.protected_pages || 0),
+          };
+          log("Analytics site data", vals);
+          $("#total-crawls").text(vals.total_crawls);
+          $("#paid-crawls").text(vals.paid_crawls);
+          $("#total-revenue").text("$" + vals.total_revenue.toFixed(2));
+          $("#protected-pages").text(vals.protected_pages);
+        } else {
+          log("Analytics fallback to zeros", res);
+          $("#total-crawls").text("0");
+          $("#paid-crawls").text("0");
+          $("#total-revenue").text("$0.00");
+          $("#protected-pages").text("0");
+        }
+      })
+      .fail((xhr, status, err) => {
+        console.error("[Overview] Analytics error:", status, err, xhr?.responseText);
+        $("#total-crawls").text("0");
+        $("#paid-crawls").text("0");
+        $("#total-revenue").text("$0.00");
+        $("#protected-pages").text("0");
+      });
+  }
+
+  /* ---------------- Price Change Alert ---------------- */
+  function checkExistingLinksAndAlert() {
+    if (rqCheckLinks?.abort) rqCheckLinks.abort();
+
+    rqCheckLinks = ajaxPost("agent_hub_check_existing_links")
+      .done((res) => {
+        if (res?.success && res?.data?.has_links) {
+          const count = Number(res.data.link_count || 0);
+          showPriceChangeAlert(count);
+        }
+      })
+      .fail((_, __, err) => console.error("[Overview] check links error:", err));
+  }
+
+  function showPriceChangeAlert(linkCount) {
+    log("Show price change alert for", linkCount, "links");
+
+    $("#price-change-alert").remove(); // ensure single instance
+
+    // Build DOM safely without injecting raw HTML with variables
+    const $notice = $("<div/>", {
+      id: "price-change-alert",
+      class: "notice notice-warning is-dismissible",
+      style: "margin:20px 0; padding:15px; border-left:4px solid #f0ad4e;",
+    });
+
+    const $h4 = $("<h4/>", { style: "margin-top:0;" })
+      .append($("<span/>", { class: "dashicons dashicons-warning", style: "color:#f0ad4e;" }))
+      .append(" ")
+      .append("Price Changed - Action Required");
+
+    const plural = linkCount === 1 ? "" : "s";
+    const areIs = linkCount === 1 ? "is" : "are";
+
+    const $p1 = $("<p/>").append(
+      "You have ",
+      $("<strong/>").text(String(linkCount)),
+      ` existing paid link${plural} that ${areIs} still using the old price. `,
+      "To apply the new price to all your content, please regenerate your paid links.",
+    );
+
+    const $btnPrimary = $("<button/>", {
+      type: "button",
+      id: "go-to-content-tab",
+      class: "button button-primary",
+    })
+      .append($("<span/>", { class: "dashicons dashicons-update" }), " ", "Go to My Content & Regenerate Links")
+      .css("margin-right", "10px");
+
+    const $btnDismiss = $("<button/>", {
+      type: "button",
+      id: "dismiss-price-alert",
+      class: "button",
+      text: "Dismiss",
+    });
+
+    const $p2 = $("<p/>").append($btnPrimary, $btnDismiss);
+
+    $notice.append($h4, $p1, $p2);
+
+    $(".agent-hub-config-card").after($notice);
+
+    // Bind actions (namespaced)
+    $(d)
+      .off("click.ovw", "#go-to-content-tab")
+      .on("click.ovw", "#go-to-content-tab", function () {
+        log("Switching to content tab");
+        $('.tab-button[data-tab="content"]').trigger("click");
+        $("#price-change-alert").fadeOut(300, function () {
+          $(this).remove();
+        });
+      });
+
+    $(d)
+      .off("click.ovw", "#dismiss-price-alert")
+      .on("click.ovw", "#dismiss-price-alert", function () {
+        $("#price-change-alert").fadeOut(300, function () {
+          $(this).remove();
+        });
+      });
+
+    // WP dismiss button handler (delegated)
+    $(d)
+      .off("click.ovw", "#price-change-alert .notice-dismiss")
+      .on("click.ovw", "#price-change-alert .notice-dismiss", function () {
+        $("#price-change-alert").fadeOut(300, function () {
+          $(this).remove();
+        });
+      });
+  }
+
+  /* ---------------- Cleanup on unload ---------------- */
+  $(w).on("beforeunload", function () {
+    if (rqSave?.abort) rqSave.abort();
+    if (rqAnalytics?.abort) rqAnalytics.abort();
+    if (rqCheckLinks?.abort) rqCheckLinks.abort();
+  });
+})(window, document, jQuery);
