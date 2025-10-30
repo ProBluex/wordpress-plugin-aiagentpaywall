@@ -1,541 +1,468 @@
 /**
- * Analytics & Charts for Tolliver - Ai Agent Pay Collector
- * Handles revenue charts and data visualization
+ * Analytics & Charts for Tolliver - AI Agent Pay Collector
+ * (hardened, lean, collision-safe)
  */
+(function (w, d, $) {
+  "use strict";
 
-(function($) {
-    'use strict';
-    
-    let marketChart = null;
-    let analyticsRefreshInterval = null;
-    let currentPage = 1;
-    const perPage = 10;
-    let activeMetrics = {
-        transactions: true,
-        volume: true,
-        buyers: true,
-        sellers: true
-    };
-    
-    /**
-     * Initialize analytics when DOM is ready
-     */
-    $(document).ready(function() {
-        console.log('[Analytics] Initializing analytics module');
-        
-        // Load Chart.js dynamically if not already loaded
-        if (typeof Chart === 'undefined') {
-            loadChartJS();
-        }
-        
-        // Load immediately if analytics tab is already active
-        if ($('[data-tab="analytics"]').hasClass('active')) {
-            loadAnalyticsData();
-            loadTopPages();
-            startAnalyticsAutoRefresh();
-        }
-        
-        // Hook into analytics tab switch
-        $(document).on('click', '[data-tab="analytics"]', function() {
-            setTimeout(loadAnalyticsData, 100);
-            setTimeout(loadTopPages, 100);
-            startAnalyticsAutoRefresh();
-        });
-        
-        // Timeframe change handler
-        $(document).on('change', '#analytics-timeframe', function() {
-            loadAnalyticsData();
-            loadTopPages();
-        });
-        
-        // Metric toggle handlers
-        $(document).on('click', '.metric-toggle', function() {
-            const metric = $(this).data('metric');
-            $(this).toggleClass('active');
-            activeMetrics[metric] = $(this).hasClass('active');
-            
-            // Re-render chart with new metric selection
-            loadAnalyticsData();
-        });
-        
-        // Stop auto-refresh when page is hidden
-        $(document).on('visibilitychange', function() {
-            if (document.visibilityState === 'hidden' && analyticsRefreshInterval) {
-                clearInterval(analyticsRefreshInterval);
-                analyticsRefreshInterval = null;
-            } else if (document.visibilityState === 'visible' && $('[data-tab="analytics"]').hasClass('active')) {
-                startAnalyticsAutoRefresh();
-            }
-        });
+  if (!w.agentHubData || !w.agentHubData.ajaxUrl || !w.agentHubData.nonce) {
+    console.error("[Analytics] Missing agentHubData config.");
+    return;
+  }
+
+  /* ------------------ Config & State ------------------ */
+  const DEBUG = !!w.agentHubData.debug;
+  const CHARTJS_SRC = "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js";
+  const COLORS = {
+    tx: "#00D091",
+    vol: "#8B5CF6",
+    buyers: "#3B82F6",
+    sellers: "#F59E0B",
+  };
+
+  let marketChart = null;
+  let analyticsRefreshInterval = null;
+  let currentPage = 1;
+  const perPage = 10;
+  const activeMetrics = {
+    transactions: true,
+    volume: true,
+    buyers: true,
+    sellers: true,
+  };
+
+  // Track in-flight requests to avoid races (abort stale)
+  let rqAnalytics = null;
+  let rqTopPages = null;
+
+  /* ------------------ Utilities ------------------ */
+
+  const log = (...args) => {
+    if (DEBUG) console.log("[Analytics]", ...args);
+  };
+
+  const ajaxPost = (action, payload = {}) => {
+    if (!w.agentHubData?.ajaxUrl) return $.Deferred().reject("Missing ajaxUrl").promise();
+    return $.ajax({
+      url: w.agentHubData.ajaxUrl,
+      type: "POST",
+      dataType: "json",
+      timeout: 15000,
+      data: { action, nonce: w.agentHubData.nonce, ...payload },
     });
-    
-    /**
-     * Load Chart.js library dynamically
-     */
-    function loadChartJS() {
-        if ($('script[src*="chart.js"]').length === 0) {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-            script.onload = function() {
-                console.log('[Analytics] Chart.js loaded successfully');
-            };
-            document.head.appendChild(script);
-        }
+  };
+
+  const esc = (s) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const nf = new Intl.NumberFormat("en-US");
+  const cf = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const formatNumber = (num) => {
+    const n = Number(num || 0);
+    if (!Number.isFinite(n)) return "0";
+    return nf.format(n);
+  };
+
+  const formatLargeNumber = (num) => {
+    const n = Number(num || 0);
+    if (!Number.isFinite(n)) return "0";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+    return nf.format(n);
+  };
+
+  const formatCurrency = (amount) => {
+    const n = Number(amount || 0);
+    if (!Number.isFinite(n)) return "$0.00";
+    if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000) return "$" + (n / 1_000).toFixed(1) + "K";
+    return cf.format(n);
+  };
+
+  const formatMoney = (amount) => {
+    const n = Number(amount || 0);
+    return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+  };
+
+  const formatDate = (dateStr) => {
+    const dt = new Date(dateStr);
+    if (Number.isNaN(+dt)) return esc(String(dateStr || ""));
+    const month = dt.toLocaleString("en-US", { month: "short" });
+    const day = dt.getDate();
+    return `${month} ${day}`;
+  };
+
+  const safeLink = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+
+  /* ------------------ Chart.js loader (idempotent) ------------------ */
+
+  function ensureChartJS(cb) {
+    if (typeof w.Chart !== "undefined") return cb?.();
+    if (d.getElementById("chartjs-umd")) return d.getElementById("chartjs-umd").addEventListener("load", () => cb?.());
+    const s = d.createElement("script");
+    s.id = "chartjs-umd";
+    s.src = CHARTJS_SRC;
+    s.onload = () => {
+      log("Chart.js loaded");
+      cb?.();
+    };
+    s.onerror = () => console.error("[Analytics] Failed to load Chart.js");
+    d.head.appendChild(s);
+  }
+
+  /* ------------------ DOM Ready ------------------ */
+
+  $(d).ready(function () {
+    log("Initializing analytics module");
+
+    // Preload Chart.js (non-blocking)
+    ensureChartJS();
+
+    // If analytics tab is already active on load
+    if ($('[data-tab="analytics"]').hasClass("active")) {
+      loadAnalyticsData();
+      loadTopPages();
+      startAnalyticsAutoRefresh();
     }
-    
-    /**
-     * Load analytics data from backend
-     */
-    function loadAnalyticsData() {
-        const timeframe = $('#analytics-timeframe').val() || '30d';
-        
-        console.log('[Analytics] Loading analytics data for timeframe:', timeframe);
-        console.log('[Analytics] 🔍 REQUEST PAYLOAD:', {
-            action: 'agent_hub_get_analytics',
-            nonce: agentHubData.nonce,
-            timeframe: timeframe,
-            ajaxUrl: agentHubData.ajaxUrl
-        });
-        
-        $.ajax({
-            url: agentHubData.ajaxUrl,
-            type: 'POST',
-            data: {
-                action: 'agent_hub_get_analytics',
-                nonce: agentHubData.nonce,
-                timeframe: timeframe
-            },
-            beforeSend: function() {
-                $('.analytics-loading').show();
-                $('#market-chart-container').hide();
-            },
-            success: function(response) {
-                console.log('[Analytics] ✅ FULL RESPONSE RECEIVED:', JSON.stringify(response, null, 2));
-                console.log('[Analytics] Response structure check:', {
-                    has_success: 'success' in response,
-                    success_value: response.success,
-                    has_data: 'data' in response,
-                    data_keys: response.data ? Object.keys(response.data) : 'NO DATA',
-                    has_site: response.data?.site ? 'YES' : 'NO',
-                    has_ecosystem: response.data?.ecosystem ? 'YES' : 'NO'
-                });
-                
-                if (response.success && response.data) {
-                    renderAnalytics(response.data);
-                } else {
-                    console.error('[Analytics] ❌ FAILED TO LOAD:', response);
-                    const errorMsg = response.data?.message || response.message || 'Unknown error';
-                    const statusCode = response.data?.status_code ? ` (HTTP ${response.data.status_code})` : '';
-                    showError('Failed to load analytics: ' + errorMsg + statusCode);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('[Analytics] AJAX error:', error);
-                showError('Error loading analytics: ' + error);
-            },
-            complete: function() {
-                $('.analytics-loading').hide();
-            }
-        });
-    }
-    
-    /**
-     * Load top performing pages from backend
-     */
-    function loadTopPages(page = 1) {
-        console.log('🟦 [TopPages] === LOAD TOP PAGES START ===');
-        console.log('🟦 [TopPages] Page:', page);
-        console.log('🟦 [TopPages] agentHubData:', agentHubData);
-        
-        currentPage = page;
-        const offset = (page - 1) * perPage;
-        const timeframe = $('#analytics-timeframe').val() || '30d';
-        
-        const requestData = {
-            action: 'agent_hub_get_top_pages',
-            nonce: agentHubData.nonce,
-            timeframe: timeframe,
-            limit: perPage,
-            offset: offset
-        };
-        
-        console.log('🟦 [TopPages] Sending AJAX request:', requestData);
-        console.log('🟦 [TopPages] AJAX URL:', agentHubData.ajaxUrl);
-        
-        $.ajax({
-            url: agentHubData.ajaxUrl,
-            type: 'POST',
-            data: requestData,
-            success: function(response) {
-                console.log('🟢 [TopPages] === AJAX SUCCESS ===');
-                console.log('🟢 [TopPages] Full response:', response);
-                console.log('🟢 [TopPages] response.success:', response.success);
-                console.log('🟢 [TopPages] response.data:', response.data);
-                
-                if (response.success && response.data) {
-                    console.log('🟢 [TopPages] Pages array:', response.data.pages);
-                    console.log('🟢 [TopPages] Total count:', response.data.total);
-                    renderTopContent(response.data.pages || []);
-                    renderPagination(response.data.total || 0, currentPage, perPage);
-                } else {
-                    console.error('🔴 [TopPages] Response not successful');
-                    console.error('🔴 [TopPages] Error:', response.error || response);
-                    $('#top-content-body').html(
-                        '<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>'
-                    );
-                    $('#top-content-pagination').hide();
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('🔴 [TopPages] === AJAX ERROR ===');
-                console.error('🔴 [TopPages] Status:', status);
-                console.error('🔴 [TopPages] Error:', error);
-                console.error('🔴 [TopPages] XHR:', xhr);
-                console.error('🔴 [TopPages] Response Text:', xhr.responseText);
-                $('#top-content-body').html(
-                    '<tr><td colspan="2" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>'
-                );
-                $('#top-content-pagination').hide();
-            }
-        });
-    }
-    
-    /**
-     * Render analytics dashboard
-     */
-    function renderAnalytics(data) {
-        console.log('[Analytics] Rendering analytics dashboard');
-        
-        // Update ecosystem stat cards
-        if (data.ecosystem) {
-            // Format large numbers (70K+, $1.2M)
-            const buyers = data.ecosystem.unique_buyers || 0;
-            const sellers = data.ecosystem.unique_sellers || 0;
-            const transactions = data.ecosystem.total_transactions || 0;
-            const revenue = data.ecosystem.total_amount || 0;
-            
-            $('#stat-ecosystem-buyers').text(formatLargeNumber(buyers));
-            $('#stat-ecosystem-sellers').text(formatLargeNumber(sellers));
-            $('#stat-ecosystem-transactions').text(formatLargeNumber(transactions));
-            
-            // Show Market Revenue in $ terms instead of transaction count
-            $('#stat-market-revenue').text(formatCurrency(revenue));
-            
-            // Render market overview chart
-            if (data.ecosystem.bucketed_data && data.ecosystem.bucketed_data.length > 0) {
-                renderMarketOverviewChart(data.ecosystem.bucketed_data);
-            } else {
-                showEmptyChartState();
-            }
+
+    // Tab switch
+    $(d).on("click", '[data-tab="analytics"]', function () {
+      // Slight defer to allow tab DOM to paint
+      setTimeout(loadAnalyticsData, 60);
+      setTimeout(loadTopPages, 60);
+      startAnalyticsAutoRefresh();
+    });
+
+    // Timeframe changes
+    $(d).on("change", "#analytics-timeframe", function () {
+      loadAnalyticsData();
+      loadTopPages();
+    });
+
+    // Metric toggles
+    $(d).on("click", ".metric-toggle", function () {
+      const metric = $(this).data("metric");
+      if (!Object.prototype.hasOwnProperty.call(activeMetrics, metric)) return;
+      $(this).toggleClass("active");
+      activeMetrics[metric] = $(this).hasClass("active");
+      // re-render with current data set
+      loadAnalyticsData();
+    });
+
+    // Pagination
+    $(d).on("click", ".page-btn", function () {
+      const page = parseInt($(this).data("page"), 10);
+      if (Number.isFinite(page)) loadTopPages(page);
+    });
+
+    // Pause auto-refresh if hidden
+    $(d).on("visibilitychange", function () {
+      if (d.visibilityState === "hidden" && analyticsRefreshInterval) {
+        clearInterval(analyticsRefreshInterval);
+        analyticsRefreshInterval = null;
+      } else if (d.visibilityState === "visible" && $('[data-tab="analytics"]').hasClass("active")) {
+        startAnalyticsAutoRefresh();
+      }
+    });
+  });
+
+  /* ------------------ API Calls ------------------ */
+
+  function loadAnalyticsData() {
+    const timeframe = $("#analytics-timeframe").val() || "30d";
+    log("Loading analytics for timeframe:", timeframe);
+
+    // abort stale request
+    if (rqAnalytics && rqAnalytics.abort) rqAnalytics.abort();
+
+    $(".analytics-loading").show();
+    $("#market-chart-container").hide();
+
+    rqAnalytics = ajaxPost("agent_hub_get_analytics", { timeframe })
+      .done((res) => {
+        log("Analytics response:", res);
+        if (res?.success && res.data) {
+          renderAnalytics(res.data);
+        } else {
+          const msg = res?.data?.message || res?.message || "Unknown error";
+          showError(
+            "Failed to load analytics: " + msg + (res?.data?.status_code ? ` (HTTP ${res.data.status_code})` : ""),
+          );
         }
-    }
-    
-    /**
-     * Render market overview chart
-     */
-    function renderMarketOverviewChart(bucketedData) {
-        const ctx = document.getElementById('market-chart');
-        if (!ctx) {
-            console.warn('[Analytics] Market chart canvas not found');
-            return;
+      })
+      .fail((_, __, err) => showError("Error loading analytics: " + (err || "Network error")))
+      .always(() => $(".analytics-loading").hide());
+  }
+
+  function loadTopPages(page = 1) {
+    currentPage = page;
+    const offset = (page - 1) * perPage;
+    const timeframe = $("#analytics-timeframe").val() || "30d";
+    const requestData = { timeframe, limit: perPage, offset };
+
+    log("Top pages request:", requestData);
+
+    // abort stale request
+    if (rqTopPages && rqTopPages.abort) rqTopPages.abort();
+
+    rqTopPages = ajaxPost("agent_hub_get_top_pages", requestData)
+      .done((res) => {
+        if (res?.success && res.data) {
+          const pages = res.data.pages || [];
+          const total = Number(res.data.total || 0);
+          renderTopContent(pages);
+          renderPagination(total, currentPage, perPage);
+        } else {
+          $("#top-content-body").html(
+            '<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>',
+          );
+          $("#top-content-pagination").hide();
         }
-        
-        // Wait for Chart.js to be loaded
-        if (typeof Chart === 'undefined') {
-            console.log('[Analytics] Waiting for Chart.js to load...');
-            setTimeout(() => renderMarketOverviewChart(bucketedData), 500);
-            return;
-        }
-        
-        console.log('[Analytics] Rendering market overview chart with', bucketedData.length, 'data points');
-        
-        // Destroy existing chart
-        if (marketChart) {
-            marketChart.destroy();
-        }
-        
-        const labels = bucketedData.map(d => formatDate(d.date));
-        
-        const datasets = [];
-        
-        if (activeMetrics.transactions) {
-            datasets.push({
-                label: 'Transactions',
-                data: bucketedData.map(d => d.transactions),
-                borderColor: '#00D091',
-                backgroundColor: 'rgba(0, 208, 145, 0.1)',
-                yAxisID: 'y',
-                tension: 0.4,
-            });
-        }
-        
-        if (activeMetrics.volume) {
-            datasets.push({
-                label: 'Volume (USDC)',
-                data: bucketedData.map(d => d.volume),
-                borderColor: '#8B5CF6',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                yAxisID: 'y1',
-                tension: 0.4,
-            });
-        }
-        
-        if (activeMetrics.buyers) {
-            datasets.push({
-                label: 'Buyers',
-                data: bucketedData.map(d => d.buyers),
-                borderColor: '#3B82F6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                yAxisID: 'y',
-                tension: 0.4,
-            });
-        }
-        
-        if (activeMetrics.sellers) {
-            datasets.push({
-                label: 'Sellers',
-                data: bucketedData.map(d => d.sellers),
-                borderColor: '#F59E0B',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                yAxisID: 'y',
-                tension: 0.4,
-            });
-        }
-        
-        $('#market-chart-container').show();
-        
-        marketChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: { display: true, text: 'Count' },
-                        beginAtZero: true,
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: { display: true, text: 'Volume (USDC)' },
-                        beginAtZero: true,
-                        grid: {
-                            drawOnChartArea: false,
-                        },
-                    },
-                }
-            }
-        });
-    }
-    
-    /**
-     * Show empty chart state
-     */
-    function showEmptyChartState() {
-        $('#market-chart-container').hide();
-        $('.chart-empty-state').show().html(
-            '<p style="text-align:center; color:#666; padding:60px 20px;">' +
-            'No ecosystem data available yet. Check back soon!</p>'
+      })
+      .fail((xhr, status, error) => {
+        console.error("[TopPages] Error:", status, error, xhr?.responseText);
+        $("#top-content-body").html(
+          '<tr><td colspan="2" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>',
         );
+        $("#top-content-pagination").hide();
+      });
+  }
+
+  /* ------------------ Rendering ------------------ */
+
+  function renderAnalytics(data) {
+    log("Rendering analytics dashboard");
+
+    const eco = data.ecosystem || {};
+    const buyers = Number(eco.unique_buyers || 0);
+    const sellers = Number(eco.unique_sellers || 0);
+    const transactions = Number(eco.total_transactions || 0);
+    const revenue = Number(eco.total_amount || 0);
+
+    $("#stat-ecosystem-buyers").text(formatLargeNumber(buyers));
+    $("#stat-ecosystem-sellers").text(formatLargeNumber(sellers));
+    $("#stat-ecosystem-transactions").text(formatLargeNumber(transactions));
+    $("#stat-market-revenue").text(formatCurrency(revenue));
+
+    const series = Array.isArray(eco.bucketed_data) ? eco.bucketed_data : [];
+    if (series.length) {
+      renderMarketOverviewChart(series);
+    } else {
+      showEmptyChartState();
     }
-    
-    /**
-     * Render top content table
-     */
-    function renderTopContent(pages) {
-        const tbody = $('#top-content-body');
-        tbody.empty();
-        
-        if (!pages || pages.length === 0) {
-            tbody.html('<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>');
-            return;
-        }
-        
-        pages.forEach(page => {
-            const row = `
-                <tr>
-                    <td>
-                        <a href="${escapeHtml(page.url || page.page_url)}" target="_blank">
-                            ${escapeHtml(page.title || page.page_title || 'Untitled')}
-                        </a>
-                    </td>
-                    <td>$${formatMoney(page.revenue || page.agent_revenue || 0)}</td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
+  }
+
+  function renderMarketOverviewChart(bucketedData) {
+    const canvas = d.getElementById("market-chart");
+    if (!canvas) {
+      console.warn("[Analytics] Market chart canvas not found");
+      return;
     }
-    
-    /**
-     * Render pagination controls
-     */
-    function renderPagination(total, currentPage, perPage) {
-        const totalPages = Math.ceil(total / perPage);
-        const container = $('#top-content-pagination');
-        
-        if (totalPages <= 1) {
-            container.hide();
-            return;
-        }
-        
-        container.show();
-        container.empty();
-        
-        let html = '<div class="pagination">';
-        
-        // Previous button
-        if (currentPage > 1) {
-            html += `<button class="page-btn" data-page="${currentPage - 1}">← Previous</button>`;
-        }
-        
-        // Page numbers
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === currentPage) {
-                html += `<span class="page-current">${i}</span>`;
-            } else if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2) {
-                html += `<button class="page-btn" data-page="${i}">${i}</button>`;
-            } else if (i === currentPage - 3 || i === currentPage + 3) {
-                html += `<span>...</span>`;
-            }
-        }
-        
-        // Next button
-        if (currentPage < totalPages) {
-            html += `<button class="page-btn" data-page="${currentPage + 1}">Next →</button>`;
-        }
-        
-        html += '</div>';
-        container.html(html);
+
+    // Wait if Chart.js not ready yet
+    if (typeof w.Chart === "undefined") {
+      log("Chart.js not ready; retrying...");
+      return setTimeout(() => renderMarketOverviewChart(bucketedData), 200);
     }
-    
-    // Add click handler for pagination
-    $(document).on('click', '.page-btn', function() {
-        const page = parseInt($(this).data('page'));
-        loadTopPages(page);
-    });
-    
-    /**
-     * Utility: Format number with commas
-     */
-    function formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-    
-    /**
-     * Utility: Format large numbers (70K+, $1.2M)
-     */
-    function formatLargeNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'M';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'K';
-        }
-        return formatNumber(num);
-    }
-    
-    /**
-     * Utility: Format currency
-     */
-    function formatCurrency(amount) {
-        const num = parseFloat(amount || 0);
-        if (num >= 1000000) {
-            return '$' + (num / 1000000).toFixed(1) + 'M';
-        } else if (num >= 1000) {
-            return '$' + (num / 1000).toFixed(1) + 'K';
-        }
-        return '$' + num.toFixed(2);
-    }
-    
-    /**
-     * Utility: Format money to 2 decimals
-     */
-    function formatMoney(amount) {
-        return parseFloat(amount || 0).toFixed(2);
-    }
-    
-    /**
-     * Utility: Format date for chart labels
-     */
-    function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        const month = date.toLocaleString('en-US', { month: 'short' });
-        const day = date.getDate();
-        return `${month} ${day}`;
-    }
-    
-    /**
-     * Utility: Escape HTML
-     */
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    /**
-     * Start auto-refresh for analytics (DISABLED - only refresh on page load)
-     */
-    function startAnalyticsAutoRefresh() {
-        // Clear any existing interval
-        if (analyticsRefreshInterval) {
-            clearInterval(analyticsRefreshInterval);
-            analyticsRefreshInterval = null;
-        }
-        
-        console.log('[Analytics] Auto-refresh disabled - data will only refresh on page load or timeframe change');
-        
-        // NO AUTO-REFRESH - only manual refresh on:
-        // 1. Page load
-        // 2. Tab switch
-        // 3. Timeframe change
-    }
-    
-    /**
-     * Show error message
-     */
-    function showError(message) {
-        console.error('[Analytics]', message);
-        if (typeof showToast === 'function') {
-            showToast('Analytics Error', message, 'error');
-        }
-    }
-    
-    // Expose functions globally
-    window.agentHubAnalytics = {
-        loadAnalyticsData: loadAnalyticsData,
-        renderMarketOverviewChart: renderMarketOverviewChart,
-        startAutoRefresh: startAnalyticsAutoRefresh
+
+    // Destroy previous chart to prevent leaks
+    if (marketChart) marketChart.destroy();
+
+    const labels = bucketedData.map((d) => formatDate(d.date));
+    const datasets = [];
+
+    const coalesce = (v) => {
+      const n = Number(v || 0);
+      return Number.isFinite(n) ? n : 0;
     };
-    
-    console.log('[Analytics] Module loaded successfully');
-    
-})(jQuery);
+
+    if (activeMetrics.transactions) {
+      datasets.push({
+        label: "Transactions",
+        data: bucketedData.map((d) => coalesce(d.transactions)),
+        borderColor: COLORS.tx,
+        backgroundColor: "rgba(0, 208, 145, 0.10)",
+        yAxisID: "y",
+        tension: 0.35,
+        pointRadius: 0,
+      });
+    }
+    if (activeMetrics.volume) {
+      datasets.push({
+        label: "Volume (USDC)",
+        data: bucketedData.map((d) => coalesce(d.volume)),
+        borderColor: COLORS.vol,
+        backgroundColor: "rgba(139, 92, 246, 0.10)",
+        yAxisID: "y1",
+        tension: 0.35,
+        pointRadius: 0,
+      });
+    }
+    if (activeMetrics.buyers) {
+      datasets.push({
+        label: "Buyers",
+        data: bucketedData.map((d) => coalesce(d.buyers)),
+        borderColor: COLORS.buyers,
+        backgroundColor: "rgba(59, 130, 246, 0.10)",
+        yAxisID: "y",
+        tension: 0.35,
+        pointRadius: 0,
+      });
+    }
+    if (activeMetrics.sellers) {
+      datasets.push({
+        label: "Sellers",
+        data: bucketedData.map((d) => coalesce(d.sellers)),
+        borderColor: COLORS.sellers,
+        backgroundColor: "rgba(245, 158, 11, 0.10)",
+        yAxisID: "y",
+        tension: 0.35,
+        pointRadius: 0,
+      });
+    }
+
+    $("#market-chart-container").show();
+    $(".chart-empty-state").hide();
+
+    marketChart = new w.Chart(canvas, {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: true, position: "top" },
+          tooltip: { backgroundColor: "rgba(0,0,0,0.8)", padding: 12 },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { maxRotation: 45, minRotation: 45 },
+          },
+          y: {
+            type: "linear",
+            display: true,
+            position: "left",
+            title: { display: true, text: "Count" },
+            beginAtZero: true,
+          },
+          y1: {
+            type: "linear",
+            display: true,
+            position: "right",
+            title: { display: true, text: "Volume (USDC)" },
+            beginAtZero: true,
+            grid: { drawOnChartArea: false },
+          },
+        },
+      },
+    });
+  }
+
+  function showEmptyChartState() {
+    $("#market-chart-container").hide();
+    $(".chart-empty-state")
+      .show()
+      .html(
+        '<p style="text-align:center; color:#666; padding:60px 20px;">No ecosystem data available yet. Check back soon!</p>',
+      );
+  }
+
+  function renderTopContent(pages) {
+    const $tbody = $("#top-content-body");
+    $tbody.empty();
+
+    if (!Array.isArray(pages) || pages.length === 0) {
+      $tbody.html('<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>');
+      return;
+    }
+
+    const rows = pages
+      .map((p) => {
+        const url = p.url || p.page_url || "#";
+        const title = p.title || p.page_title || "Untitled";
+        const revenue = p.revenue ?? p.agent_revenue ?? 0;
+        return `
+        <tr>
+          <td>${safeLink(url, title)}</td>
+          <td>$${formatMoney(revenue)}</td>
+        </tr>`;
+      })
+      .join("");
+
+    $tbody.html(rows);
+  }
+
+  function renderPagination(total, page, size) {
+    const $container = $("#top-content-pagination");
+    const totalPages = Math.max(1, Math.ceil(Number(total || 0) / size));
+
+    if (totalPages <= 1) {
+      $container.hide();
+      return;
+    }
+
+    $container.show().empty();
+
+    let html = '<div class="pagination">';
+
+    if (page > 1) html += `<button class="page-btn" data-page="${page - 1}">← Previous</button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === page) {
+        html += `<span class="page-current">${i}</span>`;
+      } else if (i === 1 || i === totalPages || Math.abs(i - page) <= 2) {
+        html += `<button class="page-btn" data-page="${i}">${i}</button>`;
+      } else if (i === page - 3 || i === page + 3) {
+        html += "<span>...</span>";
+      }
+    }
+
+    if (page < totalPages) html += `<button class="page-btn" data-page="${page + 1}">Next →</button>`;
+
+    html += "</div>";
+    $container.html(html);
+  }
+
+  /* ------------------ Auto Refresh (manual-only, safe) ------------------ */
+
+  function startAnalyticsAutoRefresh() {
+    // clear existing
+    if (analyticsRefreshInterval) {
+      clearInterval(analyticsRefreshInterval);
+      analyticsRefreshInterval = null;
+    }
+    // As requested: disabled; only manual triggers
+    log("Auto-refresh disabled: refresh on load, tab switch, timeframe change only.");
+  }
+
+  /* ------------------ Errors ------------------ */
+
+  function showError(message) {
+    console.error("[Analytics]", message);
+    if (typeof w.showToast === "function") {
+      w.showToast("Analytics Error", String(message || "Unknown error"), "error");
+    }
+  }
+
+  /* ------------------ Public API ------------------ */
+  w.agentHubAnalytics = {
+    loadAnalyticsData,
+    renderMarketOverviewChart,
+    startAnalyticsAutoRefresh,
+  };
+
+  log("Module loaded");
+})(window, document, jQuery);
