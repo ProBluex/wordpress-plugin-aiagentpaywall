@@ -87,6 +87,7 @@ class Admin {
             AGENT_HUB_VERSION
         );
         
+        // Load admin.js first - other scripts depend on it
         wp_enqueue_script(
             'agent-hub-admin',
             AGENT_HUB_PLUGIN_URL . 'assets/js/admin.js',
@@ -95,50 +96,56 @@ class Admin {
             true
         );
         
+        // Analytics depends on admin.js being loaded
         wp_enqueue_script(
             'agent-hub-analytics',
             AGENT_HUB_PLUGIN_URL . 'assets/js/analytics.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );
         
+        // Content manager depends on admin.js
         wp_enqueue_script(
             'agent-hub-content',
             AGENT_HUB_PLUGIN_URL . 'assets/js/content-manager.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );
         
+        // Overview depends on admin.js
         wp_enqueue_script(
             'agent-hub-overview',
             AGENT_HUB_PLUGIN_URL . 'assets/js/overview.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );
         
+        // Contact depends on admin.js
         wp_enqueue_script(
             'agent-hub-contact',
             AGENT_HUB_PLUGIN_URL . 'assets/js/contact.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );
         
+        // Violations depends on admin.js
         wp_enqueue_script(
             'agent-hub-violations',
             AGENT_HUB_PLUGIN_URL . 'assets/js/violations.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );
         
+        // Batch processor depends on admin.js
         wp_enqueue_script(
             'agent-hub-batch-processor',
             AGENT_HUB_PLUGIN_URL . 'assets/js/batch-processor.js',
-            ['jquery'],
+            ['jquery', 'agent-hub-admin'],
             AGENT_HUB_VERSION,
             true
         );

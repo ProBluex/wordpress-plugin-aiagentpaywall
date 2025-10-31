@@ -70,18 +70,35 @@
   /* ---------- Namespace ---------- */
 
   const hub = (w.agentHub = w.agentHub || {});
+  console.log('[admin.js] Hub namespace initialized');
 
   /* ---------- Tabs (hash-aware) ---------- */
 
   function activateTab(tab) {
+    console.log('[admin.js] Activating tab:', tab);
+    
     $(".tab-button").removeClass("active");
     $(".tab-content").removeClass("active");
     $(`.tab-button[data-tab="${tab}"]`).addClass("active");
     $(`#tab-${tab}`).addClass("active");
 
-    // light refresh trigger per tab
-    if (tab === "analytics") hub.loadAnalytics();
-    if (tab === "content") hub.loadContent(1);
+    // light refresh trigger per tab with defensive checks
+    if (tab === "analytics") {
+      if (typeof hub.loadAnalytics === "function") {
+        hub.loadAnalytics();
+      } else {
+        console.error('[admin.js] hub.loadAnalytics is not defined yet');
+      }
+    }
+    if (tab === "content") {
+      if (typeof hub.loadContent === "function") {
+        hub.loadContent(1);
+      } else {
+        console.error('[admin.js] hub.loadContent is not defined yet');
+      }
+    }
+    
+    console.log('[admin.js] Tab activated:', tab);
   }
 
   $(".tab-button").on("click", function () {
@@ -91,14 +108,29 @@
     activateTab(tab);
   });
 
-  // initialize from hash or default first tab
-  const initialHash = (w.location.hash || "").slice(1);
-  if (initialHash && $(`.tab-button[data-tab="${initialHash}"]`).length) {
-    activateTab(initialHash);
-  } else {
-    const firstTab = $(".tab-button").first().data("tab");
-    if (firstTab) activateTab(firstTab);
-  }
+  // Move initialization to jQuery ready to ensure all functions are defined
+  $(function() {
+    console.log('[admin.js] Initializing tabs...');
+    
+    // Log available functions
+    console.log('[admin.js] All hub functions defined:', {
+      loadContent: typeof hub.loadContent,
+      loadAnalytics: typeof hub.loadAnalytics,
+      toggleHumanAccess: typeof hub.toggleHumanAccess,
+      generateLink: typeof hub.generateLink
+    });
+    
+    // initialize from hash or default first tab
+    const initialHash = (w.location.hash || "").slice(1);
+    if (initialHash && $(`.tab-button[data-tab="${initialHash}"]`).length) {
+      activateTab(initialHash);
+    } else {
+      const firstTab = $(".tab-button").first().data("tab");
+      if (firstTab) activateTab(firstTab);
+    }
+    
+    console.log('[admin.js] Tabs initialized');
+  });
 
   // react to external hash changes (e.g., browser back)
   $(w).on("hashchange", () => {
