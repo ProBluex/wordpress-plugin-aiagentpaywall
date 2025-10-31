@@ -102,21 +102,19 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 error_log('[ecosystem-data.php] ✅ Successfully retrieved ecosystem data');
-error_log('[ecosystem-data.php] 🌍 Data keys: ' . json_encode(array_keys($data ?? [])));
+error_log('[ecosystem-data.php] 🌍 Response structure check:');
+error_log('[ecosystem-data.php] 🌍   - Has "success" key: ' . (isset($data['success']) ? 'YES' : 'NO'));
+error_log('[ecosystem-data.php] 🌍   - Has "data" key: ' . (isset($data['data']) ? 'YES' : 'NO'));
 
-if (isset($data['total_transactions'])) {
-    error_log('[ecosystem-data.php] 🌍 total_transactions: ' . $data['total_transactions']);
-}
-if (isset($data['unique_buyers'])) {
-    error_log('[ecosystem-data.php] 🌍 unique_buyers: ' . $data['unique_buyers']);
-}
-if (isset($data['unique_sellers'])) {
-    error_log('[ecosystem-data.php] 🌍 unique_sellers: ' . $data['unique_sellers']);
-}
-if (isset($data['total_amount'])) {
-    error_log('[ecosystem-data.php] 🌍 total_amount: ' . $data['total_amount']);
+if (isset($data['data'])) {
+    error_log('[ecosystem-data.php] 🌍   - data.total_transactions: ' . ($data['data']['total_transactions'] ?? 'MISSING'));
+    error_log('[ecosystem-data.php] 🌍   - data.unique_buyers: ' . ($data['data']['unique_buyers'] ?? 'MISSING'));
+    error_log('[ecosystem-data.php] 🌍   - data.unique_sellers: ' . ($data['data']['unique_sellers'] ?? 'MISSING'));
+    error_log('[ecosystem-data.php] 🌍   - data.total_amount: ' . ($data['data']['total_amount'] ?? 'MISSING'));
 }
 
-// Return success
-wp_send_json_success($data);
+// Edge function already returns {success: true, data: {...}}, pass it through directly
+// DO NOT double-wrap with wp_send_json_success()
+header('Content-Type: application/json');
+echo json_encode($data);
 exit;

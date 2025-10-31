@@ -218,24 +218,83 @@
           nonce: w.agentHubData.nonce 
         },
         success: function(response) {
-          log("Ecosystem direct response:", response);
+          console.log("🌍 [ECOSYSTEM] Raw response received:", response);
+          console.log("🌍 [ECOSYSTEM] Response type:", typeof response);
+          console.log("🌍 [ECOSYSTEM] Has 'success':", !!response.success);
+          console.log("🌍 [ECOSYSTEM] Has 'data':", !!response.data);
+          
+          if (response.data) {
+            console.log("🌍 [ECOSYSTEM] Data keys:", Object.keys(response.data));
+            console.log("🌍 [ECOSYSTEM] Data structure:", {
+              total_transactions: response.data.total_transactions,
+              unique_buyers: response.data.unique_buyers,
+              unique_sellers: response.data.unique_sellers,
+              total_amount: response.data.total_amount,
+              has_bucketed: !!response.data.bucketed_data
+            });
+          }
+          
           if (response.success && response.data) {
+            // Verify DOM elements exist
+            const $buyers = $("#stat-ecosystem-buyers");
+            const $sellers = $("#stat-ecosystem-sellers");
+            const $transactions = $("#stat-ecosystem-transactions");
+            const $revenue = $("#stat-market-revenue");
+            
+            console.log("🌍 [ECOSYSTEM] DOM element checks:", {
+              buyers_found: $buyers.length > 0,
+              sellers_found: $sellers.length > 0,
+              transactions_found: $transactions.length > 0,
+              revenue_found: $revenue.length > 0
+            });
+            
+            if ($buyers.length === 0) console.error("❌ #stat-ecosystem-buyers NOT FOUND");
+            if ($sellers.length === 0) console.error("❌ #stat-ecosystem-sellers NOT FOUND");
+            if ($transactions.length === 0) console.error("❌ #stat-ecosystem-transactions NOT FOUND");
+            if ($revenue.length === 0) console.error("❌ #stat-market-revenue NOT FOUND");
+            
             // Update ONLY the 4 ecosystem stat cards
-            $("#stat-ecosystem-buyers").text(formatLargeNumber(response.data.unique_buyers || 0));
-            $("#stat-ecosystem-sellers").text(formatLargeNumber(response.data.unique_sellers || 0));
-            $("#stat-ecosystem-transactions").text(formatLargeNumber(response.data.total_transactions || 0));
-            $("#stat-market-revenue").text(formatCurrency(response.data.total_amount || 0));
+            const formattedBuyers = formatLargeNumber(response.data.unique_buyers || 0);
+            const formattedSellers = formatLargeNumber(response.data.unique_sellers || 0);
+            const formattedTransactions = formatLargeNumber(response.data.total_transactions || 0);
+            const formattedRevenue = formatCurrency(response.data.total_amount || 0);
+            
+            console.log("🌍 [ECOSYSTEM] Formatted values:", {
+              buyers: formattedBuyers,
+              sellers: formattedSellers,
+              transactions: formattedTransactions,
+              revenue: formattedRevenue
+            });
+            
+            $buyers.text(formattedBuyers);
+            $sellers.text(formattedSellers);
+            $transactions.text(formattedTransactions);
+            $revenue.text(formattedRevenue);
+            
+            console.log("✅ [ECOSYSTEM] DOM updated successfully");
             
             // Update Market Overview chart with ecosystem bucketed data
             if (response.data.bucketed_data && response.data.bucketed_data.length) {
+              console.log("🌍 [ECOSYSTEM] Rendering chart with", response.data.bucketed_data.length, "buckets");
               renderMarketOverviewChart(response.data.bucketed_data);
+            } else {
+              console.warn("⚠️ [ECOSYSTEM] No bucketed data for chart");
             }
           } else {
-            log("Ecosystem data failed:", response);
+            console.error("❌ [ECOSYSTEM] Response validation failed:", {
+              success: response.success,
+              has_data: !!response.data,
+              response_dump: response
+            });
           }
         },
         error: function(xhr, status, error) {
-          console.error("[Analytics] Ecosystem data error:", status, error);
+          console.error("❌ [ECOSYSTEM] AJAX error:", {
+            status: status,
+            error: error,
+            xhr_status: xhr.status,
+            xhr_response: xhr.responseText
+          });
         }
       });
     }
