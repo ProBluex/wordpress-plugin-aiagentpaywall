@@ -38,6 +38,7 @@
   // Track in-flight requests to avoid races (abort stale)
   let rqAnalytics = null;
   let rqTopPages = null;
+  let rqEcosystem = null;
 
   /* ------------------ Utilities ------------------ */
 
@@ -193,6 +194,9 @@
     console.log("📊 [Analytics] ==================== LOAD ANALYTICS START ====================");
     console.log("📊 [Analytics] Timestamp:", new Date().toISOString());
     
+    // Set timestamp IMMEDIATELY to prevent duplicate calls
+    lastAnalyticsLoad = Date.now();
+    
     const timeframe = $("#analytics-timeframe").val() || "30d";
     console.log("📊 [Analytics] Selected timeframe:", timeframe);
 
@@ -248,7 +252,6 @@
         console.log("📊 [Analytics] Request completed, hiding loading spinner");
         $(".analytics-loading").hide();
         $("#market-chart-container").show();
-        lastAnalyticsLoad = Date.now(); // Update cache timestamp
       });
 
     // NEW CALL - Direct ecosystem data bypass
@@ -258,7 +261,13 @@
       console.log("🌍 [ECOSYSTEM] Full endpoint:", w.agentHubData.pluginUrl + 'ecosystem-data.php');
       console.log("🌍 [ECOSYSTEM] Request data:", { timeframe: timeframe, nonce: w.agentHubData.nonce });
       
-      $.ajax({
+      // Abort previous ecosystem request to prevent duplicates
+      if (rqEcosystem && rqEcosystem.abort) {
+        console.log("⚪ [ECOSYSTEM] Aborting previous ecosystem request");
+        rqEcosystem.abort();
+      }
+      
+      rqEcosystem = $.ajax({
         url: w.agentHubData.pluginUrl + 'ecosystem-data.php',
         type: 'POST',
         dataType: 'json',
@@ -306,25 +315,29 @@
             if ($transactions.length === 0) console.error("❌ #stat-ecosystem-transactions NOT FOUND");
             if ($revenue.length === 0) console.error("❌ #stat-market-revenue NOT FOUND");
             
-            // Update ONLY the 4 ecosystem stat cards
-            const formattedBuyers = formatLargeNumber(response.data.unique_buyers || 0);
-            const formattedSellers = formatLargeNumber(response.data.unique_sellers || 0);
-            const formattedTransactions = formatLargeNumber(response.data.total_transactions || 0);
-            const formattedRevenue = formatCurrency(response.data.total_amount || 0);
-            
-            console.log("🌍 [ECOSYSTEM] Formatted values:", {
-              buyers: formattedBuyers,
-              sellers: formattedSellers,
-              transactions: formattedTransactions,
-              revenue: formattedRevenue
-            });
-            
-            $buyers.text(formattedBuyers);
-            $sellers.text(formattedSellers);
-            $transactions.text(formattedTransactions);
-            $revenue.text(formattedRevenue);
-            
-            console.log("✅ [ECOSYSTEM] DOM updated successfully");
+            // Only update if we have non-zero values (real data)
+            if (response.data.unique_buyers > 0 || response.data.total_transactions > 0) {
+              const formattedBuyers = formatLargeNumber(response.data.unique_buyers || 0);
+              const formattedSellers = formatLargeNumber(response.data.unique_sellers || 0);
+              const formattedTransactions = formatLargeNumber(response.data.total_transactions || 0);
+              const formattedRevenue = formatCurrency(response.data.total_amount || 0);
+              
+              console.log("🌍 [ECOSYSTEM] Formatted values:", {
+                buyers: formattedBuyers,
+                sellers: formattedSellers,
+                transactions: formattedTransactions,
+                revenue: formattedRevenue
+              });
+              
+              $buyers.text(formattedBuyers);
+              $sellers.text(formattedSellers);
+              $transactions.text(formattedTransactions);
+              $revenue.text(formattedRevenue);
+              
+              console.log("✅ [ECOSYSTEM] DOM updated successfully");
+            } else {
+              console.log("⚪ [ECOSYSTEM] Skipping DOM update (no real data yet)");
+            }
             
             // Update Market Overview chart with ecosystem bucketed data
             if (response.data.bucketed_data && response.data.bucketed_data.length) {
@@ -422,18 +435,13 @@
   function renderAnalytics(data) {
     log("Rendering analytics dashboard");
 
-    const eco = data.ecosystem || {};
-    const buyers = Number(eco.unique_buyers || 0);
-    const sellers = Number(eco.unique_sellers || 0);
-    const transactions = Number(eco.total_transactions || 0);
-    const revenue = Number(eco.total_amount || 0);
-
-    $("#stat-ecosystem-buyers").text(formatLargeNumber(buyers));
-    $("#stat-ecosystem-sellers").text(formatLargeNumber(sellers));
-    $("#stat-ecosystem-transactions").text(formatLargeNumber(transactions));
-    $("#stat-market-revenue").text(formatCurrency(revenue));
-
-    const series = Array.isArray(eco.bucketed_data) ? eco.bucketed_data : [];
+    // NOTE: Ecosystem stats are now handled by direct ecosystem-data.php call
+    // This function is kept for backwards compatibility and site-specific data
+    // Only render chart if site data has bucketed_data
+    
+    const site = data.site || {};
+    const series = Array.isArray(site.bucketed_data) ? site.bucketed_data : [];
+    
     if (series.length) {
       renderMarketOverviewChart(series);
     } else {

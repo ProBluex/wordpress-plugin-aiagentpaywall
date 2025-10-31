@@ -231,7 +231,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Active Buyers</div>
-                        <div class="stat-value" id="stat-ecosystem-buyers">Loading...</div>
+                        <div class="stat-value" id="stat-ecosystem-buyers">0</div>
                     </div>
                 </div>
                 
@@ -241,7 +241,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Active Sellers</div>
-                        <div class="stat-value" id="stat-ecosystem-sellers">Loading...</div>
+                        <div class="stat-value" id="stat-ecosystem-sellers">0</div>
                     </div>
                 </div>
                 
@@ -251,7 +251,7 @@ $is_connected = !empty($api_key) && !empty($site_id);
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Transactions</div>
-                        <div class="stat-value" id="stat-ecosystem-transactions">Loading...</div>
+                        <div class="stat-value" id="stat-ecosystem-transactions">0</div>
                     </div>
                 </div>
                 
