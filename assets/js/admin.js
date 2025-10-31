@@ -82,14 +82,8 @@
     $(`.tab-button[data-tab="${tab}"]`).addClass("active");
     $(`#tab-${tab}`).addClass("active");
 
-    // light refresh trigger per tab with defensive checks
-    if (tab === "analytics") {
-      if (typeof hub.loadAnalytics === "function") {
-        hub.loadAnalytics();
-      } else {
-        console.error('[admin.js] hub.loadAnalytics is not defined yet');
-      }
-    }
+    // Analytics tab is handled by analytics.js click handler
+    // to prevent double-loading
     if (tab === "content") {
       if (typeof hub.loadContent === "function") {
         hub.loadContent(1);

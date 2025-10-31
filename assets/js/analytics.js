@@ -30,6 +30,10 @@
     buyers: true,
     sellers: true,
   };
+  
+  // Track last load time to prevent unnecessary reloads
+  let lastAnalyticsLoad = 0;
+  const CACHE_DURATION = 30000; // 30 seconds
 
   // Track in-flight requests to avoid races (abort stale)
   let rqAnalytics = null;
@@ -138,9 +142,15 @@
 
     // Tab switch
     $(d).on("click", '[data-tab="analytics"]', function () {
-      // Slight defer to allow tab DOM to paint
-      setTimeout(loadAnalyticsData, 60);
-      setTimeout(loadTopPages, 60);
+      const now = Date.now();
+      const timeSinceLastLoad = now - lastAnalyticsLoad;
+      
+      // Only reload if data is stale (older than 30 seconds)
+      if (timeSinceLastLoad > CACHE_DURATION) {
+        // Slight defer to allow tab DOM to paint
+        setTimeout(loadAnalyticsData, 60);
+        setTimeout(loadTopPages, 60);
+      }
       startAnalyticsAutoRefresh();
     });
 
@@ -192,8 +202,9 @@
       rqAnalytics.abort();
     }
 
+    // Show loading overlay without hiding existing data
     $(".analytics-loading").show();
-    $("#market-chart-container").hide();
+    // Keep chart visible to prevent flash-to-zero
 
     console.log("📊 [Analytics] Making AJAX request to agent_hub_get_analytics");
     console.log("📊 [Analytics] Request payload:", { timeframe });
@@ -236,6 +247,8 @@
       .always(() => {
         console.log("📊 [Analytics] Request completed, hiding loading spinner");
         $(".analytics-loading").hide();
+        $("#market-chart-container").show();
+        lastAnalyticsLoad = Date.now(); // Update cache timestamp
       });
 
     // NEW CALL - Direct ecosystem data bypass
