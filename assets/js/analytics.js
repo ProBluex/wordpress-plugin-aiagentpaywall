@@ -180,34 +180,71 @@
   /* ------------------ API Calls ------------------ */
 
   function loadAnalyticsData() {
+    console.log("📊 [Analytics] ==================== LOAD ANALYTICS START ====================");
+    console.log("📊 [Analytics] Timestamp:", new Date().toISOString());
+    
     const timeframe = $("#analytics-timeframe").val() || "30d";
-    log("Loading analytics for timeframe:", timeframe);
+    console.log("📊 [Analytics] Selected timeframe:", timeframe);
 
     // abort stale request
-    if (rqAnalytics && rqAnalytics.abort) rqAnalytics.abort();
+    if (rqAnalytics && rqAnalytics.abort) {
+      console.log("⚪ [Analytics] Aborting previous analytics request");
+      rqAnalytics.abort();
+    }
 
     $(".analytics-loading").show();
     $("#market-chart-container").hide();
 
+    console.log("📊 [Analytics] Making AJAX request to agent_hub_get_analytics");
+    console.log("📊 [Analytics] Request payload:", { timeframe });
+
     // EXISTING CALL - Keep for backwards compatibility and local metrics
     rqAnalytics = ajaxPost("agent_hub_get_analytics", { timeframe })
       .done((res) => {
-        log("Analytics response:", res);
+        console.log("✅ [Analytics] Response received from agent_hub_get_analytics");
+        console.log("📊 [Analytics] Response success:", res?.success);
+        console.log("📊 [Analytics] Response has data:", !!res?.data);
+        
         if (res?.success && res.data) {
+          console.log("📊 [Analytics] Response data keys:", Object.keys(res.data));
           renderAnalytics(res.data);
+          console.log("✅ [Analytics] renderAnalytics() completed");
         } else {
+          console.error("❌ [Analytics] Invalid response structure:", res);
           const msg = res?.data?.message || res?.message || "Unknown error";
           showError(
             "Failed to load analytics: " + msg + (res?.data?.status_code ? ` (HTTP ${res.data.status_code})` : ""),
           );
         }
       })
-      .fail((_, __, err) => showError("Error loading analytics: " + (err || "Network error")))
-      .always(() => $(".analytics-loading").hide());
+      .fail((xhr, status, error) => {
+        console.log("🔴 [Analytics] Request failed:", {
+          status: status,
+          error: error,
+          xhr_status: xhr?.status,
+          is_abort: status === 'abort'
+        });
+        
+        if (status === 'abort') {
+          console.log("⚪ [Analytics] Request aborted (normal when switching timeframes)");
+          return;
+        }
+        
+        console.error("❌ [Analytics] Real error:", error || "Network error");
+        showError("Error loading analytics: " + (error || "Network error"));
+      })
+      .always(() => {
+        console.log("📊 [Analytics] Request completed, hiding loading spinner");
+        $(".analytics-loading").hide();
+      });
 
     // NEW CALL - Direct ecosystem data bypass
     if (w.agentHubData?.pluginUrl) {
-      log("Loading ecosystem data directly from ecosystem-data.php");
+      console.log("🌍 [ECOSYSTEM] ==================== DIRECT CALL START ====================");
+      console.log("🌍 [ECOSYSTEM] Plugin URL:", w.agentHubData.pluginUrl);
+      console.log("🌍 [ECOSYSTEM] Full endpoint:", w.agentHubData.pluginUrl + 'ecosystem-data.php');
+      console.log("🌍 [ECOSYSTEM] Request data:", { timeframe: timeframe, nonce: w.agentHubData.nonce });
+      
       $.ajax({
         url: w.agentHubData.pluginUrl + 'ecosystem-data.php',
         type: 'POST',
@@ -216,6 +253,9 @@
         data: { 
           timeframe: timeframe, 
           nonce: w.agentHubData.nonce 
+        },
+        beforeSend: function() {
+          console.log("🌍 [ECOSYSTEM] Sending AJAX request...");
         },
         success: function(response) {
           console.log("🌍 [ECOSYSTEM] Raw response received:", response);
@@ -301,24 +341,40 @@
   }
 
   function loadTopPages(page = 1) {
+    console.log("📄 [TopPages] ==================== LOAD TOP PAGES START ====================");
+    console.log("📄 [TopPages] Page:", page);
+    
     currentPage = page;
     const offset = (page - 1) * perPage;
     const timeframe = $("#analytics-timeframe").val() || "30d";
     const requestData = { timeframe, limit: perPage, offset };
 
-    log("Top pages request:", requestData);
+    console.log("📄 [TopPages] Request data:", requestData);
 
     // abort stale request
-    if (rqTopPages && rqTopPages.abort) rqTopPages.abort();
+    if (rqTopPages && rqTopPages.abort) {
+      console.log("⚪ [TopPages] Aborting previous top pages request");
+      rqTopPages.abort();
+    }
 
+    console.log("📄 [TopPages] Making AJAX request to agent_hub_get_top_pages");
     rqTopPages = ajaxPost("agent_hub_get_top_pages", requestData)
       .done((res) => {
+        console.log("✅ [TopPages] Response received");
+        console.log("📄 [TopPages] Response success:", res?.success);
+        console.log("📄 [TopPages] Response has data:", !!res?.data);
+        
         if (res?.success && res.data) {
           const pages = res.data.pages || [];
           const total = Number(res.data.total || 0);
+          console.log("📄 [TopPages] Pages count:", pages.length);
+          console.log("📄 [TopPages] Total pages:", total);
+          
           renderTopContent(pages);
           renderPagination(total, currentPage, perPage);
+          console.log("✅ [TopPages] Rendering completed");
         } else {
+          console.warn("⚠️ [TopPages] No pages found in response");
           $("#top-content-body").html(
             '<tr><td colspan="2" style="text-align:center; color:#666;">No pages found</td></tr>',
           );
@@ -326,7 +382,21 @@
         }
       })
       .fail((xhr, status, error) => {
-        console.error("[TopPages] Error:", status, error, xhr?.responseText);
+        console.log("🔴 [TopPages] Request failed:", {
+          status: status,
+          error: error,
+          xhr_status: xhr?.status,
+          xhr_statusText: xhr?.statusText,
+          is_abort: status === 'abort'
+        });
+        
+        // Don't show errors for intentional aborts
+        if (status === 'abort') {
+          console.log("⚪ [TopPages] Request aborted (normal when switching timeframes)");
+          return;
+        }
+        
+        console.error("❌ [TopPages] Real error:", status, error, xhr?.responseText);
         $("#top-content-body").html(
           '<tr><td colspan="2" style="text-align:center; color:#c00;">Failed to load top pages</td></tr>',
         );
