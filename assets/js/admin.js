@@ -290,6 +290,11 @@
   };
 
   /* ---------- Bulk Generate ---------- */
+  // NOTE: Bulk generate button is now handled by batch-processor.js
+  // which provides a modal interface with real-time progress updates.
+  // The old simple handler below is commented out:
+  
+  /*
   $DOM.bulkGenerateBtn.on("click", function () {
     const $btn = $(this);
     const prev = $btn.html();
@@ -305,6 +310,7 @@
       .fail((_, __, err) => w.showToast("Error", `Network error: ${err || "Unknown"}`, "error"))
       .always(() => $btn.prop("disabled", false).html(prev));
   });
+  */
 
   $DOM.refreshContentBtn.on("click", () => hub.loadContent());
 
