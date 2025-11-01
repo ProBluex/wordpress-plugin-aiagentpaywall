@@ -335,6 +335,12 @@
           setAnalyticsCache({ ecosystem: data });
           
           console.log("✅ [ECOSYSTEM] DOM updated successfully");
+          
+          // Update chart if we have bucketed data
+          if (data.bucketed_data && data.bucketed_data.length) {
+            console.log("🌍 [ECOSYSTEM] Rendering chart with", data.bucketed_data.length, "buckets");
+            renderMarketOverviewChart(data.bucketed_data);
+          }
         } else {
           console.error("🔴 [ECOSYSTEM] Request failed or no data");
           console.error("🔴 [ECOSYSTEM] Full response:", response);
@@ -347,13 +353,6 @@
           $sellers.text("Error");
           $transactions.text("Error");
           $revenue.text("Error");
-        }
-          
-          // Update chart regardless
-          if (data.bucketed_data && data.bucketed_data.length) {
-            console.log("🌍 [ECOSYSTEM] Rendering chart with", data.bucketed_data.length, "buckets");
-            renderMarketOverviewChart(data.bucketed_data);
-          }
         }
         
         hideAnalyticsLoading();
