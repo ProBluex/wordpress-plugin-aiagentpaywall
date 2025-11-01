@@ -58,6 +58,8 @@ $request_body = [
 error_log('[ecosystem-data.php] 🌍 Calling edge function: ' . $edge_function_url);
 error_log('[ecosystem-data.php] 🌍 Request body: ' . json_encode($request_body));
 
+$start_time = microtime(true);
+
 $response = wp_remote_post($edge_function_url, [
     'timeout' => 15,
     'headers' => [
@@ -79,6 +81,8 @@ if (is_wp_error($response)) {
 $status_code = wp_remote_retrieve_response_code($response);
 $body = wp_remote_retrieve_body($response);
 
+$elapsed_time = round((microtime(true) - $start_time) * 1000);
+error_log('[ecosystem-data.php] ⏱️ Edge function response time: ' . $elapsed_time . 'ms');
 error_log('[ecosystem-data.php] 🌍 Response status: ' . $status_code);
 error_log('[ecosystem-data.php] 🌍 Response body: ' . $body);
 

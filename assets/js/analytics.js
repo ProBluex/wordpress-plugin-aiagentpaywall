@@ -289,6 +289,12 @@
     const $transactions = $("#stat-ecosystem-transactions");
     const $revenue = $("#stat-market-revenue");
     
+    // Show loading state
+    $buyers.text("...");
+    $sellers.text("...");
+    $transactions.text("...");
+    $revenue.text("...");
+    
     // Abort previous request if exists
     if (rqEcosystem && rqEcosystem.abort) {
       console.log("⚪ [ECOSYSTEM] Aborting previous ecosystem request");
@@ -304,7 +310,7 @@
         timeframe: timeframe,
         nonce: w.agentHubData.nonce
       },
-      timeout: 5000,
+      timeout: 20000,  // Extended timeout for ecosystem-wide queries
       success: function(response) {
         console.log("✅ [ECOSYSTEM] Response received");
         console.log("🌍 [ECOSYSTEM] Response success:", response.success);
@@ -362,6 +368,22 @@
         console.error("🔴 [ECOSYSTEM] Status:", status);
         console.error("🔴 [ECOSYSTEM] Error:", error);
         console.error("🔴 [ECOSYSTEM] XHR status:", xhr.status);
+        
+        // If timeout and this is first attempt, retry once with longer timeout
+        if (status === 'timeout' && !this.retried) {
+          console.warn("⚠️ [ECOSYSTEM] Timeout occurred, retrying once...");
+          this.retried = true;
+          setTimeout(function() {
+            loadEcosystemData(timeframe);
+          }, 1000);
+          return;
+        }
+        
+        // Show user-friendly error
+        $buyers.text(status === 'timeout' ? "Timeout" : "Error");
+        $sellers.text(status === 'timeout' ? "Timeout" : "Error");
+        $transactions.text(status === 'timeout' ? "Timeout" : "Error");
+        $revenue.text(status === 'timeout' ? "Timeout" : "Error");
         
         hideAnalyticsLoading();
       }
