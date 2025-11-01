@@ -300,7 +300,10 @@
     rqEcosystem = $.ajax({
       url: w.agentHubData.pluginUrl + 'ecosystem-data.php',
       method: 'POST',
-      data: { timeframe },
+      data: { 
+        timeframe: timeframe,
+        nonce: w.agentHubData.nonce
+      },
       timeout: 5000,
       success: function(response) {
         console.log("✅ [ECOSYSTEM] Response received");
@@ -310,30 +313,41 @@
         if (response.success && response.data) {
           const data = response.data;
           
-          // Only update if we have non-zero values (real data)
-          if (data.unique_buyers > 0 || data.total_transactions > 0) {
-            const formattedBuyers = formatLargeNumber(data.unique_buyers || 0);
-            const formattedSellers = formatLargeNumber(data.unique_sellers || 0);
-            const formattedTransactions = formatLargeNumber(data.total_transactions || 0);
-            const formattedRevenue = formatCurrency(data.total_amount || 0);
-            
-            console.log("🌍 [ECOSYSTEM] Formatted values:", {
-              buyers: formattedBuyers,
-              sellers: formattedSellers,
-              transactions: formattedTransactions,
-              revenue: formattedRevenue
-            });
-            
-            $buyers.text(formattedBuyers);
-            $sellers.text(formattedSellers);
-            $transactions.text(formattedTransactions);
-            $revenue.text(formattedRevenue);
-            
-            // Cache the data
-            setAnalyticsCache({ ecosystem: data });
-            
-            console.log("✅ [ECOSYSTEM] DOM updated successfully");
+          // Always update DOM with valid data (including zeros for new sites)
+          const formattedBuyers = formatLargeNumber(data.unique_buyers || 0);
+          const formattedSellers = formatLargeNumber(data.unique_sellers || 0);
+          const formattedTransactions = formatLargeNumber(data.total_transactions || 0);
+          const formattedRevenue = formatCurrency(data.total_amount || 0);
+          
+          console.log("🌍 [ECOSYSTEM] Formatted values:", {
+            buyers: formattedBuyers,
+            sellers: formattedSellers,
+            transactions: formattedTransactions,
+            revenue: formattedRevenue
+          });
+          
+          $buyers.text(formattedBuyers);
+          $sellers.text(formattedSellers);
+          $transactions.text(formattedTransactions);
+          $revenue.text(formattedRevenue);
+          
+          // Cache the data
+          setAnalyticsCache({ ecosystem: data });
+          
+          console.log("✅ [ECOSYSTEM] DOM updated successfully");
+        } else {
+          console.error("🔴 [ECOSYSTEM] Request failed or no data");
+          console.error("🔴 [ECOSYSTEM] Full response:", response);
+          if (response.message) {
+            console.error("🔴 [ECOSYSTEM] Error message:", response.message);
           }
+          
+          // Show user-friendly error in UI
+          $buyers.text("Error");
+          $sellers.text("Error");
+          $transactions.text("Error");
+          $revenue.text("Error");
+        }
           
           // Update chart regardless
           if (data.bucketed_data && data.bucketed_data.length) {
