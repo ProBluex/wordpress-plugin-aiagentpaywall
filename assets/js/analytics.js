@@ -39,6 +39,39 @@
   let rqEcosystem = null;
   let rqTopPages = null;
 
+  // Browser-level cache for analytics data
+  const ANALYTICS_CACHE_KEY = 'agent_hub_analytics_cache';
+  const ANALYTICS_CACHE_TTL = 300000; // 5 minutes
+
+  function getAnalyticsCache() {
+    try {
+      const cached = localStorage.getItem(ANALYTICS_CACHE_KEY);
+      if (!cached) return null;
+      const {data, timestamp} = JSON.parse(cached);
+      if (Date.now() - timestamp > ANALYTICS_CACHE_TTL) {
+        localStorage.removeItem(ANALYTICS_CACHE_KEY);
+        return null;
+      }
+      console.log('📊 [Analytics] Using cached data from localStorage');
+      return data;
+    } catch (e) {
+      console.warn('[Analytics] Failed to read cache:', e);
+      return null;
+    }
+  }
+
+  function setAnalyticsCache(data) {
+    try {
+      localStorage.setItem(ANALYTICS_CACHE_KEY, JSON.stringify({
+        data: data,
+        timestamp: Date.now()
+      }));
+      console.log('📊 [Analytics] Data cached to localStorage');
+    } catch (e) {
+      console.warn('[Analytics] Failed to cache data:', e);
+    }
+  }
+
   /* ------------------ Utilities ------------------ */
 
   const log = (...args) => {
