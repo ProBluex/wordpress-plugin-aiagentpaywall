@@ -87,6 +87,15 @@ class Admin {
             AGENT_HUB_VERSION
         );
         
+        // Preload Chart.js for faster Analytics rendering
+        wp_enqueue_script(
+            'chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+            [],
+            '4.4.0',
+            true
+        );
+        
         // Load admin.js first - other scripts depend on it
         wp_enqueue_script(
             'agent-hub-admin',
@@ -100,7 +109,7 @@ class Admin {
         wp_enqueue_script(
             'agent-hub-analytics',
             AGENT_HUB_PLUGIN_URL . 'assets/js/analytics.js',
-            ['jquery', 'agent-hub-admin'],
+            ['jquery', 'agent-hub-admin', 'chartjs'],
             AGENT_HUB_VERSION,
             true
         );
@@ -347,34 +356,80 @@ class Admin {
             return;
         }
         
+        // Check for in-flight request (deduplication)
+        $lock_key = 'agent_hub_api_lock_' . $timeframe;
+        if (get_transient($lock_key)) {
+            usleep(500000); // Wait 0.5s for in-flight request
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                error_log('[Admin.php] 📦 Returning cached data after lock wait');
+                wp_send_json_success($cached);
+                return;
+            }
+        }
+        
+        // Set lock to prevent duplicate requests
+        set_transient($lock_key, true, 5);
+        
         $api = new API();
         
         error_log('[Admin.php] 📊 ==================== ANALYTICS REQUEST ====================');
         error_log('[Admin.php] 📊 Timeframe: ' . $timeframe);
         
-        // 🚫 DO NOT call deprecated get_analytics() here
-        // ✅ Use local/site analytics for Overview cards
-        $site_result = $api->get_site_analytics($timeframe);
-        error_log('[Admin.php] 📊 site_result: ' . json_encode([
-            'success' => $site_result['success'] ?? false,
-            'has_data' => isset($site_result['data']),
-            'error' => $site_result['error'] ?? 'none'
-        ]));
-        error_log('[Admin.php] 📊 site_result raw data keys: ' . json_encode(array_keys($site_result['data'] ?? [])));
-        if (isset($site_result['data']['metrics'])) {
-            error_log('[Admin.php] 📊 site_result has nested metrics structure');
-        } else {
-            error_log('[Admin.php] 📊 site_result has flat structure');
+        // 🚀 PARALLEL API CALLS - Make both requests simultaneously
+        $site_id = get_option('402links_site_id');
+        $api_endpoint = $api->get_api_endpoint();
+        $api_key = $api->get_api_key();
+        
+        $requests = [
+            'site' => [
+                'url' => $api_endpoint . '/get-site-analytics?site_id=' . $site_id . '&period=' . $timeframe,
+                'type' => 'GET',
+                'timeout' => 3,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type' => 'application/json'
+                ]
+            ],
+            'ecosystem' => [
+                'url' => $api_endpoint . '/wordpress-ecosystem-stats',
+                'type' => 'POST',
+                'timeout' => 3,
+                'data' => ['timeframe' => $timeframe],
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type' => 'application/json'
+                ]
+            ]
+        ];
+        
+        // Execute parallel requests
+        $responses = [];
+        foreach ($requests as $key => $config) {
+            $responses[$key] = wp_remote_request($config['url'], [
+                'method' => $config['type'],
+                'headers' => $config['headers'],
+                'body' => isset($config['data']) ? json_encode($config['data']) : null,
+                'timeout' => $config['timeout']
+            ]);
         }
         
-        // ✅ Ecosystem stats for analytics upper widgets (kept separate)
-        $ecosystem_result = $api->get_ecosystem_stats($timeframe);
-        error_log('[Admin.php] 🌍 ecosystem_result: ' . json_encode([
-            'success' => $ecosystem_result['success'] ?? false,
-            'has_data' => isset($ecosystem_result['data']),
-            'error' => $ecosystem_result['error'] ?? 'none'
-        ]));
-        error_log('[Admin.php] 🌍 ecosystem_result raw data keys: ' . json_encode(array_keys($ecosystem_result['data'] ?? [])));
+        // Process responses
+        $site_result = ['success' => false];
+        if (!is_wp_error($responses['site'])) {
+            $body = json_decode(wp_remote_retrieve_body($responses['site']), true);
+            $site_result = $body ?: ['success' => false];
+        }
+        
+        $ecosystem_result = ['success' => false];
+        if (!is_wp_error($responses['ecosystem'])) {
+            $body = json_decode(wp_remote_retrieve_body($responses['ecosystem']), true);
+            $ecosystem_result = $body ?: ['success' => false];
+        }
+        
+        error_log('[Admin.php] 📊 Parallel requests completed');
+        error_log('[Admin.php] 📊 site_result success: ' . ($site_result['success'] ? 'true' : 'false'));
+        error_log('[Admin.php] 🌍 ecosystem_result success: ' . ($ecosystem_result['success'] ? 'true' : 'false'));
         
         if (($site_result['success'] ?? false) || ($ecosystem_result['success'] ?? false)) {
             // Add cache-busting headers
@@ -392,21 +447,18 @@ class Admin {
             error_log('[Admin.php] 📊 Extracted $site_metrics: ' . json_encode($site_metrics));
             error_log('[Admin.php] 📊 $site_metrics keys: ' . json_encode(array_keys($site_metrics)));
             
-            // Count protected pages using correct meta key
-            $protected_query = new \WP_Query([
-                'post_type'      => ['post', 'page'],
-                'post_status'    => 'publish',
-                'meta_query'     => [['key' => '_402links_id', 'compare' => 'EXISTS']],
-                'fields'         => 'ids',
-                'posts_per_page' => 1,
-                'no_found_rows'  => false,
-            ]);
-            $protected_pages_count = $protected_query->found_posts;
-            error_log('[Admin.php] 📄 Protected pages WP_Query parameters: ' . json_encode([
-                'post_type' => ['post', 'page'],
-                'meta_key' => '_402links_id'
-            ]));
-            error_log('[Admin.php] 📄 Protected pages found_posts: ' . $protected_pages_count);
+            // Count protected pages using optimized direct SQL query
+            global $wpdb;
+            $protected_pages_count = $wpdb->get_var("
+                SELECT COUNT(DISTINCT p.ID) 
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_status = 'publish'
+                AND p.post_type IN ('post', 'page')
+                AND pm.meta_key = '_402links_id'
+            ");
+            $protected_pages_count = intval($protected_pages_count);
+            error_log('[Admin.php] 📄 Protected pages count (SQL): ' . $protected_pages_count);
             
             $final_response = [
                 'site' => [
@@ -443,13 +495,17 @@ class Admin {
                 'ecosystem_total_transactions' => $final_response['ecosystem']['total_transactions']
             ]));
             
-            // Cache the response for 90 seconds
-            set_transient($cache_key, $final_response, 90);
+            // Cache the response for 5 minutes
+            set_transient($cache_key, $final_response, 300);
+            
+            // Release lock
+            delete_transient($lock_key);
             
             wp_send_json_success($final_response);
         }
         
-        // If both failed:
+        // If both failed, release lock
+        delete_transient($lock_key);
         $site_err = $site_result['error'] ?? $site_result['message'] ?? 'unknown';
         $eco_err  = $ecosystem_result['error'] ?? $ecosystem_result['message'] ?? 'unknown';
         error_log('[Admin.php] ❌ Analytics request failed');

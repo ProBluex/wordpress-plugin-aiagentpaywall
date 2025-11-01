@@ -20,6 +20,15 @@ class API {
         error_log('🟦 [API Constructor] Service key: ' . ($this->service_role_key ? 'SET (length: ' . strlen($this->service_role_key) . ')' : 'NOT SET'));
     }
     
+    // Public getters for parallel requests
+    public function get_api_endpoint() {
+        return $this->api_endpoint;
+    }
+    
+    public function get_api_key() {
+        return $this->api_key;
+    }
+    
     /**
      * Register WordPress site with 402links backend
      */
@@ -907,7 +916,7 @@ class API {
         
         $args = [
             'method' => $method,
-            'timeout' => 5, // Fast-fail if bot registry API is slow
+            'timeout' => 3, // Reduced timeout for faster failures
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key

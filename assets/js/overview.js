@@ -147,10 +147,52 @@
         
         // ========== ANALYTICS LOADING FOR OVERVIEW TAB ==========
         let overviewDataInterval;
+        
+        // Browser-level cache
+        const CACHE_KEY = 'agent_hub_overview_cache';
+        const CACHE_TTL = 300000; // 5 minutes
+
+        function getCachedData() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (!cached) return null;
+                const {data, timestamp} = JSON.parse(cached);
+                if (Date.now() - timestamp > CACHE_TTL) {
+                    localStorage.removeItem(CACHE_KEY);
+                    return null;
+                }
+                console.log('🔵 [Overview] Using cached data from localStorage');
+                return data;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function setCachedData(data) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    data: data,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn('[Overview] Failed to cache data:', e);
+            }
+        }
 
         function loadOverviewAnalytics() {
             console.log('🔵 [Overview] ==================== ANALYTICS REQUEST START ====================');
             console.log('🔵 [Overview] Timestamp:', new Date().toISOString());
+            
+            // Try browser cache first
+            const cachedData = getCachedData();
+            if (cachedData) {
+                updateMetrics(cachedData);
+                return;
+            }
+            
+            // Show loading skeleton
+            showLoadingSkeleton();
+            
             console.log('🔵 [Overview] AJAX URL:', agentHubData.ajaxUrl);
             
             const requestPayload = {
@@ -180,63 +222,60 @@
                     }
                     
                     if (response.success && response.data && response.data.site) {
-                        const siteData = response.data.site;
-                        console.log('🟢 [Overview] Extracted siteData:', siteData);
-                        
-                        // Log each metric extraction
-                        const metrics = {
-                            total_crawls: siteData?.total_crawls,
-                            paid_crawls: siteData?.paid_crawls,
-                            total_revenue: siteData?.total_revenue,
-                            protected_pages: siteData?.protected_pages
-                        };
-                        console.log('🟢 [Overview] Extracted metrics (before fallback):', metrics);
-                        
-                        // Update metric cards with logging
-                        const finalValues = {
-                            total_crawls: siteData.total_crawls || 0,
-                            paid_crawls: siteData.paid_crawls || 0,
-                            total_revenue: '$' + (siteData.total_revenue || 0).toFixed(2),
-                            protected_pages: siteData.protected_pages || 0
-                        };
-                        console.log('🟢 [Overview] Final values (after fallback):', finalValues);
-                        
-                        $('#total-crawls').text(finalValues.total_crawls);
-                        $('#paid-crawls').text(finalValues.paid_crawls);
-                        $('#total-revenue').text(finalValues.total_revenue);
-                        $('#protected-pages').text(finalValues.protected_pages);
-                        
-                        console.log('✅ [Overview] Metrics updated in DOM successfully');
+                        setCachedData(response.data);
+                        updateMetrics(response.data);
                     } else {
                         console.error('❌ [Overview] ==================== FAILURE ====================');
                         console.error('❌ [Overview] Response indicates failure');
-                        console.error('❌ [Overview] response.success:', response.success);
-                        console.error('❌ [Overview] response.data:', response.data);
-                        console.error('❌ [Overview] response.data.site exists:', !!(response.data && response.data.site));
-                        console.error('❌ [Overview] response.message:', response.message);
-                        console.error('❌ [Overview] Full response:', JSON.stringify(response, null, 2));
-                        
-                        // Show zeros with error state
-                        $('#total-crawls').text('0');
-                        $('#paid-crawls').text('0');
-                        $('#total-revenue').text('$0.00');
-                        $('#protected-pages').text('0');
+                        showZeroMetrics();
                     }
+                    
+                    hideLoadingSkeleton();
                 },
                 error: function(xhr, status, error) {
                     console.error('🔴 [Overview] ==================== AJAX ERROR ====================');
                     console.error('🔴 [Overview] Status:', status);
                     console.error('🔴 [Overview] Error:', error);
-                    console.error('🔴 [Overview] XHR status:', xhr.status);
-                    console.error('🔴 [Overview] XHR responseText:', xhr.responseText);
                     
-                    // Show zeros on error
-                    $('#total-crawls').text('0');
-                    $('#paid-crawls').text('0');
-                    $('#total-revenue').text('$0.00');
-                    $('#protected-pages').text('0');
+                    showZeroMetrics();
+                    hideLoadingSkeleton();
                 }
             });
+        }
+
+        function updateMetrics(data) {
+            const siteData = data.site;
+            console.log('🟢 [Overview] Extracted siteData:', siteData);
+            
+            const finalValues = {
+                total_crawls: siteData.total_crawls || 0,
+                paid_crawls: siteData.paid_crawls || 0,
+                total_revenue: '$' + (siteData.total_revenue || 0).toFixed(2),
+                protected_pages: siteData.protected_pages || 0
+            };
+            console.log('🟢 [Overview] Final values:', finalValues);
+            
+            $('#total-crawls').text(finalValues.total_crawls);
+            $('#paid-crawls').text(finalValues.paid_crawls);
+            $('#total-revenue').text(finalValues.total_revenue);
+            $('#protected-pages').text(finalValues.protected_pages);
+            
+            console.log('✅ [Overview] Metrics updated in DOM successfully');
+        }
+
+        function showZeroMetrics() {
+            $('#total-crawls').text('0');
+            $('#paid-crawls').text('0');
+            $('#total-revenue').text('$0.00');
+            $('#protected-pages').text('0');
+        }
+
+        function showLoadingSkeleton() {
+            $('.stat-value').addClass('skeleton-loading');
+        }
+
+        function hideLoadingSkeleton() {
+            $('.stat-value').removeClass('skeleton-loading');
         }
 
         // Load on page load
